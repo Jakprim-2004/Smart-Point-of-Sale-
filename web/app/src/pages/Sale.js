@@ -61,11 +61,14 @@ const styles = {
     }
   },
   productImage: {
-    height: '200px',
+    height: '140px', // ลดขนาดความสูงลง
     width: '100%',
-    objectFit: 'cover',
+    objectFit: 'contain', // เปลี่ยนจาก 'cover' เป็น 'contain'
+    objectPosition: 'center',
     borderRadius: '20px 20px 0 0',
-    transition: 'transform 0.3s ease'
+    transition: 'transform 0.3s ease',
+    padding: '10px', // เพิ่ม padding เพื่อให้รูปไม่ชิดขอบ
+    background: '#ffffff' // เพิ่มพื้นหลังสีขาว
   },
   productInfo: {
     padding: '20px',
@@ -456,7 +459,7 @@ function Sale() {
           }
         } catch (e) {
           Swal.fire({
-            title: "เกิดข้อผ��ดพลาด",
+            title: "เกิดข้อผิดพลาด",
             text: e.message,
             icon: "error",
           });
@@ -796,7 +799,7 @@ function Sale() {
                           </div>
                           
                           <div style={styles.productInfo}>
-                            <h6 className="fw-bold mb-2">{item.name}</h6><span className="h5 mb-0" style={{color: '#2563eb'}}>
+                            <h6 className="fw-bold mb-2">{item.name } </h6><span className="h5 mb-0" style={{color: '#2563eb'}}>
                                 ฿{parseInt(item.price).toLocaleString("th-TH")}
                               </span>
                             <div className="text-center mb-3">
@@ -842,7 +845,7 @@ function Sale() {
                             <div className="d-flex align-items-center mb-2">
                               <div className="flex-grow-1">
                                 <h6 className="mb-0" style={{color: '#1e40af', fontWeight: '600'}}>
-                                  {item.product.name}
+                                  {item.product.name} 
                                 </h6>
                                 <small className="text-muted">
                                   {item.barcode}
