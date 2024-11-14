@@ -941,7 +941,7 @@ function Dashboard() {
                       e.target.style.transform = 'scale(1)';
                       e.target.style.backgroundColor = '#dc3545';
                     }}
-                    title="คลิกเพื่อดู���ายละเอียด"
+                    title="คลิกเพื่อดูรายละเอียด"
                   >
                     {lowStockCount} รายการ
                   </span>
