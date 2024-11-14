@@ -61,14 +61,14 @@ const styles = {
     }
   },
   productImage: {
-    height: '140px', // ลดขนาดความสูงลง
+    height: '140px', 
     width: '100%',
-    objectFit: 'contain', // เปลี่ยนจาก 'cover' เป็น 'contain'
+    objectFit: 'contain', 
     objectPosition: 'center',
     borderRadius: '20px 20px 0 0',
     transition: 'transform 0.3s ease',
-    padding: '10px', // เพิ่ม padding เพื่อให้รูปไม่ชิดขอบ
-    background: '#ffffff' // เพิ่มพื้นหลังสีขาว
+    padding: '10px', 
+    background: '#ffffff' 
   },
   productInfo: {
     padding: '20px',
