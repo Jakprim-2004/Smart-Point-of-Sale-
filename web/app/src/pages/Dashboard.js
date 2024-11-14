@@ -30,15 +30,16 @@ ChartJS.register(
 function Dashboard() {
   const myDate = new Date();
   const [year] = useState(myDate.getFullYear());
-  const [month, ] = useState(myDate.getMonth() + 1);
-  const [viewType, ] = useState("daily");
-  const [topSellingViewType, setTopSellingViewType] = useState('products'); // Add this line
+  const [month] = useState(myDate.getMonth() + 1);
+  const [viewType] = useState("daily"); // unused but kept for future use with API
+  const [topSellingViewType, setTopSellingViewType] = useState('products');
   const [paymentChartType, setPaymentChartType] = useState('pie');
-  const [topSellingChartType, setTopSellingChartType] = useState('pie'); // Add this line
+  const [topSellingChartType, setTopSellingChartType] = useState('pie');
   const navigate = useNavigate();
 
+  // Keep existing state variables for data
   const [stockData, setStockData] = useState([]);
-  const [lowStockItems, setLowStockItems] = useState([]); // Add this state
+  const [lowStockItems, setLowStockItems] = useState([]);
   const [topSellingProducts, setTopSellingProducts] = useState([]);
   const [topSellingCategories, setTopSellingCategories] = useState([]);
   const [todaySales, setTodaySales] = useState({
@@ -53,7 +54,12 @@ function Dashboard() {
     yesterdayBillCount: 0,
     yesterdayAveragePerBill: 0,
   });
-  const [options] = useState({
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [paymentStats, setPaymentStats] = useState([]);
+  const [lowStockCount, setLowStockCount] = useState(0);
+
+  // Remove unused options state and replace with simple object
+  const chartOptions = {
     responsive: true,
     plugins: {
       legend: {
@@ -81,11 +87,7 @@ function Dashboard() {
         },
       },
     },
-  });
-
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [paymentStats, setPaymentStats] = useState([]);
-  const [lowStockCount, setLowStockCount] = useState(0);
+  };
 
   useEffect(() => {
     // Update time every second
@@ -370,19 +372,19 @@ function Dashboard() {
           <div className="d-flex justify-content-end mb-2">
             <i 
               className="fas fa-chart-pie mx-2" 
-              style={topSellingChartType === 'pie' ? activeIconStyle : inactiveIconStyle}
+              style={topSellingChartType === 'pie' ? styles.activeIcon : styles.inactiveIcon}
               onClick={() => setTopSellingChartType('pie')}
               title="กราฟวงกลม"
             />
             <i 
               className="fas fa-chart-bar mx-2" 
-              style={topSellingChartType === 'bar' ? activeIconStyle : inactiveIconStyle}
+              style={topSellingChartType === 'bar' ? styles.activeIcon : styles.inactiveIcon}
               onClick={() => setTopSellingChartType('bar')}
               title="กราฟแท่ง"
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'start' }}>
-            <div style={{ width: '35%', height: '150px' }}> {/* ปรับขนาดตรงนี้ */}
+            <div style={{ width: '35%', height: '150px' }}> {/* ปรับขนาดต��งนี้ */}
               {topSellingChartType === 'pie' ? (
                 <Pie
                   data={chartData}
@@ -583,147 +585,61 @@ function Dashboard() {
   };
   
 
-  const containerStyle = {
-    backgroundColor: "#f8f9fa",
-    padding: "25px",
-    borderRadius: "15px",
-    fontFamily: "'Kanit', sans-serif",
-    minHeight: "100vh",
-  };
-
-  const summaryCardStyle = {
-    transition: "transform 0.2s, box-shadow 0.2s",
-    cursor: "pointer",
-    height: "100%",
-    border: "none",
-    borderRadius: "12px",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-  };
-
-  const cardHeaderStyle = {
-    backgroundColor: "#4dabf7",
-    color: "white",
-    padding: "15px 20px",
-    fontSize: "18px",
-    fontWeight: "600",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderTopLeftRadius: "12px",
-    borderTopRightRadius: "12px",
-  };
-
-  // เพิ่ม style สำหรับไอคอน
-  const chartIconStyle = {
-    cursor: 'pointer',
-    padding: '5px 10px',
-    fontSize: '1.2rem',
-    transition: 'all 0.2s'
-  };
-
-  const activeIconStyle = {
-    ...chartIconStyle,
-    color: '#0dcaf0',
-    transform: 'scale(1.2)'
-  };
-
-  const inactiveIconStyle = {
-    ...chartIconStyle,
-    color: '#6c757d'
-  };
-
-  const chartContainerStyle = {
-    backgroundColor: "white",
-    borderRadius: "12px",
-    padding: "20px",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-    marginBottom: "25px",
-  };
-
-  // Add new styles
-  const modernCardStyle = {
-    ...summaryCardStyle,
-    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-    transition: 'all 0.3s ease',
-    '&:hover': {
-      transform: 'translateY(-5px)',
-      boxShadow: '0 8px 15px rgba(0, 0, 0, 0.1)',
+  // Consolidate styles into a single styles object
+  const styles = {
+    container: {
+      backgroundColor: "#f8f9fa",
+      padding: "25px",
+      borderRadius: "15px",
+      fontFamily: "'Kanit', sans-serif",
+      minHeight: "100vh",
+    },
+    summaryCard: {
+      transition: "transform 0.2s, box-shadow 0.2s",
+      cursor: "pointer",
+      height: "100%",
+      border: "none",
+      borderRadius: "12px",
+      boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    },
+    modernHeader: {
+      backgroundColor: "#4dabf7",
+      color: "white",
+      padding: "15px 20px",
+      fontSize: "18px",
+      fontWeight: "600",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      borderRadius: "12px 12px 0 0",
+      background: 'linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%)',
+    },
+    chartIcon: {
+      cursor: 'pointer',
+      padding: '5px 10px',
+      fontSize: '1.2rem',
+      transition: 'all 0.2s'
+    },
+    activeIcon: {
+      color: '#0dcaf0',
+      transform: 'scale(1.2)'
+    },
+    inactiveIcon: {
+      color: '#6c757d'
     }
   };
-
-  const modernHeaderStyle = {
-    ...cardHeaderStyle,
-    background: 'linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%)',
-    borderBottom: 'none',
-  };
-
-  const statCardStyle = {
-    padding: '20px',
-    borderRadius: '15px',
-    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.05)',
-    transition: 'transform 0.3s ease',
-    cursor: 'pointer',
-    '&:hover': {
-      transform: 'translateY(-5px)',
-    }
-  };
-
-  // Update clickableNumber style
-  const clickableNumber = {
-    cursor: 'pointer',
-    display: 'inline-block', // Add this to make container fit content
-    padding: '4px 8px',
-    borderRadius: '4px',
-    transition: 'all 0.2s ease',
-    backgroundColor: 'transparent',
-    '&:hover': {
-      backgroundColor: 'rgba(0, 0, 0, 0.08)'
-    }
-  };
-
-  // Add the styles to the head of the document
-  const styles = `
-    .clickable-stat {
-      cursor: pointer;
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 4px;
-      transition: all 0.2s ease;
-      background-color: transparent;
-      text-decoration: underline;
-    }
-    
-    .clickable-stat:hover {
-      background-color: rgba(0, 0, 0, 0.08);
-    }
-
-    .hover-gray {
-      transition: all 0.2s ease;
-      text-decoration: underline;
-    }
-
-    .hover-gray:hover {
-      background-color: rgba(0, 0, 0, 0.08);
-      border-radius: 4px;
-    }
-  `;
-
-  const styleSheet = document.createElement("style");
-  styleSheet.innerText = styles;
-  document.head.appendChild(styleSheet);
 
   return (
     <Template>
-      <div style={containerStyle}>
+      <div style={styles.container}>
 
         <div className="row mb-4">
 
           <div className="col-12">
-            <div style={{...chartContainerStyle, background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'}}>
+            <div style={{...styles.chartContainer, background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'}}>
 
 
-              <div style={modernHeaderStyle}>
+              <div style={styles.modernHeader}>
                 <h4 style={{ margin: 0, fontWeight: '600' }}>
                   <i className="fas fa-chart-line fa-beat  me-2"></i>
                   ยอดขายวันนี้ {currentTime.toLocaleDateString('th-TH')} 
@@ -735,7 +651,7 @@ function Dashboard() {
 
               <div className="row p-4 g-4">
                 <div className="col-md-3">
-                  <div style={statCardStyle} className="text-center">
+                  <div style={styles.statCard} className="text-center">
                     <div className="d-flex align-items-center justify-content-between mb-2">
                       <h5 className="mb-0">ยอดรวม</h5>
                       <i className="fas fa-wallet text-primary fa-lg"></i>
@@ -746,7 +662,7 @@ function Dashboard() {
                 </div>
 
                 <div className="col-md-3">
-                  <div style={statCardStyle} className="text-center">
+                  <div style={styles.statCard} className="text-center">
                     <div className="d-flex align-items-center justify-content-between mb-2">
                       <h5 className="mb-0">การเติบโต</h5>
                       <i className={`fas fa-trending-${todaySales.growthRate >= 0 ? 'up text-success' : 'down text-danger'} fa-lg`}></i>
@@ -761,7 +677,7 @@ function Dashboard() {
                 </div>
 
                 <div className="col-md-3">
-                  <div style={statCardStyle} className="text-center">
+                  <div style={styles.statCard} className="text-center">
                     <div className="d-flex align-items-center justify-content-between mb-2">
                       <h5 className="mb-0">จำนวนบิล</h5>
                       <i className="fas fa-receipt text-info fa-lg"></i>
@@ -779,7 +695,7 @@ function Dashboard() {
                 </div>
 
                 <div className="col-md-3">
-                  <div style={statCardStyle} className="text-center">
+                  <div style={styles.statCard} className="text-center">
                     <div className="d-flex align-items-center justify-content-between mb-2">
                       <h5 className="mb-0">เฉลี่ย/บิล</h5>
                       <i className="fas fa-calculator text-info fa-lg"></i>
@@ -810,7 +726,7 @@ function Dashboard() {
                 <div style={{ height: '250px', padding: '20px', background: '#ffffff', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
                   <Bar
                     options={{
-                      ...options,
+                      ...chartOptions,
                       maintainAspectRatio: false
                     }}
                     data={{
@@ -832,7 +748,7 @@ function Dashboard() {
 
         <div className="row g-4">
         <div className="col-md-4">
-            <div className="card h-100" style={summaryCardStyle}>
+            <div className="card h-100" style={styles.summaryCard}>
               <div className="card-header text-center bg-info">
                 <div className="d-flex justify-content-between align-items-center">                      
                   <div className="d-flex align-items-center gap-2">
@@ -859,13 +775,13 @@ function Dashboard() {
                   <div>
                     <i 
                       className="fas fa-chart-pie mx-2" 
-                      style={topSellingChartType === 'pie' ? activeIconStyle : inactiveIconStyle}
+                      style={topSellingChartType === 'pie' ? styles.activeIcon : styles.inactiveIcon}
                       onClick={() => setTopSellingChartType('pie')}
                       title="กราฟวงกลม"
                     />
                     <i 
                       className="fas fa-chart-bar mx-2" 
-                      style={topSellingChartType === 'bar' ? activeIconStyle : inactiveIconStyle}
+                      style={topSellingChartType === 'bar' ? styles.activeIcon : styles.inactiveIcon}
                       onClick={() => setTopSellingChartType('bar')}
                       title="กราฟแท่ง"
                     />
@@ -891,20 +807,20 @@ function Dashboard() {
             </div>
           </div>
           <div className="col-md-4">
-            <div className="card h-100" style={summaryCardStyle}>
+            <div className="card h-100" style={styles.summaryCard}>
               <div className="card-header text-center bg-info">
                 <div className="d-flex justify-content-between align-items-center">
                   <h4 className="mb-0"><i class="fa-solid fa-chart-column fa-bounce fa-lg" style={{color: "#365dba"}}></i> วิธีการชำระเงิน</h4>
                   <div>
                     <i 
                       className="fas fa-chart-pie mx-2" 
-                      style={paymentChartType === 'pie' ? activeIconStyle : inactiveIconStyle}
+                      style={paymentChartType === 'pie' ? styles.activeIcon : styles.inactiveIcon}
                       onClick={() => setPaymentChartType('pie')}
                       title="กราฟวงกลม"
                     />
                     <i 
                       className="fas fa-chart-bar mx-2" 
-                      style={paymentChartType === 'bar' ? activeIconStyle : inactiveIconStyle}
+                      style={paymentChartType === 'bar' ? styles.activeIcon : styles.inactiveIcon}
                       onClick={() => setPaymentChartType('bar')}
                       title="กราฟแท่ง"
                     />
@@ -918,7 +834,7 @@ function Dashboard() {
           </div>
 
           <div className="col-md-4">
-            <div className="card h-100" style={summaryCardStyle}>
+            <div className="card h-100" style={styles.summaryCard}>
               <div className="card-header text-center bg-warning text-white">
                 <div className="d-flex justify-content-between align-items-center">
                   <h4 className="mb-0">
@@ -941,7 +857,7 @@ function Dashboard() {
                       e.target.style.transform = 'scale(1)';
                       e.target.style.backgroundColor = '#dc3545';
                     }}
-                    title="คลิกเพื่อดูรายละเอียด"
+                    title="คลิกเพื่อดูายละเอียด"
                   >
                     {lowStockCount} รายการ
                   </span>
