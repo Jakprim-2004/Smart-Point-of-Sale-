@@ -166,7 +166,7 @@ function Sale() {
   const [memberInfo, setMemberInfo] = useState({});
   const [sumTotal, setSumTotal] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("ทั้งหมด");
+  const [categoryFilter, ] = useState("ทั้งหมด");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [heldBills, setHeldBills] = useState([]);
 
@@ -468,49 +468,7 @@ function Sale() {
     });
   };
 
-  const handleLastBill = async () => {
-    try {
-      await axios
-        .get(config.api_path + "/billSale/lastBill", config.headers())
-        .then((res) => {
-          if (res.data.message === "success" && res.data.result.length > 0) {
-            setLastBill(res.data.result[0]);
-
-            let sum = 0;
-            const vatRate = 7; // อัตรา VAT 7%
-
-            for (
-              let i = 0;
-              i < res.data.result[0].billSaleDetails.length;
-              i++
-            ) {
-              const item = res.data.result[0].billSaleDetails[i];
-              sum += parseInt(item.qty) * parseInt(item.price);
-            }
-
-            const vatAmount = calculateVAT(sum, vatRate);
-            const totalWithVAT = sum + vatAmount;
-
-            setSumTotal(totalWithVAT);
-          } else {
-            Swal.fire({
-              title: "ไม่มีบิลล่าสุด",
-              text: "ไม่พบข้อมูลบิลล่าสุด",
-              icon: "info",
-            });
-          }
-        })
-        .catch((err) => {
-          throw err.response.data;
-        });
-    } catch (e) {
-      Swal.fire({
-        title: "error",
-        text: e.message,
-        icon: "error",
-      });
-    }
-  };
+  
 
   const handleBillToday = async () => {
     try {
