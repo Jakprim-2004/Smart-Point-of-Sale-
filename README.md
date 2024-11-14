@@ -1,4 +1,4 @@
-# DDPOS
+# DDPOS Point of sales
 
 ## Installation & Setup Instructions (คำแนะนำการติดตั้งและการตั้งค่า)
 
