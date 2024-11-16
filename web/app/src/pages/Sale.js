@@ -7,6 +7,8 @@ import Modal from "../components/Modal";
 import * as dayjs from "dayjs";
 import PrintJS from "print-js";
 import Barcode from "../components/Barcode";
+import { QRCodeSVG } from 'qrcode.react';
+import generatePayload from 'promptpay-qr';
 
 const styles = {
   productCard: {
@@ -578,7 +580,7 @@ function Sale() {
     const qty = parseInt(item.qty, 10);
     if (isNaN(qty) || qty <= 0 || qty > item.remainingQty) {
       Swal.fire({
-        title: "จำนวนไม่ถูกต้อง",
+        title: "จำนว���ไม่ถูกต้อง",
         text: "กรุณากรอกจำนวนที่ถูกต้อง",
         icon: "warning",
       });
@@ -640,6 +642,25 @@ function Sale() {
         text: e.message,
         icon: "error",
       });
+    }
+  };
+
+  // เพิ่มฟังก์ชันสำหรับสร้าง QR Code
+  const generateQRCode = () => {
+    try {
+      // สร้าง payload สำหรับ PromptPay QR
+      const payload = generatePayload(memberInfo.promptPayId, { amount: totalPrice });
+      
+      // สร้าง URL สำหรับเปิดแอพธนาคาร (deeplink)
+      const deeplinkURL = `intent://scan/#Intent;scheme=thaiqr;package=com.scb.phone.android;S.qrCode=${payload};end`;
+      
+      return {
+        payload,
+        deeplinkURL
+      };
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      return null;
     }
   };
 
@@ -989,26 +1010,6 @@ function Sale() {
             />
           </div>
           <div className="mt-3">
-            <label>รับเงิน</label>
-          </div>
-          <div>
-            <input
-              value={inputMoney}
-              onChange={(e) => setInputMoney(e.target.value)}
-              className="form-control text-end"
-            />
-          </div>
-          <div className="mt-3">
-            <label>เงินทอน</label>
-          </div>
-          <div>
-            <input
-              value={(inputMoney - totalPrice).toLocaleString("th-TH")}
-              className="form-control text-end"
-              disabled
-            />
-          </div>
-          <div className="mt-3">
             <label>ช่องทางการชำระเงิน</label>
           </div>
           <div>
@@ -1019,26 +1020,89 @@ function Sale() {
             >
               <option value="Cash">Cash(เงินสด)</option>
               <option value="PromptPay">PromptPay(พร้อมเพย์)</option>
-              {/* เพิ่มช่องทางการชำระเงินอื่น ๆ ตามความจำเป็น */}
             </select>
           </div>
-          <div className="text-center mt-3">
-            <button
-              onClick={(e) => setInputMoney(totalPrice)}
-              className="btn btn-primary me-2"
-            >
-              <i className="fa fa-check me-2"></i>
-              จ่ายพอดี
-            </button>
-            <button
-                onClick={handleEndSale}
-                className="btn btn-success"
-                disabled={inputMoney <= 0} 
-              >
-                <i className="fa fa-check me-2"></i>
-                จบการขาย
-              </button>
-          </div>
+
+          {paymentMethod === 'Cash' ? (
+            <>
+              <div className="mt-3">
+                <label>รับเงิน</label>
+              </div>
+              <div>
+                <input
+                  value={inputMoney}
+                  onChange={(e) => setInputMoney(e.target.value)}
+                  className="form-control text-end"
+                />
+              </div>
+              <div className="mt-3">
+                <label>เงินทอน</label>
+              </div>
+              <div>
+                <input
+                  value={(inputMoney - totalPrice).toLocaleString("th-TH")}
+                  className="form-control text-end"
+                  disabled
+                />
+              </div>
+              <div className="text-center mt-3">
+                <button
+                  onClick={(e) => setInputMoney(totalPrice)}
+                  className="btn btn-primary me-2"
+                >
+                  <i className="fa fa-check me-2"></i>
+                  จ่ายพอดี
+                </button>
+                <button
+                  onClick={handleEndSale}
+                  className="btn btn-success"
+                  disabled={inputMoney <= 0}
+                >
+                  <i className="fa fa-check me-2"></i>
+                  ยืนยันการชำระเงิน
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="text-center mt-4">
+              <div className="mb-3">
+                <QRCodeSVG
+                  value={generateQRCode()?.payload || ''}
+                  size={256}
+                  includeMargin={true}
+                  level="L"
+                />
+              </div>
+              <p className="mb-3">สแกน QR Code เพื่อชำระเงิน</p>
+              <p className="text-primary font-weight-bold mb-4">
+                จำนวนเงิน: {totalPrice.toLocaleString("th-TH")} บาท
+              </p>
+              <div className="d-flex justify-content-center gap-2">
+                {/* ปุ่มเปิดแอพธนาคารต่างๆ */}
+                <button
+                  onClick={() => window.location.href = generateQRCode()?.deeplinkURL}
+                  className="btn btn-primary me-2"
+                >
+                  <i className="fa fa-mobile-alt me-2"></i>
+                  เปิดแอพ SCB
+                </button>
+                <button
+                  onClick={() => window.location.href = `kasikornbank://x-callback-url/scan?qr=${generateQRCode()?.payload}`}
+                  className="btn btn-success me-2"
+                >
+                  <i className="fa fa-mobile-alt me-2"></i>
+                  เปิดแอพ KBANK
+                </button>
+                <button
+                  onClick={handleEndSale}
+                  className="btn btn-primary"
+                >
+                  <i className="fa fa-check me-2"></i>
+                  ยืนยันการชำระเงิน
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
 
