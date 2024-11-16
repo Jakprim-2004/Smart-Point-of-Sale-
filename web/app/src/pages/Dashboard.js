@@ -384,7 +384,7 @@ function Dashboard() {
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'start' }}>
-            <div style={{ width: '35%', height: '150px' }}> {/* ปรับขนาดต��งนี้ */}
+            <div style={{ width: '35%', height: '150px' }}> {/* ปรับขนาดตรงนี้ */}
               {topSellingChartType === 'pie' ? (
                 <Pie
                   data={chartData}
@@ -626,8 +626,23 @@ function Dashboard() {
     },
     inactiveIcon: {
       color: '#6c757d'
+    },
+    clickableNumber: {
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      textDecoration: 'none',
+      padding: '4px 8px',
+      borderRadius: '4px'
+    },
+    clickableNumberHover: {
+      backgroundColor: '#e9ecef',
+      color: '#0dcaf0'
     }
   };
+
+  // Add new state for hover
+  const [billCountHover, setBillCountHover] = useState(false);
+  const [averageHover, setAverageHover] = useState(false);
 
   return (
     <Template>
@@ -682,8 +697,17 @@ function Dashboard() {
                       <h5 className="mb-0">จำนวนบิล</h5>
                       <i className="fas fa-receipt text-info fa-lg"></i>
                     </div>
-                    <h3 className="text-info mb-0 hover-gray" onClick={navigateToBillSales}>
-                      {todaySales.billCount} บิล
+                    <h3 
+                      className="text-info mb-0"
+                      style={{
+                        ...styles.clickableNumber,
+                        ...(billCountHover ? styles.clickableNumberHover : {})
+                      }}
+                      onClick={navigateToBillSales}
+                      onMouseEnter={() => setBillCountHover(true)}
+                      onMouseLeave={() => setBillCountHover(false)}
+                    >
+                      <u>{todaySales.billCount} บิล</u>
                     </h3>
                     <small className="text-muted d-block mt-2">
                       เมื่อวาน: {todaySales.yesterdayBillCount} บิล
@@ -700,8 +724,17 @@ function Dashboard() {
                       <h5 className="mb-0">เฉลี่ย/บิล</h5>
                       <i className="fas fa-calculator text-info fa-lg"></i>
                     </div>
-                    <h3 className="text-info mb-0 hover-gray" onClick={navigateToBillSales}>
-                      ฿ {todaySales.averagePerBill.toLocaleString()}
+                    <h3 
+                      className="text-info mb-0"
+                      style={{
+                        ...styles.clickableNumber,
+                        ...(averageHover ? styles.clickableNumberHover : {})
+                      }}
+                      onClick={navigateToBillSales}
+                      onMouseEnter={() => setAverageHover(true)}
+                      onMouseLeave={() => setAverageHover(false)}
+                    >
+                      <u>฿ {todaySales.averagePerBill.toLocaleString()}</u>
                     </h3>
                     <small className="text-muted d-block mt-2">
                       เมื่อวาน: ฿ {todaySales.yesterdayAveragePerBill.toLocaleString()}
