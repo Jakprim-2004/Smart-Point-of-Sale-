@@ -65,7 +65,7 @@ const ReportUse = () => {
   return (
     <Template>
       <div className="container mx-auto px-4 py-5 max-w-4l">
-        <h1 className="text-3xl font-bold text-center mb-5">แจ้งปัญหาการใช้งาน</h1>
+        <h1 className="text-3xl font-bold text-center mb-5">แจ้งปัญหา</h1>
 
         <div className="card mb-5 shadow">
           <div className="card-header">

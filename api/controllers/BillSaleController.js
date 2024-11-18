@@ -284,11 +284,17 @@ app.get('/billSale/billToday', service.isLogin, async (req, res) => {
         BillSaleModel.hasMany(BillSaleDetailModel);
         BillSaleDetailModel.belongsTo(ProductModel);
 
-        const startDate = new Date();
-        startDate.setHours(0, 0, 0, 0);
-
+        // แก้ไขการสร้างวันที่ให้ใช้ timezone ของไทย
         const now = new Date();
-        now.setHours(23, 59, 59, 59);
+        const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        endDate.setHours(23, 59, 59, 999);
+
+        // ปรับ timezone ให้เป็น UTC+7
+        startDate.setHours(startDate.getHours() + 7);
+        endDate.setHours(endDate.getHours() + 7);
 
         const { Sequelize } = require('sequelize');
         const Op = Sequelize.Op;
@@ -299,8 +305,8 @@ app.get('/billSale/billToday', service.isLogin, async (req, res) => {
                 userId: service.getMemberId(req),
                 createdAt: {
                     [Op.between]: [
-                        startDate.toISOString(),
-                        now.toISOString()
+                        startDate,
+                        endDate
                     ]
                 }
             },
@@ -332,6 +338,7 @@ app.get('/billSale/list', service.isLogin, async (req, res) => {
 
     try {
         const results = await BillSaleModel.findAll({
+            attributes: ['id', 'createdAt', 'paymentMethod', 'status', 'userId'], // เพิ่ม paymentMethod
             order: [['id', 'DESC']],
             where: {
                 status: 'pay',
@@ -344,10 +351,11 @@ app.get('/billSale/list', service.isLogin, async (req, res) => {
                 }
             }
         });
+        console.log('Bills with payment:', results); // เพิ่ม log เพื่อตรวจสอบ
         res.send({ message: 'success', results: results });
     } catch (e) {
         res.statusCode = 500;
-        res.send({ message: e.mesage });
+        res.send({ message: e.message });
     }
 });
 

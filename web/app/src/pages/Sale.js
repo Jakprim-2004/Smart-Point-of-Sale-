@@ -7,10 +7,151 @@ import Modal from "../components/Modal";
 import * as dayjs from "dayjs";
 import PrintJS from "print-js";
 import Barcode from "../components/Barcode";
-import { QRCodeSVG } from 'qrcode.react';
-import generatePayload from 'promptpay-qr';
 
-
+const styles = {
+  productCard: {
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    cursor: 'pointer',
+    background: 'linear-gradient(145deg, #ffffff, #f3f4f6)',
+    borderRadius: '20px',
+    overflow: 'hidden',
+    boxShadow: '5px 5px 15px #d1d1d1, -5px -5px 15px #ffffff',
+    '&:hover': {
+      transform: 'translateY(-5px)',
+      boxShadow: '8px 8px 20px #d1d1d1, -8px -8px 20px #ffffff'
+    }
+  },
+  totalDisplay: {
+    background: 'linear-gradient(135deg, #000428 0%, #004e92 100%)',
+    color: '#ffffff',
+    padding: '25px',
+    borderRadius: '25px',
+    textAlign: 'right',
+    fontWeight: '600',
+    fontSize: '2.5rem',
+    marginBottom: '25px',
+    boxShadow: '0 10px 20px rgba(0,0,0,0.2)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    position: 'relative',
+    overflow: 'hidden',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      background: 'linear-gradient(45deg, transparent, rgba(255,255,255,0.1))',
+      zIndex: 1
+    }
+  },
+  searchInput: {
+    padding: '18px 25px',
+    borderRadius: '50px',
+    border: 'none',
+    fontSize: '1.1rem',
+    backgroundColor: '#f8fafc',
+    boxShadow: 'inset 2px 2px 5px #d1d1d1, inset -2px -2px 5px #ffffff',
+    width: '100%',
+    maxWidth: '500px',
+    transition: 'all 0.3s ease',
+    '&:focus': {
+      boxShadow: 'inset 4px 4px 8px #d1d1d1, inset -4px -4px 8px #ffffff',
+      outline: 'none'
+    }
+  },
+  productImage: {
+    height: '140px', 
+    width: '100%',
+    objectFit: 'contain', 
+    objectPosition: 'center',
+    borderRadius: '20px 20px 0 0',
+    transition: 'transform 0.3s ease',
+    padding: '10px', 
+    background: '#ffffff' 
+  },
+  productInfo: {
+    padding: '20px',
+    background: 'rgba(255,255,255,0.9)',
+    backdropFilter: 'blur(10px)'
+  },
+  stockBadge: {
+    position: 'absolute',
+    top: '15px',
+    right: '15px',
+    padding: '8px 15px',
+    borderRadius: '25px',
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    backdropFilter: 'blur(5px)',
+    border: '1px solid rgba(255,255,255,0.2)'
+  },
+  cartContainer: {
+    background: 'linear-gradient(145deg, #ffffff, #f8fafc)',
+    borderRadius: '25px',
+    padding: '20px',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+  },
+  cartHeader: {
+    background: 'linear-gradient(135deg, #000428 0%, #004e92 100%)',
+    padding: '25px',
+    borderRadius: '20px',
+    marginBottom: '20px',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  cartTotal: {
+    color: '#ffffff',
+    fontSize: '2.5rem',
+    fontWeight: '600',
+    textAlign: 'right',
+    marginBottom: '5px',
+    textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+  },
+  cartLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: '0.9rem',
+    textAlign: 'right',
+  },
+  cartItem: {
+    background: '#ffffff',
+    borderRadius: '15px',
+    padding: '15px',
+    marginBottom: '15px',
+    transition: 'all 0.3s ease',
+    border: '1px solid #eef2f7',
+    position: 'relative',
+    '&:hover': {
+      transform: 'translateX(5px)',
+      boxShadow: '0 5px 15px rgba(0,0,0,0.05)',
+    }
+  },
+  deleteButton: {
+    width: '30px',
+    height: '30px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: 'none',
+    background: '#fee2e2',
+    color: '#dc2626',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+      background: '#dc2626',
+      color: '#ffffff',
+      transform: 'rotate(90deg)',
+    }
+  },
+  quantityBadge: {
+    background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+    color: '#ffffff',
+    padding: '5px 12px',
+    borderRadius: '20px',
+    fontSize: '0.9rem',
+    fontWeight: '600',
+  }
+};
 
 function Sale() {
   const [products, setProducts] = useState([]);
@@ -437,7 +578,7 @@ function Sale() {
     const qty = parseInt(item.qty, 10);
     if (isNaN(qty) || qty <= 0 || qty > item.remainingQty) {
       Swal.fire({
-        title: "จำนว���ไม่ถูกต้อง",
+        title: "จำนวนไม่ถูกต้อง",
         text: "กรุณากรอกจำนวนที่ถูกต้อง",
         icon: "warning",
       });
@@ -499,25 +640,6 @@ function Sale() {
         text: e.message,
         icon: "error",
       });
-    }
-  };
-
-  // เพิ่มฟังก์ชันสำหรับสร้าง QR Code
-  const generateQRCode = () => {
-    try {
-      // สร้าง payload สำหรับ PromptPay QR
-      const payload = generatePayload(memberInfo.promptPayId, { amount: totalPrice });
-      
-      // สร้าง URL สำหรับเปิดแอพธนาคาร (deeplink)
-      const deeplinkURL = `intent://scan/#Intent;scheme=thaiqr;package=com.scb.phone.android;S.qrCode=${payload};end`;
-      
-      return {
-        payload,
-        deeplinkURL
-      };
-    } catch (error) {
-      console.error('Error generating QR code:', error);
-      return null;
     }
   };
 
@@ -867,6 +989,26 @@ function Sale() {
             />
           </div>
           <div className="mt-3">
+            <label>รับเงิน</label>
+          </div>
+          <div>
+            <input
+              value={inputMoney}
+              onChange={(e) => setInputMoney(e.target.value)}
+              className="form-control text-end"
+            />
+          </div>
+          <div className="mt-3">
+            <label>เงินทอน</label>
+          </div>
+          <div>
+            <input
+              value={(inputMoney - totalPrice).toLocaleString("th-TH")}
+              className="form-control text-end"
+              disabled
+            />
+          </div>
+          <div className="mt-3">
             <label>ช่องทางการชำระเงิน</label>
           </div>
           <div>
@@ -877,75 +1019,26 @@ function Sale() {
             >
               <option value="Cash">Cash(เงินสด)</option>
               <option value="PromptPay">PromptPay(พร้อมเพย์)</option>
+              {/* เพิ่มช่องทางการชำระเงินอื่น ๆ ตามความจำเป็น */}
             </select>
           </div>
-
-          {paymentMethod === 'Cash' ? (
-            <>
-              <div className="mt-3">
-                <label>รับเงิน</label>
-              </div>
-              <div>
-                <input
-                  value={inputMoney}
-                  onChange={(e) => setInputMoney(e.target.value)}
-                  className="form-control text-end"
-                />
-              </div>
-              <div className="mt-3">
-                <label>เงินทอน</label>
-              </div>
-              <div>
-                <input
-                  value={(inputMoney - totalPrice).toLocaleString("th-TH")}
-                  className="form-control text-end"
-                  disabled
-                />
-              </div>
-              <div className="text-center mt-3">
-                <button
-                  onClick={(e) => setInputMoney(totalPrice)}
-                  className="btn btn-primary me-2"
-                >
-                  <i className="fa fa-check me-2"></i>
-                  จ่ายพอดี
-                </button>
-                <button
-                  onClick={handleEndSale}
-                  className="btn btn-success"
-                  disabled={inputMoney <= 0}
-                >
-                  <i className="fa fa-check me-2"></i>
-                  ยืนยันการชำระเงิน
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="text-center mt-4">
-              <div className="mb-3">
-                <QRCodeSVG
-                  value={generateQRCode()?.payload || ''}
-                  size={256}
-                  includeMargin={true}
-                  level="L"
-                />
-              </div>
-              <p className="mb-3">สแกน QR Code เพื่อชำระเงิน</p>
-              <p className="text-primary font-weight-bold mb-4">
-                จำนวนเงิน: {totalPrice.toLocaleString("th-TH")} บาท
-              </p>
-              <div className="d-flex justify-content-center gap-2">
-
-                <button
-                  onClick={handleEndSale}
-                  className="btn btn-primary"
-                >
-                  <i className="fa fa-check me-2"></i>
-                  ยืนยันการชำระเงิน
-                </button>
-              </div>
-            </div>
-          )}
+          <div className="text-center mt-3">
+            <button
+              onClick={(e) => setInputMoney(totalPrice)}
+              className="btn btn-primary me-2"
+            >
+              <i className="fa fa-check me-2"></i>
+              จ่ายพอดี
+            </button>
+            <button
+                onClick={handleEndSale}
+                className="btn btn-success"
+                disabled={inputMoney <= 0} 
+              >
+                <i className="fa fa-check me-2"></i>
+                จบการขาย
+              </button>
+          </div>
         </div>
       </Modal>
 
@@ -1174,150 +1267,5 @@ function Sale() {
     </>
   );
 }
-
-const styles = {
-  productCard: {
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    cursor: 'pointer',
-    background: 'linear-gradient(145deg, #ffffff, #f3f4f6)',
-    borderRadius: '20px',
-    overflow: 'hidden',
-    boxShadow: '5px 5px 15px #d1d1d1, -5px -5px 15px #ffffff',
-    '&:hover': {
-      transform: 'translateY(-5px)',
-      boxShadow: '8px 8px 20px #d1d1d1, -8px -8px 20px #ffffff'
-    }
-  },
-  totalDisplay: {
-    background: 'linear-gradient(135deg, #000428 0%, #004e92 100%)',
-    color: '#ffffff',
-    padding: '25px',
-    borderRadius: '25px',
-    textAlign: 'right',
-    fontWeight: '600',
-    fontSize: '2.5rem',
-    marginBottom: '25px',
-    boxShadow: '0 10px 20px rgba(0,0,0,0.2)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    position: 'relative',
-    overflow: 'hidden',
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      background: 'linear-gradient(45deg, transparent, rgba(255,255,255,0.1))',
-      zIndex: 1
-    }
-  },
-  searchInput: {
-    padding: '18px 25px',
-    borderRadius: '50px',
-    border: 'none',
-    fontSize: '1.1rem',
-    backgroundColor: '#f8fafc',
-    boxShadow: 'inset 2px 2px 5px #d1d1d1, inset -2px -2px 5px #ffffff',
-    width: '100%',
-    maxWidth: '500px',
-    transition: 'all 0.3s ease',
-    '&:focus': {
-      boxShadow: 'inset 4px 4px 8px #d1d1d1, inset -4px -4px 8px #ffffff',
-      outline: 'none'
-    }
-  },
-  productImage: {
-    height: '140px', 
-    width: '100%',
-    objectFit: 'contain', 
-    objectPosition: 'center',
-    borderRadius: '20px 20px 0 0',
-    transition: 'transform 0.3s ease',
-    padding: '10px', 
-    background: '#ffffff' 
-  },
-  productInfo: {
-    padding: '20px',
-    background: 'rgba(255,255,255,0.9)',
-    backdropFilter: 'blur(10px)'
-  },
-  stockBadge: {
-    position: 'absolute',
-    top: '15px',
-    right: '15px',
-    padding: '8px 15px',
-    borderRadius: '25px',
-    fontSize: '0.85rem',
-    fontWeight: '600',
-    backdropFilter: 'blur(5px)',
-    border: '1px solid rgba(255,255,255,0.2)'
-  },
-  cartContainer: {
-    background: 'linear-gradient(145deg, #ffffff, #f8fafc)',
-    borderRadius: '25px',
-    padding: '20px',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-  },
-  cartHeader: {
-    background: 'linear-gradient(135deg, #000428 0%, #004e92 100%)',
-    padding: '25px',
-    borderRadius: '20px',
-    marginBottom: '20px',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  cartTotal: {
-    color: '#ffffff',
-    fontSize: '2.5rem',
-    fontWeight: '600',
-    textAlign: 'right',
-    marginBottom: '5px',
-    textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
-  },
-  cartLabel: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: '0.9rem',
-    textAlign: 'right',
-  },
-  cartItem: {
-    background: '#ffffff',
-    borderRadius: '15px',
-    padding: '15px',
-    marginBottom: '15px',
-    transition: 'all 0.3s ease',
-    border: '1px solid #eef2f7',
-    position: 'relative',
-    '&:hover': {
-      transform: 'translateX(5px)',
-      boxShadow: '0 5px 15px rgba(0,0,0,0.05)',
-    }
-  },
-  deleteButton: {
-    width: '30px',
-    height: '30px',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    border: 'none',
-    background: '#fee2e2',
-    color: '#dc2626',
-    transition: 'all 0.3s ease',
-    '&:hover': {
-      background: '#dc2626',
-      color: '#ffffff',
-      transform: 'rotate(90deg)',
-    }
-  },
-  quantityBadge: {
-    background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-    color: '#ffffff',
-    padding: '5px 12px',
-    borderRadius: '20px',
-    fontSize: '0.9rem',
-    fontWeight: '600',
-  }
-};
 
 export default Sale;

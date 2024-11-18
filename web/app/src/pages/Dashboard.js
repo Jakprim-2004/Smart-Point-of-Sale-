@@ -780,7 +780,7 @@ function Dashboard() {
 
 
         <div className="row g-4">
-        <div className="col-md-4">
+        <div className="col-md-4 ">
             <div className="card h-100" style={styles.summaryCard}>
               <div className="card-header text-center bg-info">
                 <div className="d-flex justify-content-between align-items-center">                      
@@ -795,13 +795,13 @@ function Dashboard() {
                         color: 'white',
                         cursor: 'pointer',
                         fontWeight: 'bold',
-                        paddingRight: '1.5rem'
+                        paddingRight: '2rem'
                       }}
                       value={topSellingViewType}
                       onChange={(e) => setTopSellingViewType(e.target.value)}
                     > 
                       <option value="products" style={{ color: 'black' }}> สินค้า</option>
-                      <option value="categories" style={{ color: 'black' }}>หมวดหมู่</option>
+                      <option value="categories" style={{ color: 'black' }}>หมวดหมู่ </option>
                     </select>
                     <span className="text-white">ขายดี 5 อันดับ</span>
                   </div>

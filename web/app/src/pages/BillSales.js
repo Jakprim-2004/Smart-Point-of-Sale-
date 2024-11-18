@@ -188,7 +188,7 @@ function BillSales() {
         <div className="modal-body">
           {/* Bill Summary */}
           <div className="row mb-4">
-            <div className="col-md-6">
+            <div className="col-md-4">
               <div className="card bg-light border-0">
                 <div className="card-body p-3">
                   <h6 className="text-muted mb-2">วันที่ออกบิล</h6>
@@ -204,7 +204,35 @@ function BillSales() {
                 </div>
               </div>
             </div>
-            <div className="col-md-6">
+            <div className="col-md-4">
+              <div className="card bg-light border-0">
+                <div className="card-body p-3">
+                  <h6 className="text-muted mb-2">ชำระโดย</h6>
+                  <p className="mb-0 fw-bold">
+                    {(() => {
+                      const payment = selectBill?.paymentMethod;
+                      
+                      
+                      if (payment === 'Cash ') {
+                        return <span className="text-success">
+                          <i className="fas fa-money-bill me-2"></i>Cash (เงินสด)
+                        </span>;
+                      } else if (payment === 'PromptPay') {
+                        return <span className="text-primary">
+                          <i className="fas fa-exchange-alt me-2"></i>PromptPay (พร้อมเพย์)
+                        </span>;
+                      } else {
+                        return <span className="text-green">
+                           <i className="fas fa-money-bill me-2"></i>Cash (เงินสด)
+                         
+                        </span>;
+                      }
+                    })()}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-4">
               <div className="card bg-primary text-white border-0">
                 <div className="card-body p-3">
                   <h6 className="mb-2">ยอดรวมทั้งสิ้น (รวม VAT)</h6>
