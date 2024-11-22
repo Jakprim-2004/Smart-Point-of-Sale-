@@ -7,16 +7,27 @@ const PausedBillModel = require("../models/PausedBillModel");
 const BillSaleModel = require("../models/BillSaleModel");
 const BillSaleDetailModel = require("../models/BillSaleDetailModel");
 
+
+
+const getThaiDateTime = () => {
+    const now = new Date();
+    return new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+};
+
 // API สำหรับเปิดบิล
 app.get('/billSale/openBill', service.isLogin, async (req, res) => {
     try {
         const payload = {
             userId: service.getMemberId(req),
-            status: 'open'
+            status: 'open',
+            createdAt: getThaiDateTime() 
         };
 
         let result = await BillSaleModel.findOne({
-            where: payload
+            where: {
+                userId: payload.userId,
+                status: 'open'
+            }
         });
 
         if (result == null) {
@@ -210,31 +221,35 @@ app.post('/billSale/updateQty', service.isLogin, async (req, res) => {
 app.post('/billSale/endSale', service.isLogin, async (req, res) => {
     try {
         const { method, amount, vatAmount, billSaleDetails } = req.body;
+        const currentTime = getThaiDateTime(); 
 
-        // อัปเดตรายละเอียดการขาย
-        for (const detail of billSaleDetails) {
-            await BillSaleDetailModel.update({
-                totalprice: detail.totalprice // บันทึกยอดรวม VAT ใน totalprice
-            }, {
-                where: {
-                    id: detail.id
-                }
-            });
-        }
-
-        // อัปเดตสถานะการขาย
         await BillSaleModel.update({
             status: 'pay',
             paymentMethod: method,
-            payDate: new Date(),
-            totalAmount: amount, // บันทึกยอดรวม VAT
-            vatAmount: vatAmount // บันทึก VAT
+            payDate: currentTime,
+            totalAmount: amount,
+            vatAmount: vatAmount,
+            createdAt: currentTime,
+            updatedAt: currentTime
         }, {
             where: {
                 status: 'open',
                 userId: service.getMemberId(req)
             }
         });
+
+        // อัปเดตรายละเอียดบิล
+        for (const detail of billSaleDetails) {
+            await BillSaleDetailModel.update({
+                totalprice: detail.totalprice,
+                createdAt: currentTime,
+                updatedAt: currentTime
+            }, {
+                where: {
+                    id: detail.id
+                }
+            });
+        }
 
         res.send({ message: 'success' });
     } catch (e) {
@@ -284,17 +299,12 @@ app.get('/billSale/billToday', service.isLogin, async (req, res) => {
         BillSaleModel.hasMany(BillSaleDetailModel);
         BillSaleDetailModel.belongsTo(ProductModel);
 
-        // แก้ไขการสร้างวันที่ให้ใช้ timezone ของไทย
-        const now = new Date();
-        const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const thaiDate = getThaiDateTime();
+        const startDate = new Date(thaiDate);
         startDate.setHours(0, 0, 0, 0);
         
-        const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endDate = new Date(thaiDate);
         endDate.setHours(23, 59, 59, 999);
-
-        // ปรับ timezone ให้เป็น UTC+7
-        startDate.setHours(startDate.getHours() + 7);
-        endDate.setHours(endDate.getHours() + 7);
 
         const { Sequelize } = require('sequelize');
         const Op = Sequelize.Op;
@@ -304,10 +314,7 @@ app.get('/billSale/billToday', service.isLogin, async (req, res) => {
                 status: 'pay',
                 userId: service.getMemberId(req),
                 createdAt: {
-                    [Op.between]: [
-                        startDate,
-                        endDate
-                    ]
+                    [Op.between]: [startDate, endDate]
                 }
             },
             order: [['id', 'DESC']],
@@ -338,7 +345,7 @@ app.get('/billSale/list', service.isLogin, async (req, res) => {
 
     try {
         const results = await BillSaleModel.findAll({
-            attributes: ['id', 'createdAt', 'paymentMethod', 'status', 'userId'], // เพิ่ม paymentMethod
+            attributes: ['id', 'createdAt', 'paymentMethod', 'status', 'userId'],
             order: [['id', 'DESC']],
             where: {
                 status: 'pay',
@@ -351,7 +358,7 @@ app.get('/billSale/list', service.isLogin, async (req, res) => {
                 }
             }
         });
-        console.log('Bills with payment:', results); // เพิ่ม log เพื่อตรวจสอบ
+       
         res.send({ message: 'success', results: results });
     } catch (e) {
         res.statusCode = 500;

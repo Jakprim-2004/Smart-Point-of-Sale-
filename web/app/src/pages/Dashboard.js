@@ -10,17 +10,21 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
+  LineElement,  // Add this
+  PointElement,  // Add this
   Title,
   Tooltip,
   Legend,
   ArcElement,
 } from "chart.js";
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar, Pie, Line } from "react-chartjs-2";  // Add Line import
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
+  LineElement,  // Add this
+  PointElement,  // Add this
   Title,
   Tooltip,
   Legend,
@@ -35,6 +39,7 @@ function Dashboard() {
   const [topSellingViewType, setTopSellingViewType] = useState('products');
   const [paymentChartType, setPaymentChartType] = useState('pie');
   const [topSellingChartType, setTopSellingChartType] = useState('pie');
+  const [hourlyChartType, setHourlyChartType] = useState('line'); // Add this state
   const navigate = useNavigate();
 
   // Keep existing state variables for data
@@ -755,22 +760,56 @@ function Dashboard() {
                     <i className="fas fa-clock fa-spin fa-xl me-2"></i>
                     ยอดขายตามช่วงเวลา
                   </h5>
+                  <div>
+                    <i 
+                      className="fas fa-chart-line mx-2" 
+                      style={hourlyChartType === 'line' ? styles.activeIcon : styles.inactiveIcon}
+                      onClick={() => setHourlyChartType('line')}
+                      title="กราฟเส้น"
+                    />
+                    <i 
+                      className="fas fa-chart-bar mx-2" 
+                      style={hourlyChartType === 'bar' ? styles.activeIcon : styles.inactiveIcon}
+                      onClick={() => setHourlyChartType('bar')}
+                      title="กราฟแท่ง"
+                    />
+                  </div>
                 </div>
                 <div style={{ height: '250px', padding: '20px', background: '#ffffff', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                  <Bar
-                    options={{
-                      ...chartOptions,
-                      maintainAspectRatio: false
-                    }}
-                    data={{
-                      labels: todaySales.hourlyData.map(h => `${h.hour}:00`),
-                      datasets: [{
-                        label: 'ยอดขาย',
-                        data: todaySales.hourlyData.map(h => h.amount),
-                        backgroundColor: 'rgba(75, 192, 192, 0.6)'
-                      }]
-                    }}
-                  />
+                  {hourlyChartType === 'line' ? (
+                    <Line
+                      options={{
+                        ...chartOptions,
+                        maintainAspectRatio: false
+                      }}
+                      data={{
+                        labels: todaySales.hourlyData.map(h => `${h.hour}:00`),
+                        datasets: [{
+                          label: 'ยอดขาย',
+                          data: todaySales.hourlyData.map(h => h.amount),
+                          borderColor: 'rgb(75, 192, 192)',
+                          backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                          tension: 0.3,
+                          fill: true
+                        }]
+                      }}
+                    />
+                  ) : (
+                    <Bar
+                      options={{
+                        ...chartOptions,
+                        maintainAspectRatio: false
+                      }}
+                      data={{
+                        labels: todaySales.hourlyData.map(h => `${h.hour}:00`),
+                        datasets: [{
+                          label: 'ยอดขาย',
+                          data: todaySales.hourlyData.map(h => h.amount),
+                          backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                        }]
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -843,7 +882,7 @@ function Dashboard() {
             <div className="card h-100" style={styles.summaryCard}>
               <div className="card-header text-center bg-info">
                 <div className="d-flex justify-content-between align-items-center">
-                  <h4 className="mb-0"><i class="fa-solid fa-chart-column fa-bounce fa-lg" style={{color: "#365dba"}}></i> วิธีการชำระเงิน</h4>
+                  <h4 className="mb-0"><i class="fa-solid fa-money-bill-transfer fa-flip fa-lg" style={{color: "#365dba"}}></i> วิธีการชำระเงิน</h4>
                   <div>
                     <i 
                       className="fas fa-chart-pie mx-2" 

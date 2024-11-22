@@ -4,6 +4,7 @@ import axios from "axios";
 import config from "../config";
 import { Link, useNavigate } from "react-router-dom";
 import Modal from "../components/Modal";
+import React from 'react';
 
 const Sidebar = forwardRef((props, sidebarRef) => {
   const [memberName, setMemberName] = useState();
@@ -24,6 +25,21 @@ const Sidebar = forwardRef((props, sidebarRef) => {
     fetchData();
     fetchDataTotalBill();
   }, []);
+
+  const handleSignOut = () => {
+    Swal.fire({
+        title: 'Sign out',
+        text: 'ยืนยันการออกจากระบบ',
+        icon: 'question',
+        showCancelButton: true,
+        showConfirmButton: true
+    }).then(res => {
+        if (res.isConfirmed) {
+            localStorage.removeItem(config.token_name);
+            navigate('/');
+        }
+    })
+}
 
   const fetchDataTotalBill = async () => {
     try {
@@ -259,11 +275,31 @@ const Sidebar = forwardRef((props, sidebarRef) => {
       fontWeight: '500'
     },
     userPanel: {
+      position: 'relative',  // Add this
       background: 'rgba(255,255,255,0.1)',
       padding: '20px',
       margin: '15px',
       borderRadius: '10px',
       boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+    },
+    signOutButton: {
+      position: 'absolute',
+      top: '10px',
+      right: '10px',
+      background: 'rgba(255,255,255,0.1)',
+      border: 'none',
+      borderRadius: '50%',
+      width: '35px',
+      height: '35px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: '#fff',
+      transition: 'all 0.3s ease',
+      cursor: 'pointer',
+      '&:hover': {
+        background: 'rgba(255,255,255,0.2)'
+      }
     },
     upgradeButton: {
       background: 'linear-gradient(45deg, #f1c40f, #f39c12)',
@@ -327,6 +363,13 @@ const Sidebar = forwardRef((props, sidebarRef) => {
 
         <div className="sidebar">
           <div style={styles.userPanel}>
+            <button 
+              onClick={handleSignOut} 
+              style={styles.signOutButton}
+              title="Sign out"
+            >
+              <i className="fas fa-sign-out-alt"></i>
+            </button>
             <div className="text-white">
               <div className="h5 mb-2">{memberName}</div>
               <div className="text-white-50 mb-3">Package: {packageName}</div>
@@ -337,7 +380,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                 className="btn"
                 style={styles.upgradeButton}
               >
-                <i class="fa-solid fa-arrow-up-wide-short"></i>
+                <i className="fa-solid fa-arrow-up-wide-short"></i>
                 Upgrade Package
               </button>
             </div>
@@ -491,6 +534,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
             </ul>
           </nav>
         </div>
+        
       </aside>
 
       <Modal id="modalPackage" title="เลือกแพคเกจที่ต้องการ" modalSize="modal-lg">

@@ -25,20 +25,7 @@ function Navbar() {
         }
     }, [location.pathname]);
 
-    const handleSignOut = () => {
-        Swal.fire({
-            title: 'Sign out',
-            text: 'ยืนยันการออกจากระบบ',
-            icon: 'question',
-            showCancelButton: true,
-            showConfirmButton: true
-        }).then(res => {
-            if (res.isConfirmed) {
-                localStorage.removeItem(config.token_name);
-                navigate('/');
-            }
-        })
-    }
+    
 
     const handleEditProfile = async () => {
         try {
@@ -115,17 +102,7 @@ function Navbar() {
                             <i className="fa fa-user mr-2"></i>
                             Profile
                         </button>
-                        <button onClick={handleSignOut} 
-                                className="btn btn-danger"
-                                style={{
-                                    padding: '0.375rem 1rem',
-                                    transition: 'all 0.3s ease',
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                    fontWeight: '500'
-                                }}>
-                            <i className="fa fa-times mr-2"></i>
-                            Sign Out
-                        </button>
+                       
                     </li>
                 </ul>
             </nav>

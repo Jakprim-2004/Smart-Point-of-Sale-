@@ -152,13 +152,13 @@ router.get('/reportTopSellingProducts', async (req, res) => {
         [sequelize.fn('SUM', sequelize.col('qty')), 'totalQty'],
         [sequelize.col('product.name'), 'productName'],
         [sequelize.fn('SUM', 
-          sequelize.literal('qty * "product"."price"')
+          sequelize.literal('qty * totalprice') // Changed to use totalprice
         ), 'totalAmount']
       ],
       group: ['productId', 'product.name', 'product.price'], 
       having: sequelize.literal('SUM(qty) > 0'), 
       order: [[sequelize.fn('SUM', 
-        sequelize.literal('qty * "product"."price"')
+        sequelize.literal('qty * totalprice') // Changed to use totalprice
       ), 'DESC']],
       limit: 5,
       include: [{ 
@@ -203,12 +203,12 @@ router.get('/reportTopSellingCategories', async (req, res) => {
         [sequelize.col('product.category'), 'category'],
         [sequelize.fn('SUM', sequelize.col('qty')), 'totalQty'],
         [sequelize.fn('SUM', 
-          sequelize.literal('qty * "product"."price"')
+          sequelize.literal('qty * totalprice') // Changed to use totalprice
         ), 'totalAmount']
       ],
       group: ['product.category', 'product.price'],  // เพิ่ม product.price ใน group by
       having: sequelize.literal('SUM(qty) > 0'),  // เพิ่มเงื่อนไขให้แสดงเฉพาะที่มีการขาย
-      order: [[sequelize.fn('SUM', sequelize.literal('qty * "product"."price"')), 'DESC']], 
+      order: [[sequelize.fn('SUM', sequelize.literal('qty * totalprice')), 'DESC']], // Changed to use totalprice
       limit: 5,
       include: [{ 
         model: ProductModel, 
@@ -455,7 +455,7 @@ router.get('/paymentMethodStats', async (req, res) => {
         'paymentMethod',
         [sequelize.fn('COUNT', sequelize.col('billSale.id')), 'count'],
         [sequelize.fn('SUM', 
-          sequelize.literal('"details"."qty" * "details->product"."price"')
+          sequelize.literal('"details"."qty" * "details"."totalprice"') // Changed to use totalprice
         ), 'total']
       ],
       include: [{
@@ -494,6 +494,307 @@ router.get('/paymentMethodStats', async (req, res) => {
     });
   } catch (error) {
     console.error('Payment stats error:', error);
+    res.status(500).send({ message: error.message });
+  }
+});
+
+router.post('/reportSalesByDateRange', async (req, res) => {
+  try {
+    const userId = service.getMemberId(req);
+    const { dateRange, customStartDate, customEndDate } = req.body;
+    
+    let startDate = new Date();
+    let endDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    // Handle different date ranges with validation
+    if (dateRange === 'custom') {
+      if (!customStartDate || !customEndDate) {
+        return res.send({
+          message: 'success',
+          results: []
+        });
+      }
+      startDate = new Date(customStartDate);
+      endDate = new Date(customEndDate);
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return res.send({
+          message: 'success',
+          results: []
+        });
+      }
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      switch (dateRange) {
+        case 'yesterday':
+          startDate.setDate(startDate.getDate() - 1);
+          endDate.setDate(endDate.getDate() - 1);
+          break;
+        case 'last7days':
+          startDate.setDate(startDate.getDate() - 6);
+          break;
+        case 'last30days':
+          startDate.setDate(startDate.getDate() - 29);
+          break;
+        case 'thisMonth':
+          startDate.setDate(1);
+          break;
+        case 'lastMonth':
+          startDate.setMonth(startDate.getMonth() - 1);
+          startDate.setDate(1);
+          endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+          break;
+        case 'custom':
+          startDate = new Date(customStartDate);
+          endDate = new Date(customEndDate);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+      }
+    }
+
+    const results = await BillSaleDetailModel.findAll({
+      attributes: [
+        'productId',
+        [sequelize.col('product.name'), 'productName'],
+        [sequelize.fn('SUM', sequelize.col('qty')), 'quantity'],
+        [sequelize.fn('SUM', sequelize.literal('qty * totalprice')), 'totalAmount'],
+        [sequelize.col('product.cost'), 'costPerUnit'],
+        [sequelize.col('product.price'), 'pricePerUnit'],
+        [sequelize.fn('SUM', 
+          sequelize.literal('(totalprice - product.cost) * qty')
+        ), 'netProfit']
+      ],
+      include: [{
+        model: ProductModel,
+        as: 'product',
+        attributes: []
+      }],
+      where: {
+        userId,
+        createdAt: {
+          [sequelize.Op.between]: [startDate, endDate]
+        }
+      },
+      group: [
+        'productId',
+        'product.name',
+        'product.cost',
+        'product.price'
+      ],
+      order: [['productId', 'ASC']],
+      raw: true
+    });
+
+    res.send({
+      message: 'success',
+      results: results.map(item => ({
+        ...item,
+        quantity: parseInt(item.quantity) || 0,
+        totalAmount: parseFloat(item.totalAmount) || 0,
+        costPerUnit: parseFloat(item.costPerUnit) || 0,
+        pricePerUnit: parseFloat(item.pricePerUnit) || 0,
+        netProfit: parseFloat(item.netProfit) || 0
+      }))
+    });
+    
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+router.post('/productDetails', async (req, res) => {
+  try {
+    const userId = service.getMemberId(req);
+    const { startDate, endDate } = req.body;
+    
+    // แก้ไขการจัดการ timezone
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    start.setHours(7, 0, 0, 0);
+    end.setHours(30, 59, 59, 999);
+
+    const results = await BillSaleDetailModel.findAll({
+      attributes: [
+        [sequelize.literal('DATE("billSaleDetail"."createdAt" AT TIME ZONE \'Asia/Bangkok\')'), 'saleDate'],
+        [sequelize.fn('SUM', sequelize.literal('qty * totalprice')), 'totalAmount'],
+        [sequelize.fn('SUM', sequelize.col('qty')), 'totalQuantity'],
+        [sequelize.fn('SUM', 
+          sequelize.literal('(totalprice - product.cost) * qty')
+        ), 'netProfit'],
+        [sequelize.fn('MIN', sequelize.col('product.cost')), 'minCostPerUnit'],
+        [sequelize.fn('MAX', sequelize.col('product.price')), 'maxPricePerUnit']
+      ],
+      include: [{
+        model: ProductModel,
+        as: 'product',
+        attributes: [],
+        required: true
+      }],
+      where: { 
+        userId,
+        createdAt: {
+          [sequelize.Op.between]: [start, end]
+        }
+      },
+      group: [
+        sequelize.literal('DATE("billSaleDetail"."createdAt" AT TIME ZONE \'Asia/Bangkok\')'),
+        'product.cost',  // เพิ่ม columns ที่จำเป็นใน GROUP BY
+        'product.price'
+      ],
+      order: [
+        [sequelize.literal('DATE("billSaleDetail"."createdAt" AT TIME ZONE \'Asia/Bangkok\')'), 'ASC']
+      ],
+      raw: true
+    });
+
+    // Group results by date
+    const groupedResults = results.reduce((acc, curr) => {
+      const date = curr.saleDate;
+      if (!acc[date]) {
+        acc[date] = {
+          saleDate: curr.saleDate,
+          totalAmount: 0,
+          totalQuantity: 0,
+          netProfit: 0,
+          minCostPerUnit: curr.minCostPerUnit,
+          maxPricePerUnit: curr.maxPricePerUnit
+        };
+      }
+      acc[date].totalAmount += parseFloat(curr.totalAmount || 0);
+      acc[date].totalQuantity += parseInt(curr.totalQuantity || 0);
+      acc[date].netProfit += parseFloat(curr.netProfit || 0);
+      acc[date].minCostPerUnit = Math.min(acc[date].minCostPerUnit, curr.minCostPerUnit);
+      acc[date].maxPricePerUnit = Math.max(acc[date].maxPricePerUnit, curr.maxPricePerUnit);
+      return acc;
+    }, {});
+
+    res.send({
+      message: 'success',
+      results: Object.values(groupedResults)
+    });
+
+  } catch (error) {
+    console.error('Error in productDetails:', error);
+    res.status(500).send({ message: error.message });
+  }
+});
+
+// แก้ไข GET endpoint เช่นเดียวกัน
+router.get('/productDetails', async (req, res) => {
+  try {
+    const userId = service.getMemberId(req);
+    
+    // Get today's date by default
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const results = await BillSaleDetailModel.findAll({
+      attributes: [
+        'productId',
+        [sequelize.col('product.name'), 'productName'],
+        [sequelize.fn('SUM', sequelize.col('qty')), 'quantity'],
+        [sequelize.fn('SUM', sequelize.literal('qty * totalprice')), 'totalAmount'],
+        [sequelize.col('product.cost'), 'costPerUnit'],
+        [sequelize.col('product.price'), 'pricePerUnit'],
+        [sequelize.fn('SUM', 
+          sequelize.literal('(totalprice - product.cost) * qty')
+        ), 'netProfit'],
+        [sequelize.literal('DATE("billSaleDetail"."createdAt")'), 'saleDate']
+      ],
+      include: [{
+        model: ProductModel,
+        as: 'product',
+        attributes: []
+      }],
+      where: { 
+        userId,
+        createdAt: {
+          [sequelize.Op.gte]: today,
+          [sequelize.Op.lt]: tomorrow
+        }
+      },
+      group: [
+        'productId', 
+        'product.name', 
+        'product.cost', 
+        'product.price',
+        sequelize.literal('DATE("billSaleDetail"."createdAt")')
+      ],
+      order: [
+        [sequelize.literal('DATE("billSaleDetail"."createdAt")'), 'ASC'],
+        ['productId', 'ASC']
+      ],
+      raw: true
+    });
+
+    res.send({
+      message: 'success',
+      results: results.map(item => ({
+        ...item,
+        quantity: parseInt(item.quantity) || 0,
+        totalAmount: parseFloat(item.totalAmount) || 0,
+        costPerUnit: parseFloat(item.costPerUnit) || 0,
+        pricePerUnit: parseFloat(item.pricePerUnit) || 0,
+        netProfit: parseFloat(item.netProfit) || 0
+      }))
+    });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+router.post('/reportTopSalesDays', async (req, res) => {
+  try {
+    const userId = service.getMemberId(req);
+    const { startDate, endDate } = req.body;
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    start.setHours(7, 0, 0, 0);
+    end.setHours(30, 59, 59, 999);
+
+    const results = await BillSaleDetailModel.findAll({
+      attributes: [
+        [sequelize.literal('DATE("billSaleDetail"."createdAt" AT TIME ZONE \'Asia/Bangkok\')'), 'date'],
+        [sequelize.fn('SUM', 
+          sequelize.literal('(totalprice - product.cost) * qty')
+        ), 'netProfit']
+      ],
+      include: [{
+        model: ProductModel,
+        as: 'product',
+        attributes: [],
+        required: true
+      }],
+      where: {
+        userId,
+        createdAt: {
+          [sequelize.Op.between]: [start, end]
+        }
+      },
+      group: [sequelize.literal('DATE("billSaleDetail"."createdAt" AT TIME ZONE \'Asia/Bangkok\')')],
+      having: sequelize.literal('SUM((totalprice - product.cost) * qty) > 0'),
+      order: [[sequelize.fn('SUM', 
+        sequelize.literal('(totalprice - product.cost) * qty')
+      ), 'DESC']],
+      limit: 5,
+      raw: true
+    });
+
+    // ส่งเฉพาะผลลัพธ์ 5 อันดับแรก ไม่ต้องสร้าง datesInRange
+    res.send({
+      message: 'success',
+      results: results.map(item => ({
+        date: item.date,
+        netProfit: parseFloat(item.netProfit) || 0
+      }))
+    });
+  } catch (error) {
     res.status(500).send({ message: error.message });
   }
 });

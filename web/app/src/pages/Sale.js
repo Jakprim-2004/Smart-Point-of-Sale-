@@ -7,6 +7,8 @@ import Modal from "../components/Modal";
 import * as dayjs from "dayjs";
 import PrintJS from "print-js";
 import Barcode from "../components/Barcode";
+import { QRCodeSVG } from 'qrcode.react';
+import generatePayload from 'promptpay-qr';
 
 const styles = {
   productCard: {
@@ -169,6 +171,8 @@ function Sale() {
   const [categoryFilter, ] = useState("ทั้งหมด");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [heldBills, setHeldBills] = useState([]);
+  const [showQR, setShowQR] = useState(false);
+  const promptPayNumber = "0000000000"; // Replace with your actual PromptPay number
 
   const saleRef = useRef();
   const searchInputRef = useRef();
@@ -643,6 +647,18 @@ function Sale() {
     }
   };
 
+  const generateQRCode = () => {
+    const amount = parseFloat(totalPrice);
+    const payload = generatePayload(promptPayNumber, { amount });
+    return payload;
+  };
+
+  const handlePaymentMethodChange = (e) => {
+    const method = e.target.value;
+    setPaymentMethod(method);
+    setShowQR(method === "PromptPay");
+  };
+
   return (
     <>
       <Template ref={saleRef}>
@@ -989,56 +1005,71 @@ function Sale() {
             />
           </div>
           <div className="mt-3">
-            <label>รับเงิน</label>
-          </div>
-          <div>
-            <input
-              value={inputMoney}
-              onChange={(e) => setInputMoney(e.target.value)}
-              className="form-control text-end"
-            />
-          </div>
-          <div className="mt-3">
-            <label>เงินทอน</label>
-          </div>
-          <div>
-            <input
-              value={(inputMoney - totalPrice).toLocaleString("th-TH")}
-              className="form-control text-end"
-              disabled
-            />
-          </div>
-          <div className="mt-3">
             <label>ช่องทางการชำระเงิน</label>
           </div>
           <div>
             <select
               value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
+              onChange={handlePaymentMethodChange}
               className="form-control"
             >
               <option value="Cash">Cash(เงินสด)</option>
               <option value="PromptPay">PromptPay(พร้อมเพย์)</option>
-              {/* เพิ่มช่องทางการชำระเงินอื่น ๆ ตามความจำเป็น */}
             </select>
           </div>
-          <div className="text-center mt-3">
-            <button
-              onClick={(e) => setInputMoney(totalPrice)}
-              className="btn btn-primary me-2"
-            >
-              <i className="fa fa-check me-2"></i>
-              จ่ายพอดี
-            </button>
-            <button
+
+          {paymentMethod === "PromptPay" ? (
+            <div className="text-center mt-4">
+              <QRCodeSVG 
+                value={generateQRCode()}
+                size={256}
+                level="L"
+              />
+              <p className="mt-2">สแกนเพื่อชำระเงิน</p>
+              <button
                 onClick={handleEndSale}
-                className="btn btn-success"
-                disabled={inputMoney <= 0} 
+                className="btn btn-success mt-2"
               >
-                <i className="fa fa-check me-2"></i>
-                จบการขาย
+                ยืนยันการชำระเงิน
               </button>
-          </div>
+            </div>
+          ) : (
+            <>
+              <div className="mt-3">
+                <label>รับเงิน</label>
+                <input
+                  value={inputMoney}
+                  onChange={(e) => setInputMoney(e.target.value)}
+                  className="form-control text-end"
+                />
+              </div>
+              <div className="mt-3">
+                <label>เงินทอน</label>
+                <input
+                  value={(inputMoney - totalPrice).toLocaleString("th-TH")}
+                  className="form-control text-end"
+                  disabled
+                />
+              </div>
+              <div className="text-center mt-3">
+                <button
+                  onClick={(e) => setInputMoney(totalPrice)}
+                  className="btn btn-primary me-2"
+                >
+                  <i className="fa fa-check me-2"></i>
+                  จ่ายพอดี
+                </button>
+                <button
+                  onClick={handleEndSale}
+                  className="btn btn-success"
+                  disabled={inputMoney <= 0}
+                >
+                  <i className="fa fa-check me-2"></i>
+                  จบการขาย
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
 
@@ -1092,10 +1123,8 @@ function Sale() {
     
     {/* Header */}
     <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-      <h4 style={{ margin: '0', fontSize: '14px', fontWeight: 'bold' }}>{memberInfo?.name || 'ไม่ขาย'}</h4>
-      <p style={{ margin: '0', fontSize: '12px' }}>{memberInfo?.address || 'ที่อยู่ร้านค้า'}</p>
-      <p style={{ margin: '0', fontSize: '12px' }}>TAX ID: {memberInfo?.taxId ||
-       '999999999999999'}</p>
+      <h4 style={{ margin: '0', fontSize: '14px', fontWeight: 'bold' }}>{memberInfo?.name || ''}</h4>
+     
     </div>
 
     {/* Bill Info */}

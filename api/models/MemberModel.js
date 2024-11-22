@@ -18,7 +18,8 @@ const MemberModel = conn.define('member', {
     },
     pass: {
         type: DataTypes.STRING(255)
-    }
+    },
+    
 })
 MemberModel.sync({alter: true});
 module.exports = MemberModel;

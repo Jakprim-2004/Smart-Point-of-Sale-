@@ -36,11 +36,13 @@ function Login() {
                 }).catch(err => {
                     throw err.response.data;
                 });
-        } catch (e) {
+        } catch (error) {
+            console.error(error);
             Swal.fire({
-                title: 'Error',
-                text: e.message,
-                icon: 'error'
+                title: 'Sign In',
+                text: 'เบอร์โทรหรือรหัสผ่านไม่ถูกต้อง',
+                icon: 'error',
+                timer: 2000
             });
         }
     };

@@ -1,31 +1,22 @@
-import Navbar from "./Navbar";
-import Sidebar from "./Sidebar";
-import { forwardRef, useImperativeHandle } from "react";
-import { useRef } from "react";
+import React from 'react';
+import Sidebar from './Sidebar';
 
-const Template = forwardRef((props, ref) => {
-  useImperativeHandle(ref, () => ({
-    refreshCountBill() {
-      if (templateRef.current) {
-        templateRef.current.refreshCountBill();
-      }
-    },
-  }));
-
-  const templateRef = useRef();
+function Template({ children }) {
+  const mainContentStyle = {
+    marginLeft: '250px',
+    padding: '20px',
+    minHeight: '100vh',
+    backgroundColor: '#f4f6f9'
+  };
 
   return (
-    <>
-      <div className="wrapper">
-        <Navbar />
-        <Sidebar ref={templateRef} />
-
-        <div class="content-wrapper pt-3">
-          <section class="content">{props.children}</section>
-        </div>
+    <div>
+      <Sidebar />
+      <div style={mainContentStyle}>
+        {children}
       </div>
-    </>
+    </div>
   );
-});
+}
 
 export default Template;
