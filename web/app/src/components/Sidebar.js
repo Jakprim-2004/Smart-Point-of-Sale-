@@ -508,7 +508,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                   <span style={styles.navIcon}>
                     <i className="nav-icon fas fa-box"></i>
                   </span>
-                  <span style={styles.navText}>สินค้า</span>
+                  <span style={styles.navText}>สต๊อก</span>
                 </Link>
               </li>
 

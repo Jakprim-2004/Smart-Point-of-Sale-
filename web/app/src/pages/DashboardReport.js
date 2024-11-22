@@ -582,7 +582,7 @@ function Dashboard() {
           <div className="card-header bg-white">
             <div className="row align-items-center">
               <div className="col">
-                <h4 className="mb-0">รายละเอียดสินค้า</h4>
+                <h4 className="mb-0">รายละเอียดยอดขาย</h4>
               </div>
               <div className="col-auto">
                 <DatePicker
@@ -654,7 +654,7 @@ function Dashboard() {
         <div style={sidebarStyle}>
           <div className="mb-4">
             <div style={menuTitleStyle}>
-              {!isSidebarCollapsed && <span>รายงาน</span>}
+              {!isSidebarCollapsed && <span>รายงานสินค้า</span>}
               <i 
                 className={`fas fa-${isSidebarCollapsed ? 'chevron-right' : 'chevron-left'}`}
                 style={toggleButtonStyle}
@@ -803,7 +803,7 @@ function Dashboard() {
               <div className="card-header bg-white">
                 <div className="row align-items-center">
                   <div className="col">
-                    <h5 className="mb-0">รายละเอียดการขาย</h5>
+                    <h5 className="mb-0">รายละเอียดสินค้า</h5>
                   </div>
                   <div className="col-auto">
                     <div className="form-check form-check-inline">
@@ -867,7 +867,6 @@ function Dashboard() {
                     <thead>
                       <tr>
                         <th>รหัสสินค้า</th>
-                        <th>บาร์โค้ด</th>
                         <th>ชื่อสินค้า</th>
                         {showSold && <th>ขายแล้ว</th>}
                         {showRemaining && <th>คงเหลือ</th>}
@@ -880,7 +879,6 @@ function Dashboard() {
                       {combinedStockData.map((item, index) => (
                         <tr key={index}>
                           <td>{item.productId}</td>
-                          <td>{item.barcode}</td>
                           <td>{item.name}</td>
                           {showSold && <td>{formatNumber(item.soldQty)}</td>}
                           {showRemaining && (
