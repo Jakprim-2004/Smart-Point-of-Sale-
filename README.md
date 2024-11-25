@@ -48,39 +48,4 @@
     npm start
     ```
 
-## Setup Instructions (คำแนะนำการตั้งค่า)
-
-1. Navigate to the `api` directory and install dependencies:
-    ```sh
-    cd api
-    npm i
-    ```
-
-2. Start the server using nodemon:
-    ```sh
-    npx nodemon server.js
-    ```
-
-3. Navigate to the `web/app` directory and install dependencies:
-    ```sh
-    cd web/app
-    npm i
-    ```
-
-4. Start the web application:
-    ```sh
-    npm start
-    ```
-
-5. Navigate to the `backoffice/app` directory and install dependencies:
-    ```sh
-    cd backoffice/app
-    npm i
-    ```
-
-6. Start the backoffice application:
-    ```sh
-    npm start
-    ```
-
 This explanation provides a step-by-step guide to set up and run the different parts of your project. (คำอธิบายนี้ให้คำแนะนำทีละขั้นตอนในการตั้งค่าและเรียกใช้ส่วนต่างๆ ของโครงการ)
