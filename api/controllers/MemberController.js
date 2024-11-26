@@ -1,5 +1,6 @@
 const express = require("express");
 const MemberModel = require("../models/MemberModel");
+const { Op } = require("sequelize");
 const app = express();
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
@@ -8,20 +9,57 @@ const PackageModel = require("../models/PackageModel");
 
 app.post("/member/signin", async (req, res) => {
   try {
-    const member = await MemberModel.findAll({
+    // ตรวจสอบว่ามีการส่ง email หรือ phone มา
+    const searchCriteria = {};
+    if (req.body.email) {
+      searchCriteria.email = req.body.email;
+    }
+    if (req.body.phone) {
+      searchCriteria.phone = req.body.phone;
+    }
+
+    const member = await MemberModel.findOne({
       where: {
-        phone: req.body.phone,
-        pass: req.body.pass,
-      },
+        [Op.and]: [
+          { [Op.or]: [searchCriteria] },
+          { pass: req.body.pass }
+        ]
+      }
     });
 
-    if (member.length > 0) {
-      let token = jwt.sign({ id: member[0].id }, process.env.secret);
+    if (member) {
+      let token = jwt.sign({ id: member.id }, process.env.secret);
       res.send({ token: token, message: "success" });
     } else {
       res.statusCode = 401;
       res.send({ message: "not found" });
     }
+  } catch (e) {
+    res.statusCode = 500;
+    res.send({ message: e.message });
+  }
+});
+
+app.post("/member/register", async (req, res) => {
+  try {
+    const payload = {
+      packageId: req.body.packageId,
+      email: req.body.email,
+      phone: req.body.phone, 
+      name: req.body.name,
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      pass: req.body.password,
+      address: req.body.address.fullAddress,
+      province: req.body.address.province,
+      district: req.body.address.district,
+      subDistrict: req.body.address.subDistrict,
+      postalCode: req.body.address.postalCode,
+      status: req.body.status
+    };
+
+    const member = await MemberModel.create(payload);
+    res.send({ message: "success", result: member });
   } catch (e) {
     res.statusCode = 500;
     res.send({ message: e.message });

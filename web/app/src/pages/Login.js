@@ -7,12 +7,26 @@ import '../styles/Login.css';
 
 function Login() {
     const [phone, setPhone] = useState('');
+    const [email, setEmail] = useState('');
     const [pass, setPass] = useState('');
     const navigate = useNavigate();
 
     const handleSignIn = async () => {
         try {
-            const payload = { phone, pass };
+            const payload = { 
+                phone: phone || '', 
+                email: email || '', 
+                pass 
+            };
+            if (!phone && !email) {
+                Swal.fire({
+                    title: 'Sign In',
+                    text: 'กรุณากรอกอีเมลหรือเบอร์โทรศัพท์',
+                    icon: 'warning',
+                    timer: 2000
+                });
+                return;
+            }
             await axios.post(config.api_path + '/member/signin', payload)
                 .then(res => {
                     if (res.data.message === 'success') {
@@ -40,14 +54,12 @@ function Login() {
             console.error(error);
             Swal.fire({
                 title: 'Sign In',
-                text: 'เบอร์โทรหรือรหัสผ่านไม่ถูกต้อง',
+                text: 'อีเมล/เบอร์โทร หรือรหัสผ่านไม่ถูกต้อง',
                 icon: 'error',
                 timer: 2000
             });
         }
     };
-
-   
 
     return (
         <div className="login-container d-flex justify-content-center align-items-center vh-100">
@@ -61,14 +73,23 @@ function Login() {
                     <div className="col-md-6 login-form-container">
                         <h3 className="text-center mb-4 mt-5">Login to DDPOs-SalesPro</h3>
                         <div className="form-group mb-3 mt-5">
-                            <label htmlFor="phone">Phone Number</label>
+                            <label htmlFor="loginField">Email or Phone Number</label>
                             <input 
                                 type="text" 
-                                id="phone" 
-                                value={phone} 
-                                onChange={(e) => setPhone(e.target.value)} 
+                                id="loginField" 
+                                value={phone || email} 
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value.includes('@')) {
+                                        setEmail(value);
+                                        setPhone('');
+                                    } else {
+                                        setPhone(value);
+                                        setEmail('');
+                                    }
+                                }} 
                                 className="form-control form-control-lg" 
-                                placeholder="Enter your phone number"
+                                placeholder="Enter your email or phone number"
                             />
                         </div>
                         <div className="form-group mb-4">
@@ -83,7 +104,9 @@ function Login() {
                             />
                         </div>
                         <button onClick={handleSignIn} className="btn btn-primary w-100 btn-lg mb-3 mt-5">Sign In</button>
-                        
+                        <div className="text-center">
+                            <p>คุณยังไม่มีบัญชีใช้งาน? <a href="/package" className="text-primary">สร้างบัญชีใหม่</a></p>
+                        </div>
                     </div>
                 </div>
             </div>
