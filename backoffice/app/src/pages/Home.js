@@ -317,6 +317,7 @@ function Home() {
                     <tr>
                       <th>หัวข้อ</th>
                       <th>รายละเอียด</th>
+                      <th>ชื่อผู้ติดต่อ</th>
                       <th>เบอร์โทรติดต่อ</th>
                       <th>สถานะ</th>
                       <th>วันที่แจ้ง</th>
@@ -333,8 +334,12 @@ function Home() {
                           </div>
                         </td>
                         <td className="text-nowrap">
+                        <i class="fa-solid fa-signature"> </i>
+                           {report.contactName}
+                        </td>
+                        <td className="text-nowrap">
                           <i className="fas fa-phone me-2"></i>
-                          {report.phone_name}
+                          {report.phoneNumber}
                         </td>
                         <td>
                           <StatusBadge status={report.status} />

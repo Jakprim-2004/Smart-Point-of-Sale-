@@ -171,13 +171,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
     }
   };
 
-  const computePercen = (totalBill, billAmount) => {
-    if (billAmount > 0) {
-      return (totalBill * 100) / billAmount;
-    } else {
-      return 0;
-    }
-  };
+  
 
   const handleChangePackage = async () => {
     if (isPackageSubscribed) {

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Report = require('../models/Report');
+const service = require("./Service");
 
 // Get all reports
 router.get('/reportUse', async (req, res) => {
@@ -15,20 +16,23 @@ router.get('/reportUse', async (req, res) => {
 });
 
 // Create new report
-router.post('/reportUse', async (req, res) => {
+router.post('/reportUse', service.isLogin, async (req, res) => {
     try {
-        const { subject, message, phoneNumber } = req.body;
-        
-        const report = await Report.create({
-            subject,
-            message,
-            phone_name: phoneNumber,
+        const payload = {
+            contactName: req.body.firstName,
+            phoneNumber: req.body.phoneNumber,
+            subject: req.body.subject,
+            message: req.body.message,
             status: 'pending'
-        });
+        };
 
-        res.status(201).send({message: 'success', report});
-    } catch (e) {
-        res.status(500).send({message: e.message});
+        const report = await Report.create(payload);
+        res.send({ message: "success", result: report });
+    } catch (error) {
+        res.status(500).send({ 
+            message: error.message,
+            errors: error.errors?.map(e => e.message)
+        });
     }
 });
 

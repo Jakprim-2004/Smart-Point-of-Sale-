@@ -72,7 +72,7 @@ app.get("/member/info", service.isLogin, async (req, res, next) => {
 
     const payLoad = jwt.decode(service.getToken(req));
     const member = await MemberModel.findByPk(payLoad.id, {
-      attributes: ["id", "name"],
+      attributes: ["id", "name", "phone","firstName"],
       include: [
         {
           model: PackageModel,

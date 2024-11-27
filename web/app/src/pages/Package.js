@@ -97,15 +97,16 @@ function Package() {
     };
 
     const validatePassword = (password) => {
-        const hasNumber = /\d/.test(password);
-        const hasUpperCase = /[A-Z]/.test(password);
-        const hasLowerCase = /[a-z]/.test(password);
+        const numberCount = (password.match(/\d/g) || []).length;
+        const lowerCaseCount = (password.match(/[a-z]/g) || []).length;
+        const upperCaseCount = (password.match(/[A-Z]/g) || []).length;
         const hasSpecialChar = /[!@#$%^&*()_+|~\-=`{}[\]:";'<>?,./]/.test(password);
         const isLongEnough = password.length >= 8;
 
         if (!isLongEnough) return { isValid: false, message: 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัว' };
-        if (!hasNumber) return { isValid: false, message: 'รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว' };
-        if (!hasUpperCase || !hasLowerCase) return { isValid: false, message: 'รหัสผ่านต้องมีตัวอักษร a-Z ตัวเล็กและตัวใหญ่อย่างน้อย 1 ตัว' };
+        if (numberCount < 8) return { isValid: false, message: 'รหัสผ่านต้องมีตัวเลขอย่างน้อย 8 ตัว' };
+        if (lowerCaseCount < 1) return { isValid: false, message: 'รหัสผ่านต้องมีตัวอักษรตัวเล็ก a-z อย่างน้อย 1 ตัว' };
+        if (upperCaseCount < 1) return { isValid: false, message: 'รหัสผ่านต้องมีตัวอักษรตัวใหญ่ A-Z อย่างน้อย 1 ตัว' };
         if (!hasSpecialChar) return { isValid: false, message: 'รหัสผ่านต้องมีอักขระพิเศษอย่างน้อย 1 ตัว เช่น !@#$%^&*()_+' };
 
         return { isValid: true, message: '' };
@@ -232,7 +233,7 @@ function Package() {
                     .catch(err => {
                         Swal.fire({
                             title: 'Error',
-                            text: err.response?.data?.message || 'เกิดข้อผิดพลาดในการบันท���กข้อมูล',
+                            text: err.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล',
                             icon: 'error'
                         });
                     });
@@ -294,7 +295,7 @@ function Package() {
                                         <button 
                                             type="button" 
                                             className="btn btn-outline-secondary" 
-                                            onClick={togglePasswordVisibility}
+                                            onClick={togglePasswordVisibility} 
                                         >
                                             {showPassword ? <FaEyeSlash /> : <FaEye />}
                                         </button>

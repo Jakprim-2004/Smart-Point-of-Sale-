@@ -7,6 +7,21 @@ const Report = conn.define('reportuse', {
         autoIncrement: true,
         primaryKey: true
     },
+    contactName: {  // เปลี่ยนจาก phone_name เป็น contactName
+        type: DataTypes.STRING(100),
+        allowNull: false,
+        validate: {
+            notEmpty: true
+        }
+    },
+    phoneNumber: {  // เพิ่มฟิลด์เบอร์โทรศัพท์
+        type: DataTypes.STRING(10),
+        allowNull: false,
+        validate: {
+            notEmpty: true,
+            is: /^[0-9]{9,10}$/  // ตรวจสอบรูปแบบเบอร์โทรศัพท์
+        }
+    },
     subject: {
         type: DataTypes.STRING(100),
         allowNull: false,
@@ -21,20 +36,13 @@ const Report = conn.define('reportuse', {
             notEmpty: true
         }
     },
-    phone_name: {
-        type: DataTypes.STRING(50),
-        allowNull: false,
-        validate: {
-            notEmpty: true
-        }
-    },
     status: {
         type: DataTypes.ENUM('pending', 'in_progress', 'completed', 'cancelled'),
         defaultValue: 'pending'
     },
     response: {
         type: DataTypes.TEXT
-    },
+    }
 });
 
 Report.sync({ alter: true });

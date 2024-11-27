@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Template from "../components/Template";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPhone, faEnvelope } from "@fortawesome/free-solid-svg-icons";
@@ -8,13 +8,48 @@ import Swal from "sweetalert2";
 import config from "../config";
 
 
+
+
 const ReportUse = () => {
   const [formData, setFormData] = useState({
+    firstName: "",    // This will be sent as contactName
+    phoneNumber: "", 
     subject: "",
-    message: "",
-    phoneNumber: ""
+    message: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchMemberInfo();
+  }, []);
+
+  const fetchMemberInfo = async () => {
+    try {
+      const response = await axios.get(
+        config.api_path + "/member/info",
+        config.headers()
+      );
+      
+      if (response.data.message === "success") {
+        setFormData(prevState => ({
+          ...prevState,
+          phoneNumber: response.data.result.phone || "",
+          firstName: response.data.result.firstName || ""  // Add firstName
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching member info:", error);
+      if (error.response?.status === 401) {
+        Swal.fire({
+          icon: 'error',
+          title: 'กรุณาเข้าสู่ระบบ',
+          text: 'Session หมดอายุ กรุณาเข้าสู่ระบบใหม่'
+        }).then(() => {
+          window.location.href = '/login';
+        });
+      }
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -33,7 +68,8 @@ const ReportUse = () => {
     try {
       const response = await axios.post(
         config.api_path + "/reportUse",
-        formData
+        formData,
+        config.headers()  // Add headers for authentication
       );
 
       if (response.data.message === "success") {
@@ -45,11 +81,8 @@ const ReportUse = () => {
           timer: 2000
         });
 
-        setFormData({
-          subject: "",
-          message: "",
-          phoneNumber: ""
-        });
+        // Fetch member info again to restore the default values
+        await fetchMemberInfo();
       }
     } catch (err) {
       Swal.fire({
@@ -125,6 +158,16 @@ const ReportUse = () => {
           </div>
           <div className="card-body">
             <form onSubmit={handleSubmit} className="space-y-4">
+
+              <FormInput
+                label="ชื่อผู้ติดต่อ"
+                id="firstName"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleInputChange}
+                placeholder="ชื่อของคุณ"
+                required
+              />
 
               <FormInput
                 label="เบอร์โทรศัพท์"
@@ -205,7 +248,8 @@ const FormInput = ({
   required,
   pattern,
   minLength,
-  maxLength
+  maxLength,
+  readOnly
 }) => (
   <div>
     <label htmlFor={id} className="form-label fw-medium text-dark mb-1">
@@ -224,6 +268,7 @@ const FormInput = ({
       pattern={pattern}
       minLength={minLength}
       maxLength={maxLength}
+      readOnly={readOnly}
     />
   </div>
 );
