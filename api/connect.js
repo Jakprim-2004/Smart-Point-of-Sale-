@@ -2,9 +2,9 @@ const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
 const sequelize = new Sequelize(
-    process.env.DB_NAME || 'YourDB',
+    process.env.DB_NAME || 'DDPOs',
     process.env.DB_USER || 'postgres',
-    process.env.DB_PASSWORD || 'YourPassword',
+    process.env.DB_PASSWORD || '6540200349',
     {
         host: process.env.DB_HOST || 'localhost',
         dialect: 'postgres',
