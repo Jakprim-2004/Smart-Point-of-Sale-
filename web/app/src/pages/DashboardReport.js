@@ -872,7 +872,7 @@ function Dashboard() {
                         {showRemaining && <th>คงเหลือ</th>}
                         <th>ราคาทุน</th>
                         <th>ราคาขาย</th>
-                        {showRemaining && <th>มูลค่าคงเหลือ</th>}
+                        {showRemaining && <th>กำไรสุทธิ</th>}
                       </tr>
                     </thead>
                     <tbody>
