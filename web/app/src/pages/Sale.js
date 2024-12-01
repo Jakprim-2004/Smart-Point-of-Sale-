@@ -995,7 +995,7 @@ function Sale() {
       <Modal id="modalEndSale" title="จบการขาย">
         <div>
           <div>
-            <label>ยอดเงินทั้งหมด</label>
+            <label>ยอดรวมราคาสินค้า</label>
           </div>
           <div>
             <input
