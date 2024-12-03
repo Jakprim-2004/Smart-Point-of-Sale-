@@ -487,25 +487,32 @@ function Dashboard() {
   };
 
   const sidebarStyle = {
-    width: isSidebarCollapsed ? '60px' : '250px',
-    height: '40vh',
-    padding: isSidebarCollapsed ? '20px 5px' : '20px',
-    position: 'sticky',
-    top: 0,
-    overflowY: 'auto',
-    borderRight: '1px solid #e0e0e0',
-    backgroundColor: 'white',
-    transition: 'all 0.3s ease'
+    width: window.innerWidth < 768 
+    ? '100%' 
+    : (isSidebarCollapsed ? '60px' : '250px'),
+  height: window.innerWidth < 768 ? 'auto' : '40vh',
+  padding: isSidebarCollapsed && window.innerWidth >= 768 ? '20px 5px' : '20px',
+  position: window.innerWidth < 768 ? 'relative' : 'sticky',
+  top: 0,
+  overflowY: 'auto',
+  borderRight: window.innerWidth < 768 ? 'none' : '1px solid #e0e0e0',
+  borderBottom: window.innerWidth < 768 ? '1px solid #e0e0e0' : 'none',
+  backgroundColor: 'white',
+  transition: 'all 0.3s ease',
+  zIndex: 1000
   };
 
   const mainContentStyle = {
     flex: 1,
-    padding: '20px'
+    padding: '20px',
+    marginLeft: window.innerWidth < 768 ? 0 : (isSidebarCollapsed ? '60px' : '250px'),
+    width: window.innerWidth < 768 ? '100%' : 'auto'
   };
 
   const containerWrapperStyle = {
     display: 'flex',
-    width: '100%'
+    width: '100%',
+    flexDirection: window.innerWidth < 768 ? 'column' : 'row' // Make sidebar stack on mobile
   };
 
   const menuItemStyle = (isActive) => ({
@@ -610,9 +617,9 @@ function Dashboard() {
                 <thead>
                   <tr style={{ background: 'none' }}>
                     <th style={{ border: 'none', padding: '12px 8px' }}>วันที่จำหน่าย</th>
-                    <th style={{ border: 'none', padding: '12px 8px' }}>รวมเป็นเงิน</th>
-                    <th style={{ border: 'none', padding: '12px 8px' }}>ราคาทุนต่อชิ้น</th>
-                    <th style={{ border: 'none', padding: '12px 8px' }}>ราคาขายต่อชิ้น</th>
+                    <th style={{ border: 'none', padding: '12px 8px' }}>ยอดรวม</th>
+                    <th style={{ border: 'none', padding: '12px 8px' }}>ทุนต่อชิ้น</th>
+                    <th style={{ border: 'none', padding: '12px 8px' }}>ขายต่อชิ้น</th>
                     <th style={{ border: 'none', padding: '12px 8px' }}>กำไรสุทธิ</th>
                   </tr>
                 </thead>
@@ -647,12 +654,41 @@ function Dashboard() {
     );
   };
 
+  const chartContainerStyle = {
+    height: '500px',
+    width: '100%',
+    maxWidth: '1200px',
+    margin: '0 auto',
+    overflowX: 'auto'
+  };
+
+  const tableWrapperStyle = {
+    overflowX: 'auto',
+    width: '100%'
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      // Force re-render on window resize
+      setIsSidebarCollapsed(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    
+    // Initial check
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   return (
     <Template>
       <div style={containerWrapperStyle}>
         {/* Sidebar */}
         <div style={sidebarStyle}>
-          <div className="mb-4">
+          <div className="mb-2">
             <div style={menuTitleStyle}>
               {!isSidebarCollapsed && <span>รายงานสินค้า</span>}
               <i 
@@ -703,7 +739,7 @@ function Dashboard() {
           {/* Summary Cards - Always show */}
           <div className="card-body mb-4">
             <div className="row g-4">
-              <div className="col-md-4">
+              <div className="col-12 col-md-4">
                 <div className="card text-center" style={summaryCardStyle}>
                   <div className="card-header bg-primary text-white">
                     <h5 className="mb-0">ยอดขาย</h5>
@@ -713,7 +749,7 @@ function Dashboard() {
                   </div>
                 </div>
               </div>
-              <div className="col-md-4">
+              <div className="col-12 col-md-4">
                 <div className="card text-center" style={summaryCardStyle}>
                   <div className="card-header bg-warning text-white">
                     <h5 className="mb-0">ต้นทุน</h5>
@@ -723,7 +759,7 @@ function Dashboard() {
                   </div>
                 </div>
               </div>
-              <div className="col-md-4">
+              <div className="col-12 col-md-4">
                 <div className="card text-center" style={summaryCardStyle}>
                   <div className="card-header bg-success text-white">
                     <h5 className="mb-0">กำไรสุทธิ</h5>
@@ -740,11 +776,8 @@ function Dashboard() {
           {activeSection === 'sales' && (
             <div className="card mb-4">
               <div className="card-header bg-white">
-                <div className="row align-items-center">
-                  <div className="col">
-                    
-                  </div>
-                  <div className="col-auto">
+                <div className="row align-items-center g-3">
+                  <div className="col-12 col-md-auto">
                     <select 
                       className="form-select" 
                       value={viewType}
@@ -756,7 +789,7 @@ function Dashboard() {
                     </select>
                   </div>
                   {viewType !== "monthly" && (
-                    <div className="col-auto">
+                    <div className="col-12 col-md-auto">
                       <select 
                         className="form-select"
                         value={month}
@@ -770,7 +803,7 @@ function Dashboard() {
                       </select>
                     </div>
                   )}
-                  <div className="col-auto">
+                  <div className="col-12 col-md-auto">
                     <select 
                       className="form-select"
                       value={year}
@@ -786,12 +819,7 @@ function Dashboard() {
                 </div>
               </div>
               <div className="card-body">
-                <div style={{ 
-                  height: '500px', 
-                  width: '1000px',
-                  maxWidth: '1200px',
-                  margin: '0 auto'
-                }}>
+                <div style={chartContainerStyle}>
                   {myData.datasets && <Line options={options} data={myData} />}
                 </div>
               </div>
@@ -842,7 +870,7 @@ function Dashboard() {
                       <option value="last7days">7 วันล่าสุด</option>
                       <option value="last30days">30 วันล่าสุด</option>
                       <option value="lastMonth">เดือนที่แล้ว</option>
-                      <option value="custom">กำหนดช่วง</option>
+                      <option value="custom">กำหนดช่วงเวลา</option>
                     </select>
                   </div>
                   {dateRange === "custom" && (
@@ -862,7 +890,7 @@ function Dashboard() {
                 </div>
               </div>
               <div className="card-body">
-                <div className="table-responsive">
+                <div style={tableWrapperStyle}>
                   <table className="table">
                     <thead>
                       <tr>
@@ -911,4 +939,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard; 
+export default Dashboard;

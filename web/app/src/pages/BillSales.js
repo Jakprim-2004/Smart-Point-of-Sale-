@@ -251,9 +251,9 @@ function BillSales() {
                 <tr>
                   <th className="py-3" style={{width: '50px'}}>#</th>
                   <th>รายการสินค้า</th>
-                  <th className="text-end" style={{width: '180px'}}>ราคา/หน่วย (รวม VAT)</th>
+                  <th className="text-end" style={{width: '180px'}}>ราคา/หน่วย</th>
                   <th className="text-end" style={{width: '100px'}}>จำนวน</th>
-                  <th className="text-end" style={{width: '150px'}}>รวม</th>
+                  
                 </tr>
               </thead>
               <tbody>
@@ -275,7 +275,6 @@ function BillSales() {
                           <small className="text-muted">VAT: ฿{(item.price * 0.07).toLocaleString("th-TH")}</small>
                         </td>
                         <td className="text-end">{item.qty} ชิ้น</td>
-                        <td className="text-end fw-bold">฿{(item.qty * item.price).toLocaleString("th-TH")}</td>
                       </tr>
                     ) : null
                   )
