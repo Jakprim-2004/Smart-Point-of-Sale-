@@ -1,4 +1,4 @@
-# DDPOS Point of sales
+# Retail Point of Sale  
 
 ## Installation & Setup Instructions (คำแนะนำการติดตั้งและการตั้งค่า)
 
@@ -49,5 +49,5 @@
     ```
 
 This explanation provides a step-by-step guide to set up and run the different parts of your project. (คำอธิบายนี้ให้คำแนะนำทีละขั้นตอนในการตั้งค่าและเรียกใช้ส่วนต่างๆ ของโครงการ)
-"# DDPOs" 
-"# DDPOs" 
+"# Retail Point of Sale " 
+

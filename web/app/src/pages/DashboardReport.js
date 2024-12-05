@@ -85,7 +85,7 @@ function Dashboard() {
   const [dateRange, setDateRange] = useState("today");
   const [dateRangeValue, setDateRangeValue] = useState([null, null]);
   const [salesData, setSalesData] = useState([]);
-  const [activeSection, setActiveSection] = useState('sales'); // sales, timeline, products, stock, topSelling, categories
+  const [activeSection, setActiveSection] = useState('sales'); 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [productDetails, setProductDetails] = useState([]);
   const [productDateRange, setProductDateRange] = useState([new Date(), new Date()]);
@@ -103,7 +103,7 @@ function Dashboard() {
     if (activeSection === 'stock') {
       fetchProductDetails();
     }
-  }, [year, month, viewType, dateRange, dateRangeValue, activeSection, productDateRange]); // เพิ่ม productDateRange
+  }, [year, month, viewType, dateRange, dateRangeValue, activeSection, productDateRange]); 
 
   useEffect(() => {
     if (activeSection === 'stock') {
@@ -111,7 +111,6 @@ function Dashboard() {
     }
   }, [activeSection]);
 
-  // Add this useEffect to trigger fetchTopSalesDays when productDateRange changes
   useEffect(() => {
     if (activeSection === 'stock' && productDateRange[0] && productDateRange[1]) {
       fetchTopSalesDays();
@@ -123,7 +122,7 @@ function Dashboard() {
     if (activeSection === 'timeline') {
       fetchCombinedStockData();
     }
-  }, [activeSection]);
+  }, [activeSection, dateRange, dateRangeValue]);
 
   const reportSumSalePerMonth = async () => {
     try {
@@ -210,7 +209,8 @@ function Dashboard() {
               tension: 0.3,
               fill: true,
             },
-          
+           
+           
           ],
         });
 
@@ -293,7 +293,6 @@ function Dashboard() {
       const url = config.api_path + "/reportSalesByDateRange";
       const [start, end] = dateRangeValue;
       
-      // Only send request if we have valid dates for custom range
       if (dateRange === 'custom' && (!start || !end)) {
         setSalesData([]);
         return;
@@ -321,16 +320,19 @@ function Dashboard() {
   const fetchProductDetails = async () => {
     try {
       const url = config.api_path + "/productDetails";
+      // Use productDateRange instead of dateRange
       const [start, end] = productDateRange;
-      
-      if (!start || !end) {
-        return;
-      }
+      if (!start || !end) return;
 
-      // เปลี่ยนเป็นใช้ POST request พร้อมส่งวันที่ที่เลือก
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+
       const res = await axios.post(url, {
-        startDate: start.toISOString(),
-        endDate: end.toISOString()
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
       }, config.headers());
 
       if (res.data.message === "success") {
@@ -379,7 +381,42 @@ function Dashboard() {
   const fetchCombinedStockData = async () => {
     try {
       const url = config.api_path + "/stock/combinedReport";
-      const res = await axios.get(url, config.headers());
+      let startDate = new Date();
+      let endDate = new Date();
+      
+      // eslint-disable-next-line default-case
+      switch(dateRange) {
+        case 'yesterday':
+          startDate.setDate(startDate.getDate() - 1);
+          endDate = new Date(startDate);
+          break;
+        case 'last7days':
+          startDate.setDate(startDate.getDate() - 6);
+          break;
+        case 'last30days':
+          startDate.setDate(startDate.getDate() - 29);
+          break;
+        case 'lastMonth':
+          startDate = new Date(startDate.getFullYear(), startDate.getMonth() - 1, 1);
+          endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+          break;
+        case 'custom':
+          if (dateRangeValue[0] && dateRangeValue[1]) {
+            startDate = dateRangeValue[0];
+            endDate = dateRangeValue[1];
+          }
+          break;
+      }
+  
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+  
+      const res = await axios.post(url, {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        dateRange: dateRange
+      }, config.headers());
+  
       if (res.data.message === "success") {
         setCombinedStockData(res.data.results);
       }
@@ -387,6 +424,12 @@ function Dashboard() {
       console.error('Error fetching combined stock data:', e);
     }
   };
+
+  useEffect(() => {
+    if (activeSection === 'stock') {
+      fetchProductDetails();
+    }
+  }, [dateRange, dateRangeValue, activeSection]);
 
   const renderTopSalesDaysChart = () => {
     const formattedData = topSalesDays.map(day => {
@@ -477,6 +520,70 @@ function Dashboard() {
     );
   };
 
+  const renderTopSalesChart = () => {
+    const sortedProducts = [...combinedStockData]
+      .sort((a, b) => b.netProfit - a.netProfit) // เปลี่ยนจาก soldQty เป็น netProfit
+      .slice(0, 5);
+
+    const chartColors = [
+      { bg: 'rgba(75, 192, 192, 0.6)', border: 'rgba(75, 192, 192, 1)' },   // เขียว
+      { bg: 'rgba(54, 162, 235, 0.6)', border: 'rgba(54, 162, 235, 1)' },   // น้ำเงิน
+      { bg: 'rgba(255, 99, 132, 0.6)', border: 'rgba(255, 99, 132, 1)' },   // แดง
+      { bg: 'rgba(255, 159, 64, 0.6)', border: 'rgba(255, 159, 64, 1)' },   // ส้ม
+      { bg: 'rgba(153, 102, 255, 0.6)', border: 'rgba(153, 102, 255, 1)' }  // ม่วง
+    ];
+
+    return (
+      <div className="card mt-4">
+        <div className="card-header bg-white">
+          <h5 className="mb-0">สินค้าที่ทำกำไรสูงสุด 5 อันดับ</h5>
+        </div>
+        <div className="card-body">
+          <div style={{ height: '300px' }}>
+            <Bar
+              data={{
+                labels: sortedProducts.map(item => item.name),
+                datasets: [{
+                  label: 'กำไรสุทธิ',
+                  data: sortedProducts.map(item => item.netProfit),
+                  backgroundColor: sortedProducts.map((_, index) => chartColors[index].bg),
+                  borderColor: sortedProducts.map((_, index) => chartColors[index].border),
+                  borderWidth: 1
+                }]
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: false
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        return `฿${formatNumber(context.raw)}`;
+                      }
+                    }
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: function(value) {
+                        return '฿' + formatNumber(value);
+                      }
+                    }
+                  }
+                }
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const summaryCardStyle = {
     transition: "transform 0.2s, box-shadow 0.2s",
     cursor: "pointer",
@@ -484,13 +591,14 @@ function Dashboard() {
     border: "none",
     borderRadius: "12px",
     boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    margin: window.innerWidth < 768 ? '0 0 15px 0' : '0'
   };
 
   const sidebarStyle = {
     width: window.innerWidth < 768 
     ? '100%' 
     : (isSidebarCollapsed ? '60px' : '250px'),
-  height: window.innerWidth < 768 ? 'auto' : '40vh',
+  height: window.innerWidth < 768 ? 'auto' : '100vh',
   padding: isSidebarCollapsed && window.innerWidth >= 768 ? '20px 5px' : '20px',
   position: window.innerWidth < 768 ? 'relative' : 'sticky',
   top: 0,
@@ -506,13 +614,15 @@ function Dashboard() {
     flex: 1,
     padding: '20px',
     marginLeft: window.innerWidth < 768 ? 0 : (isSidebarCollapsed ? '60px' : '250px'),
-    width: window.innerWidth < 768 ? '100%' : 'auto'
+    width: window.innerWidth < 768 ? '100%' : 'auto',
+    overflowX: 'hidden'
   };
 
   const containerWrapperStyle = {
     display: 'flex',
     width: '100%',
-    flexDirection: window.innerWidth < 768 ? 'column' : 'row' // Make sidebar stack on mobile
+    flexDirection: window.innerWidth < 768 ? 'column' : 'row',
+    overflow: 'hidden'
   };
 
   const menuItemStyle = (isActive) => ({
@@ -520,7 +630,7 @@ function Dashboard() {
     margin: '8px 0',
     cursor: 'pointer',
     color: isActive ? 'white' : '#6c757d',
-    backgroundColor: isActive ? '#1976d2' : 'transparent', // เปลี่ยนเป็นสีน้ำเงิน
+    backgroundColor: isActive ? '#1976d2' : 'transparent', 
     borderRadius: '8px',
     transition: 'all 0.3s ease',
     textAlign: 'center',
@@ -530,7 +640,7 @@ function Dashboard() {
     alignItems: 'center',
     justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
     '&:hover': {
-      backgroundColor: isActive ? '#1565c0' : '#f8f9fa', // สีน้ำเงินเข้มเมื่อ hover ถ้าเป็น active
+      backgroundColor: isActive ? '#1565c0' : '#f8f9fa', 
       color: isActive ? 'white' : '#2c3e50'
     }
   });
@@ -544,6 +654,7 @@ function Dashboard() {
     borderBottom: '1px solid #e0e0e0',
     display: 'flex',
     alignItems: 'center',
+    gap: '8px',  
     justifyContent: isSidebarCollapsed ? 'center' : 'space-between'
   };
 
@@ -655,21 +766,22 @@ function Dashboard() {
   };
 
   const chartContainerStyle = {
-    height: '500px',
+    height: window.innerWidth < 768 ? '300px' : '500px',
     width: '100%',
-    maxWidth: '1200px',
+    maxWidth: '100%',
     margin: '0 auto',
     overflowX: 'auto'
   };
 
   const tableWrapperStyle = {
     overflowX: 'auto',
-    width: '100%'
+    width: '100%',
+    fontSize: window.innerWidth < 768 ? '14px' : '16px'
   };
 
   useEffect(() => {
     const handleResize = () => {
-      // Force re-render on window resize
+      
       setIsSidebarCollapsed(window.innerWidth < 768);
     };
 
@@ -683,6 +795,8 @@ function Dashboard() {
     };
   }, []);
 
+  
+
   return (
     <Template>
       <div style={containerWrapperStyle}>
@@ -690,12 +804,14 @@ function Dashboard() {
         <div style={sidebarStyle}>
           <div className="mb-2">
             <div style={menuTitleStyle}>
-              {!isSidebarCollapsed && <span>รายงานสินค้า</span>}
-              <i 
-                className={`fas fa-${isSidebarCollapsed ? 'chevron-right' : 'chevron-left'}`}
-                style={toggleButtonStyle}
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {!isSidebarCollapsed && <span style={{ marginRight: '-4px' }}>รายงานสินค้า</span>}
+                <i 
+                  className={`fas fa-${isSidebarCollapsed ? 'chevron-right' : 'chevron-left'}`}
+                  style={toggleButtonStyle}
+                  onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                />
+              </div>
             </div>
             <div 
               style={menuItemStyle(activeSection === 'sales')}
@@ -730,13 +846,13 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Main Content */}
+     
         <div style={{
           ...mainContentStyle,
-          marginLeft: isSidebarCollapsed ? '60px' : '250px',
+          marginLeft: isSidebarCollapsed ? '10px' : '10px',
           transition: 'margin-left 0.3s ease'
         }}>
-          {/* Summary Cards - Always show */}
+        
           <div className="card-body mb-4">
             <div className="row g-4">
               <div className="col-12 col-md-4">
@@ -896,34 +1012,29 @@ function Dashboard() {
                       <tr>
                         <th>รหัสสินค้า</th>
                         <th>ชื่อสินค้า</th>
-                        {showSold && <th>ขายแล้ว</th>}
-                        {showRemaining && <th>คงเหลือ</th>}
-                        <th>ราคาทุน</th>
-                        <th>ราคาขาย</th>
-                        {showRemaining && <th>กำไรสุทธิ</th>}
+                        <th>จำนวนขาย</th>
+                        <th>รวมเป็นเงิน</th>
+                        <th>เฉลี่ยต่อชิ้น (ทุน/ขาย)</th>
+                        <th>กำไรสุทธิ</th>
                       </tr>
                     </thead>
                     <tbody>
                       {combinedStockData.map((item, index) => (
                         <tr key={index}>
-                          <td>{item.productId}</td>
-                          <td>{item.name}</td>
-                          {showSold && <td>{formatNumber(item.soldQty)}</td>}
-                          {showRemaining && (
-                            <td className={item.remainingQty < 10 ? 'text-danger' : 'text-success'}>
-                              {formatNumber(item.remainingQty)}
-                            </td>
-                          )}
-                          <td>{formatNumber(item.cost)} บาท</td>
-                          <td>{formatNumber(item.price)} บาท</td>
-                          {showRemaining && (
-                            <td>{formatNumber(item.remainingQty * item.cost)} บาท</td>
-                          )}
+                          <td>{item.productId || '-'}</td>
+                          <td>{item.name || '-'}</td>
+                          <td>{formatNumber(item.soldQty) || 0} ชิ้น</td>
+                          <td>฿{formatNumber(item.totalAmount) || 0}</td>
+                          <td>฿{formatNumber(item.cost)} | ฿{formatNumber(item.price)}</td>
+                          <td className="text-success">
+                            ฿{formatNumber(item.netProfit) || 0}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+                {renderTopSalesChart()}
               </div>
             </div>
           )}

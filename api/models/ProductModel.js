@@ -23,6 +23,9 @@ const ProductModel = conn.define('product', {
     },
     category: {
         type: DataTypes.STRING
+    },
+    expirationdate:{
+        type: DataTypes.DATE
     }
 })
 

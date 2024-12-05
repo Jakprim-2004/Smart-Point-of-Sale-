@@ -768,7 +768,7 @@ function Sale() {
                                 color: '#ffffff'
                               }}
                             >
-                              คงเหลือ: {item.remainingQty}
+                               {item.remainingQty}
                             </div>
                           </div>
                           

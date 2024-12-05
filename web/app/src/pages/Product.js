@@ -288,17 +288,18 @@ function Product() {
     <>
       <Template>
         <div className="card shadow-sm border-0">
-          <div className="card-header bg-primary text-white">
-            <h4 className="card-title mb-0">สินค้า</h4>
+          <div className="card-header bg-primary text-white py-3">
+            <h4 className="card-title mb-0 font-weight-bold">สินค้า</h4>
           </div>
-          <div className="card-body">
-            <div className="row mb-3">
+          <div className="card-body bg-light">
+            <div className="row mb-4">
               <div className="col-md-10">
                 <button
                   onClick={clearForm}
                   data-toggle="modal"
                   data-target="#modalProduct"
-                  className="btn btn-primary shadow-sm d-flex align-items-center"
+                  className="btn btn-primary shadow-sm d-flex align-items-center hover-scale"
+                  style={{ transition: "transform 0.2s" }}
                 >
                   <i className="fa fa-plus mr-2"></i> เพิ่มรายการ
                 </button>
@@ -306,82 +307,117 @@ function Product() {
               <div className="col-md-2">
                 <input
                   type="text"
-                  className="form-control shadow-sm"
-                  placeholder="ค้นหาสินค้า"
+                  className="form-control shadow-sm border-0"
+                  placeholder="🔍 ค้นหาสินค้า"
                   onChange={handleSearch}
+                  style={{ borderRadius: "20px", padding: "10px 15px" }}
                 />
               </div>
             </div>
 
-            <table className="table table-hover table-bordered shadow-sm">
-              <thead className="thead-light">
-                <tr>
-                  <th>Barcode</th>
-                  <th>ชื่อสินค้า</th>
-                  <th className="text-right">ราคาทุน</th>
-                  <th className="text-right">ราคาจำหน่าย</th>
-                  <th>ประเภทสินค้า</th>
-                  <th width="150px">จัดการ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.length > 0
-                  ? products
-                    .filter(
-                      (item) =>
-                        item.name.includes(searchTerm) ||
-                        item.barcode.includes(searchTerm) ||
-                        item.category.includes(searchTerm)
-                    )
-                    .map((item) => (
-                      <tr key={item.id}>
-                        <td><Barcode value={item.barcode} width={1} height={50} /></td>
-                        <td>{item.name}</td>
-                        <td className="text-right">{parseInt(item.cost).toLocaleString("th-TH")} ฿</td>
-                        <td className="text-right">{parseInt(item.price).toLocaleString("th-TH")} ฿</td>
-                        <td>{item.category}</td>
-                        <td className="text-center">
-                          <button
-                            onClick={() => handleChooseProduct(item)}
-                            data-toggle="modal"
-                            data-target="#modalProductImage"
-                            className="btn btn-primary btn-sm mr-1 shadow-sm"
-                          >
-                            <i className="fa fa-image"></i>
-                          </button>
-                          <button
-                            onClick={() => setProduct(item)}
-                            data-toggle="modal"
-                            data-target="#modalProduct"
-                            className="btn btn-info btn-sm mr-1 shadow-sm"
-                          >
-                            <i className="fa fa-pencil"></i>
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item)}
-                            className="btn btn-danger btn-sm shadow-sm"
-                          >
-                            <i className="fa fa-times"></i>
-                          </button>
-                          <button
-                            onClick={() => handlePrintBarcode(item.barcode)}
-                            className="btn btn-outline-secondary btn-sm mr-2 mt-3 shadow-sm"
-                          >
-                             <i className="fa fa-print mr-2 "></i>
-                            พิมพ์บาร์โค้ด
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  : (
+            <div className="table-responsive">
+              <table className="table table-hover table-bordered shadow-sm bg-white" 
+                     style={{ borderRadius: "8px", overflow: "hidden" }}>
+                <thead className="thead-light">
+                  <tr style={{ background: "#f8f9fa" }}>
+                    <th className="py-3">Barcode</th>
+                    <th className="py-3">ชื่อสินค้า</th>
+                    <th className="py-3 text-right">ราคาทุน</th>
+                    <th className="py-3 text-right">ราคาจำหน่าย</th>
+                    <th className="py-3 text-right">วันหมดอายุ</th>
+                    <th className="py-3">ประเภทสินค้า</th>
+                    <th className="py-3" width="200px">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.length > 0 ? (
+                    products
+                      .filter(
+                        (item) =>
+                          item.name.includes(searchTerm) ||
+                          item.barcode.includes(searchTerm) ||
+                          item.category.includes(searchTerm)
+                      )
+                      .map((item) => (
+                        <tr key={item.id} className="align-middle">
+                          <td className="py-2"><Barcode value={item.barcode} width={1} height={40} /></td>
+                          <td className="py-2 font-weight-bold">{item.name}</td>
+                          <td className="py-2 text-right">{parseInt(item.cost).toLocaleString("th-TH")} ฿</td>
+                          <td className="py-2 text-right">{parseInt(item.price).toLocaleString("th-TH")} ฿</td>
+                          <td className="py-2 text-right">{parseInt(item.expirationdate).toLocaleString("th-TH")}</td>
+                          <td className="py-2">
+                            <span className="badge badge-info px-3 py-2">{item.category}</span>
+                          </td>
+                          <td className="text-center py-2">
+                            <div className="btn-group">
+                              <button
+                                onClick={() => handleChooseProduct(item)}
+                                data-toggle="modal"
+                                data-target="#modalProductImage"
+                                className="btn btn-primary btn-sm mr-1"
+                                title="จัดการรูปภาพ"
+                              >
+                                <i className="fa fa-image"></i>
+                              </button>
+                              <button
+                                onClick={() => setProduct(item)}
+                                data-toggle="modal"
+                                data-target="#modalProduct"
+                                className="btn btn-info btn-sm mr-1"
+                                title="แก้ไข"
+                              >
+                                <i className="fa fa-pencil"></i>
+                              </button>
+                              <button
+                                onClick={() => handleDelete(item)}
+                                className="btn btn-danger btn-sm mr-1"
+                                title="ลบ"
+                              >
+                                <i className="fa fa-times"></i>
+                              </button>
+                              <button
+                                onClick={() => handlePrintBarcode(item.barcode)}
+                                className="btn btn-secondary btn-sm"
+                                title="พิมพ์บาร์โค้ด"
+                              >
+                                <i className="fa fa-print"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                  ) : (
                     <tr>
-                      <td colSpan="6" className="text-center text-muted">ไม่พบสินค้า</td>
+                      <td colSpan="7" className="text-center text-muted py-4">
+                        <i className="fa fa-box-open mb-2 fa-2x"></i>
+                        <p>ไม่พบสินค้า</p>
+                      </td>
                     </tr>
                   )}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+
+        {/* Add some custom CSS */}
+        <style jsx>{`
+          .hover-scale:hover {
+            transform: scale(1.02);
+          }
+          .table {
+            margin-bottom: 0;
+          }
+          .btn-group .btn {
+            transition: all 0.2s;
+          }
+          .btn-group .btn:hover {
+            transform: translateY(-2px);
+          }
+          .badge {
+            font-weight: normal;
+          }
+        `}</style>
 
         {/* Product Images Modal */}
         <Modal id="modalProductImage" title="ภาพสินค้า" modalSize="modal-lg">
@@ -478,6 +514,15 @@ function Product() {
                 <input
                   value={product.price}
                   onChange={(e) => setProduct({ ...product, price: e.target.value })}
+                  type="number"
+                  className="form-control shadow-sm"
+                />
+              </div>
+              <div className="form-group col-md-6">
+                <label>วันหมดอายุ</label>
+                <input
+                  value={product.expirationdate}
+                  onChange={(e) => setProduct({ ...product, expirationdate: e.target.value })}
                   type="number"
                   className="form-control shadow-sm"
                 />

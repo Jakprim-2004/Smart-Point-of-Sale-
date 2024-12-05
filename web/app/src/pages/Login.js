@@ -66,12 +66,12 @@ function Login() {
             <div className="card login-card shadow-lg p-4">
                 <div className="row">
                     <div className="col-md-6 d-flex flex-column align-items-center justify-content-center">
-                        <h3 className="login-title">DDPOs-SalesPro</h3>
+                        <h3 className="login-title">Retail Point of Sale </h3>
                         <p className="login-subtitle">Online inventory management system</p>
                         <img src="/logologin.jpg" alt="Logo" className="login-logo" />
                     </div>
                     <div className="col-md-6 login-form-container">
-                        <h3 className="text-center mb-4 mt-5">Login to DDPOs-SalesPro</h3>
+                        <h3 className="text-center mb-4 mt-5">Login to Retail Point of Sale z</h3>
                         <div className="form-group mb-3 mt-5">
                             <label htmlFor="loginField">Email or Phone Number</label>
                             <input 

@@ -18,30 +18,22 @@ router.post("/reportSumSalePerMonth", async (req, res) => {
     const userId = service.getMemberId(req); 
     let attributes, groupBy;
 
-    if (viewType === "monthly") {
-      attributes = [
-        [sequelize.fn("EXTRACT", sequelize.literal("MONTH FROM \"billSaleDetail\".\"createdAt\"")), "month"],
-        [sequelize.fn("SUM", sequelize.literal("\"product\".\"price\" * \"billSaleDetail\".\"qty\"")), "sum"], 
-        [sequelize.fn("SUM", sequelize.literal("(\"product\".\"price\" - \"product\".\"cost\") * \"billSaleDetail\".\"qty\"")), "profit"], 
-        [sequelize.fn("SUM", sequelize.literal("\"product\".\"cost\" * \"billSaleDetail\".\"qty\"")), "cost"] 
-      ];
-      groupBy = [sequelize.fn("EXTRACT", sequelize.literal("MONTH FROM \"billSaleDetail\".\"createdAt\""))];
-    } else if (viewType === "weekly") {
-      attributes = [
-        [sequelize.fn("EXTRACT", sequelize.literal("WEEK FROM \"billSaleDetail\".\"createdAt\"")), "week"],
-        [sequelize.fn("SUM", sequelize.literal("\"product\".\"price\" * \"billSaleDetail\".\"qty\"")), "sum"], 
-        [sequelize.fn("SUM", sequelize.literal("(\"product\".\"price\" - \"product\".\"cost\") * \"billSaleDetail\".\"qty\"")), "profit"], 
-        [sequelize.fn("SUM", sequelize.literal("\"product\".\"cost\" * \"billSaleDetail\".\"qty\"")), "cost"] 
-      ];
-      groupBy = [sequelize.fn("EXTRACT", sequelize.literal("WEEK FROM \"billSaleDetail\".\"createdAt\""))];
-    } else if (viewType === "daily") {
+    if (viewType === "daily") {
       attributes = [
         [sequelize.fn("EXTRACT", sequelize.literal("DAY FROM \"billSaleDetail\".\"createdAt\"")), "day"],
         [sequelize.fn("SUM", sequelize.literal("\"product\".\"price\" * \"billSaleDetail\".\"qty\"")), "sum"],
-        [sequelize.fn("SUM", sequelize.literal("(\"product\".\"price\" - \"product\".\"cost\") * \"billSaleDetail\".\"qty\"")), "profit"], 
+        [sequelize.fn("SUM", sequelize.literal("(\"product\".\"price\" - \"product\".\"cost\") * \"billSaleDetail\".\"qty\"")), "profit"],
         [sequelize.fn("SUM", sequelize.literal("\"product\".\"cost\" * \"billSaleDetail\".\"qty\"")), "cost"]
       ];
       groupBy = [sequelize.fn("EXTRACT", sequelize.literal("DAY FROM \"billSaleDetail\".\"createdAt\""))];
+    } else if (viewType === "monthly") {
+      attributes = [
+        [sequelize.fn("EXTRACT", sequelize.literal("MONTH FROM \"billSaleDetail\".\"createdAt\"")), "month"],
+        [sequelize.fn("SUM", sequelize.literal("\"product\".\"price\" * \"billSaleDetail\".\"qty\"")), "sum"],
+        [sequelize.fn("SUM", sequelize.literal("(\"product\".\"price\" - \"product\".\"cost\") * \"billSaleDetail\".\"qty\"")), "profit"],
+        [sequelize.fn("SUM", sequelize.literal("\"product\".\"cost\" * \"billSaleDetail\".\"qty\"")), "cost"]
+      ];
+      groupBy = [sequelize.fn("EXTRACT", sequelize.literal("MONTH FROM \"billSaleDetail\".\"createdAt\""))];
     }
 
     const whereConditions = [
@@ -49,11 +41,11 @@ router.post("/reportSumSalePerMonth", async (req, res) => {
       { userId: userId }
     ];
 
-    if (viewType === "daily" || viewType === "weekly") {
+    if (viewType === "daily") {
       whereConditions.push(sequelize.where(sequelize.fn("EXTRACT", sequelize.literal("MONTH FROM \"billSaleDetail\".\"createdAt\"")), month));
     }
 
-    const salesResults = await BillSaleDetailModel.findAll({
+    const results = await BillSaleDetailModel.findAll({
       attributes: attributes,
       where: {
         [sequelize.Op.and]: whereConditions
@@ -66,22 +58,16 @@ router.post("/reportSumSalePerMonth", async (req, res) => {
       }] 
     });
 
-    let totalSales = 0;
-    let totalProfit = 0;
-    let totalCost = 0;
-
-    salesResults.forEach(item => {
-      totalSales += parseFloat(item.dataValues.sum || 0);
-      totalProfit += parseFloat(item.dataValues.profit || 0);
-      totalCost += parseFloat(item.dataValues.cost || 0);
-    });
+    const totalSales = results.reduce((sum, item) => sum + parseFloat(item.dataValues.sum || 0), 0);
+    const totalProfit = results.reduce((sum, item) => sum + parseFloat(item.dataValues.profit || 0), 0);
+    const totalCost = results.reduce((sum, item) => sum + parseFloat(item.dataValues.cost || 0), 0);
 
     res.send({
       message: "success",
-      results: salesResults,
-      totalSales: totalSales,
-      totalProfit: totalProfit,
-      totalCost: totalCost
+      results: results,
+      totalSales,
+      totalProfit,
+      totalCost
     });
   } catch (error) {
     res.status(500).send({ message: error.message });
@@ -606,23 +592,22 @@ router.post('/reportSalesByDateRange', async (req, res) => {
 router.post('/productDetails', async (req, res) => {
   try {
     const userId = service.getMemberId(req);
-    const { startDate, endDate } = req.body;
+    const { startDate, endDate, dateRange } = req.body;
     
-    // แก้ไขการจัดการ timezone
+    // Create Date objects for UTC+7 (Bangkok timezone)
     const start = new Date(startDate);
     const end = new Date(endDate);
     
-    start.setHours(7, 0, 0, 0);
-    end.setHours(30, 59, 59, 999);
+    // Adjust for Bangkok timezone
+    start.setHours(start.getHours() + 7);
+    end.setHours(end.getHours() + 7);
 
     const results = await BillSaleDetailModel.findAll({
       attributes: [
         [sequelize.literal('DATE("billSaleDetail"."createdAt" AT TIME ZONE \'Asia/Bangkok\')'), 'saleDate'],
         [sequelize.fn('SUM', sequelize.literal('qty * totalprice')), 'totalAmount'],
         [sequelize.fn('SUM', sequelize.col('qty')), 'totalQuantity'],
-        [sequelize.fn('SUM', 
-          sequelize.literal('(totalprice - product.cost) * qty')
-        ), 'netProfit'],
+        [sequelize.fn('SUM', sequelize.literal('(totalprice - product.cost) * qty')), 'netProfit'],
         [sequelize.fn('MIN', sequelize.col('product.cost')), 'minCostPerUnit'],
         [sequelize.fn('MAX', sequelize.col('product.price')), 'maxPricePerUnit']
       ],
@@ -640,7 +625,7 @@ router.post('/productDetails', async (req, res) => {
       },
       group: [
         sequelize.literal('DATE("billSaleDetail"."createdAt" AT TIME ZONE \'Asia/Bangkok\')'),
-        'product.cost',  // เพิ่ม columns ที่จำเป็นใน GROUP BY
+        'product.cost',
         'product.price'
       ],
       order: [
@@ -795,6 +780,57 @@ router.post('/reportTopSalesDays', async (req, res) => {
       }))
     });
   } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+router.post('/stock/combinedReport', async (req, res) => {
+  try {
+    const userId = service.getMemberId(req);
+    const { startDate, endDate } = req.body;
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    // Get sales data with product information
+    const results = await BillSaleDetailModel.findAll({
+      attributes: [
+        'productId',
+        [sequelize.fn('SUM', sequelize.col('qty')), 'soldQty'],
+        [sequelize.fn('SUM', sequelize.literal('qty * totalprice')), 'totalAmount'],
+        [sequelize.fn('SUM', sequelize.literal('(totalprice - product.cost) * qty')), 'netProfit'],
+      ],
+      include: [{
+        model: ProductModel,
+        as: 'product',
+        attributes: ['name', 'cost', 'price']
+      }],
+      where: {
+        userId,
+        createdAt: {
+          [sequelize.Op.between]: [start, end]
+        }
+      },
+      group: ['productId', 'product.name', 'product.cost', 'product.price'],
+      having: sequelize.literal('SUM(qty) > 0'), // Only get items with sales
+      raw: true
+    });
+
+    res.send({
+      message: 'success',
+      results: results.map(item => ({
+        productId: item.productId,
+        name: item['product.name'] || '',
+        soldQty: parseInt(item.soldQty) || 0,
+        cost: parseFloat(item['product.cost']) || 0,
+        price: parseFloat(item['product.price']) || 0,
+        totalAmount: parseFloat(item.totalAmount) || 0,
+        netProfit: parseFloat(item.netProfit) || 0
+      }))
+    });
+
+  } catch (error) {
+    console.error('Error in combined stock report:', error);
     res.status(500).send({ message: error.message });
   }
 });
