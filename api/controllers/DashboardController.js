@@ -812,7 +812,7 @@ router.post('/stock/combinedReport', async (req, res) => {
         }
       },
       group: ['productId', 'product.name', 'product.cost', 'product.price'],
-      having: sequelize.literal('SUM(qty) > 0'), // Only get items with sales
+      having: sequelize.literal('SUM(qty) > 0'),
       raw: true
     });
 

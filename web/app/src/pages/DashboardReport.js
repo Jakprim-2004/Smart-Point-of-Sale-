@@ -380,6 +380,11 @@ function Dashboard() {
 
   const fetchCombinedStockData = async () => {
     try {
+      // First fetch stock report data
+      const stockReportRes = await axios.get(`${config.api_path}/stock/report`, config.headers());
+      const stockReport = stockReportRes.data.results || [];
+      
+      // Then fetch combined report data
       const url = config.api_path + "/stock/combinedReport";
       let startDate = new Date();
       let endDate = new Date();
@@ -418,7 +423,23 @@ function Dashboard() {
       }, config.headers());
   
       if (res.data.message === "success") {
-        setCombinedStockData(res.data.results);
+        // Create a map of product stock data
+        const stockMap = new Map(stockReport.map(item => [item.result.id, {
+          stockIn: item.stockIn || 0,
+          stockOut: item.stockOut || 0,
+          remainingQty: item.stockIn - item.stockOut
+        }]));
+  
+        // Combine sales data with stock data
+        const combinedData = res.data.results.map(item => {
+          const stockData = stockMap.get(item.productId) || { remainingQty: 0 };
+          return {
+            ...item,
+            remainingQty: Math.max(0, stockData.remainingQty)
+          };
+        });
+  
+        setCombinedStockData(combinedData);
       }
     } catch (e) {
       console.error('Error fetching combined stock data:', e);
@@ -1012,7 +1033,8 @@ function Dashboard() {
                       <tr>
                         <th>รหัสสินค้า</th>
                         <th>ชื่อสินค้า</th>
-                        <th>จำนวนขาย</th>
+                        {showSold && <th>จำนวนขาย</th>}
+                        {showRemaining && <th>จำนวนคงเหลือ</th>}
                         <th>รวมเป็นเงิน</th>
                         <th>เฉลี่ยต่อชิ้น (ทุน/ขาย)</th>
                         <th>กำไรสุทธิ</th>
@@ -1023,7 +1045,8 @@ function Dashboard() {
                         <tr key={index}>
                           <td>{item.productId || '-'}</td>
                           <td>{item.name || '-'}</td>
-                          <td>{formatNumber(item.soldQty) || 0} ชิ้น</td>
+                          {showSold && <td>{formatNumber(item.soldQty) || 0} ชิ้น</td>}
+                          {showRemaining && <td>{formatNumber(item.remainingQty) || 0} ชิ้น</td>}
                           <td>฿{formatNumber(item.totalAmount) || 0}</td>
                           <td>฿{formatNumber(item.cost)} | ฿{formatNumber(item.price)}</td>
                           <td className="text-success">
