@@ -849,7 +849,7 @@ function Dashboard() {
      
         <div style={{
           ...mainContentStyle,
-          marginLeft: isSidebarCollapsed ? '10px' : '10px',
+          marginLeft: isSidebarCollapsed ? '10px' : '0px',
           transition: 'margin-left 0.3s ease'
         }}>
         
