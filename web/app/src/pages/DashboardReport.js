@@ -1005,7 +1005,7 @@ function Dashboard() {
                       <option value="today">วันนี้</option>
                       <option value="yesterday">เมื่อวาน</option>
                       <option value="last7days">7 วันล่าสุด</option>
-                      <option value="last30days">30 วันล่าสุด</option>
+                      <option value="last30days">เดือนนี้</option>
                       <option value="lastMonth">เดือนที่แล้ว</option>
                       <option value="custom">กำหนดช่วงเวลา</option>
                     </select>

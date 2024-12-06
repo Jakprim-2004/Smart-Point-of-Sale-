@@ -4,6 +4,8 @@ import Swal from "sweetalert2";
 import config from "../config";
 import { useNavigate } from "react-router-dom";
 import '../styles/Login.css';
+import Lottie from 'lottie-react';
+import animationData from '../assets/Logo-new.json'; // แก้ path ให้ชี้ไปที่ src/assets
 
 function Login() {
     const [phone, setPhone] = useState('');
@@ -68,10 +70,16 @@ function Login() {
                     <div className="col-md-6 d-flex flex-column align-items-center justify-content-center">
                         <h3 className="login-title">Retail Point of Sale </h3>
                         <p className="login-subtitle">Online inventory management system</p>
-                        <img src="/logologin.jpg" alt="Logo" className="login-logo" />
+                        <div className="w-32 h-32 mx-auto mb-4">
+                            <Lottie
+                                animationData={animationData}
+                                loop={true}
+                                autoplay={true}
+                            />
+                        </div>
                     </div>
                     <div className="col-md-6 login-form-container">
-                        <h3 className="text-center mb-4 mt-5">Login to Retail Point of Sale z</h3>
+                        <h3 className="text-center mb-4 mt-5">Login to Retail Point of Sale </h3>
                         <div className="form-group mb-3 mt-5">
                             <label htmlFor="loginField">Email or Phone Number</label>
                             <input 
