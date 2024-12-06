@@ -344,7 +344,7 @@ function Product() {
                           <td className="py-2 font-weight-bold">{item.name}</td>
                           <td className="py-2 text-right">{parseInt(item.cost).toLocaleString("th-TH")} ฿</td>
                           <td className="py-2 text-right">{parseInt(item.price).toLocaleString("th-TH")} ฿</td>
-                          <td className="py-2 text-right">{parseInt(item.expirationdate).toLocaleString("th-TH")}</td>
+                          <td className="py-2 text-right">{item.expirationdate?.substring(0, 10)}</td>
                           <td className="py-2">
                             <span className="badge badge-info px-3 py-2">{item.category}</span>
                           </td>
