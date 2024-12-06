@@ -521,10 +521,12 @@ function Product() {
               <div className="form-group col-md-6">
                 <label>วันหมดอายุ</label>
                 <input
-                  value={product.expirationdate}
+                  value={product.expirationdate ? product.expirationdate.substring(0, 10) : ''}
                   onChange={(e) => setProduct({ ...product, expirationdate: e.target.value })}
-                  type="number"
+                  type="date"
                   className="form-control shadow-sm"
+                  min={new Date().toISOString().split('T')[0]}
+                  placeholder="เลือกวันหมดอายุ"
                 />
               </div>
               <div className="form-group col-md-6">
@@ -547,7 +549,7 @@ function Product() {
                   <option value="อาหารสดและเบเกอรี่">อาหารสดและเบเกอรี่</option>
                   <option value="ไข่ นม และผลิตภัณฑ์จากนม">ไข่ นม และผลิตภัณฑ์จากนม</option>
                   <option value="น้ำดื่ม เครื่องดื่ม และผงชงดื่ม">น้ำดื่ม เครื่องดื่ม และผงชงดื่ม</option>
-                  <option value="ของแห้งและเครื่องปรุง">ของแห้งและเครื่องปรุง</option>
+                  <option value="ของแห้งและเครื่องปรุง">ของแห้งและเครื่องป��ุง</option>
                   <option value="ขนมขบเคี้ยวและของหวาน">ขนมขบเคี้ยวและของหวาน</option>
                   <option value="ความงามและของใช้ส่วนตัว">ความงามและของใช้ส่วนตัว</option>
                   <option value="แม่และเด็ก">แม่และเด็ก</option>

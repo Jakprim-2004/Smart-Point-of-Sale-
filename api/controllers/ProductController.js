@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const ProductModel = require("../models/ProductModel");
 const Service = require("./Service");
+const { Op } = require('sequelize'); // Add this import
 
 app.post("/product/insert", Service.isLogin, async (req, res) => {
   try {
@@ -82,6 +83,29 @@ app.get("/product/listForSale", Service.isLogin, async (req, res) => {
     });
 
     res.send({ message: "success", results: results });
+  } catch (e) {
+    res.statusCode = 500;
+    res.send({ message: e.message });
+  }
+});
+
+app.get("/product/nearExpiry", Service.isLogin, async (req, res) => {
+  try {
+    const threemonths = new Date();
+    threemonths.setMonth(threemonths.getMonth() + 3);
+
+    const results = await ProductModel.findAll({
+      where: {
+        userId: Service.getMemberId(req),
+        expirationdate: {
+          [Op.lte]: threemonths,
+          [Op.gt]: new Date()
+        }
+      },
+      order: [["expirationdate", "ASC"]]
+    });
+
+    res.send({ results: results, message: "success" });
   } catch (e) {
     res.statusCode = 500;
     res.send({ message: e.message });

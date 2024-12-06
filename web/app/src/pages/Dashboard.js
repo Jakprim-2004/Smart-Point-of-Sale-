@@ -40,6 +40,8 @@ function Dashboard() {
   const [paymentChartType, setPaymentChartType] = useState('pie');
   const [topSellingChartType, setTopSellingChartType] = useState('pie');
   const [hourlyChartType, setHourlyChartType] = useState('line'); // Add this state
+  const [nearExpiryProducts, setNearExpiryProducts] = useState([]);
+  const [nearExpiryCount, setNearExpiryCount] = useState(0);
   const navigate = useNavigate();
 
   // Keep existing state variables for data
@@ -111,6 +113,7 @@ function Dashboard() {
     reportTopSellingCategories();
     getTodaySalesReport(); // Add this line
     getPaymentStats(); // Add this line
+    reportNearExpiryProducts();
   }, [year, month, viewType]);
 
   useEffect(() => {
@@ -215,6 +218,23 @@ function Dashboard() {
       const res = await axios.get(url, config.headers());
       if (res.data.message === "success") {
         setPaymentStats(res.data.results);
+      }
+    } catch (e) {
+      Swal.fire({
+        title: "error",
+        text: e.message,
+        icon: "error",
+      });
+    }
+  };
+
+  const reportNearExpiryProducts = async () => {
+    try {
+      const url = config.api_path + "/product/nearExpiry";
+      const res = await axios.get(url, config.headers());
+      if (res.data.message === "success") {
+        setNearExpiryProducts(res.data.results);
+        setNearExpiryCount(res.data.results.length);
       }
     } catch (e) {
       Swal.fire({
@@ -1004,7 +1024,69 @@ function Dashboard() {
               </div>
             </div>
           </div>
-          
+          <div className="col-md-4">
+            <div className="card h-100" style={styles.summaryCard}>
+              <div className="card-header text-center bg-info text-white">
+                <div className="d-flex justify-content-between align-items-center">
+                  <h4 className="mb-0">
+                    <i className="fas fa-calendar-times fa-fade me-2"></i>
+                    สินค้าใกล้หมดอายุ
+                  </h4>
+                  <span className="badge bg-danger fs-5">
+                    {nearExpiryCount} รายการ
+                  </span>
+                </div>
+              </div>
+              <div 
+                className="card-body"
+                style={{
+                  height: "320px",
+                  overflowY: "auto",
+                  padding: "0",
+                }}
+              >
+                {nearExpiryProducts.length > 0 ? (
+                  <div className="list-group list-group-flush">
+                    {nearExpiryProducts.map((item, index) => {
+                      const expiryDate = new Date(item.expirationdate);
+                      const daysUntilExpiry = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+                      const isVeryNear = daysUntilExpiry <= 30;
+                      
+                      return (
+                        <div
+                          key={index}
+                          className="list-group-item"
+                          style={{
+                            borderLeft: isVeryNear ? "4px solid #dc3545" : "4px solid #ffc107",
+                            padding: "15px",
+                            backgroundColor: isVeryNear ? 'rgba(220, 53, 69, 0.05)' : 'rgba(255, 193, 7, 0.05)'
+                          }}
+                        >
+                          <div className="d-flex justify-content-between align-items-center">
+                            <div>
+                              <h6 className="mb-1 fw-bold">{item.name}</h6>
+                              <div className={`badge ${isVeryNear ? 'bg-danger' : 'bg-warning text-dark'} fs-6`}>
+                                <i className="fas fa-clock me-1"></i>
+                                หมดอายุใน: {daysUntilExpiry} วัน
+                              </div>
+                              <div className="text-muted small mt-1">
+                                วันหมดอายุ: {expiryDate.toLocaleDateString('th-TH')}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="alert alert-success m-3 text-center">
+                    <i className="fas fa-check-circle fa-2x mb-2"></i>
+                    <p className="mb-0">ไม่มีสินค้าใกล้หมดอายุ</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </Template>
