@@ -5,7 +5,8 @@ import config from "../config";
 import { useNavigate } from "react-router-dom";
 import '../styles/Login.css';
 import Lottie from 'lottie-react';
-import animationData from '../assets/Logo-new.json'; // แก้ path ให้ชี้ไปที่ src/assets
+import animationData from '../assets/Logo-new.json';
+import welcomeIcon from '../assets/welcome.svg';
 
 function Login() {
     const [phone, setPhone] = useState('');
@@ -35,8 +36,10 @@ function Login() {
                         Swal.fire({
                             title: 'Sign In',
                             text: 'เข้าสู่ระบบแล้ว',
-                            icon: 'success',
-                            timer: 2000
+                            imageUrl: welcomeIcon,
+                            imageWidth: 200,
+                            imageHeight: 200,
+                            timer: 9000
                         });
 
                         localStorage.setItem(config.token_name, res.data.token);

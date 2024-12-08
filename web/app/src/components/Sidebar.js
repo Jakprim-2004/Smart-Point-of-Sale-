@@ -5,6 +5,7 @@ import config from "../config";
 import { Link, useNavigate } from "react-router-dom";
 import Modal from "../components/Modal";
 import React from 'react';
+import ExitIcon from '../assets/Exit.svg';
 
 const Sidebar = forwardRef((props, sidebarRef) => {
   const [memberName, setMemberName] = useState();
@@ -30,7 +31,9 @@ const Sidebar = forwardRef((props, sidebarRef) => {
     Swal.fire({
         title: 'Sign out',
         text: 'ยืนยันการออกจากระบบ',
-        icon: 'question',
+        imageUrl: ExitIcon,
+        imageWidth: 200,
+        imageHeight: 200, // Replace icon with custom JSON animation
         showCancelButton: true,
         showConfirmButton: true
     }).then(res => {

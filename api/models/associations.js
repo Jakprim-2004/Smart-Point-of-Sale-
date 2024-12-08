@@ -23,4 +23,3 @@ BillSaleDetailModel.belongsTo(BillSaleModel, {
   as: 'billSale'
 });
 
-// Remove Report-User association since we no longer use userId
