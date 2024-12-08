@@ -4,6 +4,10 @@ import config from "../config";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from 'react-router-dom';
+import banknotes from '../assets/banknotes.gif'; // Add this import at the top with other imports
+import growth from '../assets/growth.gif'; // Add this import at the top with other imports
+import product from '../assets/product.gif'; // Add this import at the top with other imports
+import star from '../assets/star.gif'; // Add this import at the top with other imports
 
 import {
   Chart as ChartJS,
@@ -681,7 +685,7 @@ function Dashboard() {
 
               <div style={styles.modernHeader}>
                 <h4 style={{ margin: 0, fontWeight: '600' }}>
-                  <i className="fas fa-chart-line fa-beat  me-2"></i>
+                <img src={growth} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
                   ยอดขายวันนี้ {currentTime.toLocaleDateString('th-TH')} 
                   <span className="ms-2 badge bg-light text-dark">
                     {currentTime.toLocaleTimeString('th-TH')}
@@ -841,17 +845,18 @@ function Dashboard() {
         <div className="row g-4">
         <div className="col-md-4 ">
             <div className="card h-100" style={styles.summaryCard}>
-              <div className="card-header text-center bg-info">
+              <div className="card-header text-center bg-muted">
                 <div className="d-flex justify-content-between align-items-center">                      
                   <div className="d-flex align-items-center gap-2">
-                    <i className="fa-solid fa-star fa-shake fa-2xl" style={{ color: "#FFD43B" }}></i>
+                  <img src={star} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
+
                     <select 
                       className="form-select form-select-sm" 
                       style={{ 
                         width: 'auto',
                         backgroundColor: 'transparent',
                         border: 'none',
-                        color: 'white',
+                        color: 'black',
                         cursor: 'pointer',
                         fontWeight: 'bold',
                         paddingRight: '2rem'
@@ -862,7 +867,9 @@ function Dashboard() {
                       <option value="products" style={{ color: 'black' }}> สินค้า</option>
                       <option value="categories" style={{ color: 'black' }}>หมวดหมู่ </option>
                     </select>
-                    <span className="text-white">ขายดี 5 อันดับ</span>
+                    <span 
+                    
+                    className="text-black"> ขายดี 5 อันดับ</span>
                   </div>
                   <div>
                     <i 
@@ -900,9 +907,12 @@ function Dashboard() {
           </div>
           <div className="col-md-4">
             <div className="card h-100" style={styles.summaryCard}>
-              <div className="card-header text-center bg-info">
+              <div className="card-header text-center bg-muted">
                 <div className="d-flex justify-content-between align-items-center">
-                  <h4 className="mb-0"><i class="fa-solid fa-money-bill-transfer fa-flip fa-lg" style={{color: "#365dba"}}></i> วิธีการชำระเงิน</h4>
+                  <h4 className="mb-0">
+                    <img src={banknotes} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
+                    วิธีการชำระเงิน
+                  </h4>
                   <div>
                     <i 
                       className="fas fa-chart-pie mx-2" 
@@ -927,10 +937,10 @@ function Dashboard() {
 
           <div className="col-md-4">
             <div className="card h-100" style={styles.summaryCard}>
-              <div className="card-header text-center bg-warning text-white">
+              <div className="card-header text-center bg-muted">
                 <div className="d-flex justify-content-between align-items-center">
                   <h4 className="mb-0">
-                    <i className="fas fa-box-open fa-fade me-2"></i>
+                  <img src={product} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
                     สินค้าใกล้หมด
                   </h4>
                   <span 

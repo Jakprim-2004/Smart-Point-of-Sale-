@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Modal from "../components/Modal";
 import React from 'react';
 import ExitIcon from '../assets/Exit.svg';
+import logoGif from '../assets/coin.gif'; 
 
 const Sidebar = forwardRef((props, sidebarRef) => {
   const [memberName, setMemberName] = useState();
@@ -351,7 +352,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
       <aside className="main-sidebar sidebar-dark-primary elevation-4" style={styles.sidebar}>
         <a href="#" className="brand-link" style={styles.brandLink}>
           <img
-            src="dist/img/logo.webp"
+            src={logoGif}
             alt="AdminLTE Logo"
             style={styles.brandImage}
           />
