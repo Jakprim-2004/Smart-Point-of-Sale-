@@ -33,7 +33,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
         text: 'ยืนยันการออกจากระบบ',
         imageUrl: ExitIcon,
         imageWidth: 200,
-        imageHeight: 200, // Replace icon with custom JSON animation
+        imageHeight: 200, 
         showCancelButton: true,
         showConfirmButton: true
     }).then(res => {
