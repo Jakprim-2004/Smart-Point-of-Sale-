@@ -39,7 +39,7 @@ function Login() {
                             imageUrl: welcomeIcon,
                             imageWidth: 200,
                             imageHeight: 200,
-                            timer: 9000
+                            timer: 2000
                         });
 
                         localStorage.setItem(config.token_name, res.data.token);

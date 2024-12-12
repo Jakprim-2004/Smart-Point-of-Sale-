@@ -8,6 +8,8 @@ import banknotes from '../assets/banknotes.gif'; // Add this import at the top w
 import growth from '../assets/growth.gif'; // Add this import at the top with other imports
 import product from '../assets/product.gif'; // Add this import at the top with other imports
 import star from '../assets/star.gif'; // Add this import at the top with other imports
+import time from '../assets/time.gif'; // Add this import at the top with other imports
+import calendar from '../assets/calendar.gif'; // Add this import at the top with other imports
 
 import {
   Chart as ChartJS,
@@ -632,7 +634,7 @@ function Dashboard() {
       boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
     },
     modernHeader: {
-      backgroundColor: "#4dabf7",
+      backgroundColor: "#abf7",
       color: "white",
       padding: "15px 20px",
       fontSize: "18px",
@@ -641,7 +643,7 @@ function Dashboard() {
       justifyContent: "space-between",
       alignItems: "center",
       borderRadius: "12px 12px 0 0",
-      background: 'linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%)',
+      background: 'linear-gradient(135deg, #0d6ed 0%, #0dcaf0 100%)',
     },
     chartIcon: {
       cursor: 'pointer',
@@ -684,10 +686,10 @@ function Dashboard() {
 
 
               <div style={styles.modernHeader}>
-                <h4 style={{ margin: 0, fontWeight: '600' }}>
+                <h4 className="text-dark" style={{ margin: 0, fontWeight: '600' }}>
                 <img src={growth} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
                   ยอดขายวันนี้ {currentTime.toLocaleDateString('th-TH')} 
-                  <span className="ms-2 badge bg-light text-dark">
+                  <span className="ms-2 badge bg-secondary text-dark">
                     {currentTime.toLocaleTimeString('th-TH')}
                   </span>
                 </h4>
@@ -781,7 +783,7 @@ function Dashboard() {
               <div className="p-4">
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <h5 className="mb-0">
-                    <i className="fas fa-clock fa-spin fa-xl me-2"></i>
+                  <img src={time} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
                     ยอดขายตามช่วงเวลา
                   </h5>
                   <div>
@@ -1036,10 +1038,10 @@ function Dashboard() {
           </div>
           <div className="col-md-4">
             <div className="card h-100" style={styles.summaryCard}>
-              <div className="card-header text-center bg-info text-white">
+              <div className="card-header text-center bg-muted text-white">
                 <div className="d-flex justify-content-between align-items-center">
-                  <h4 className="mb-0">
-                    <i className="fas fa-calendar-times fa-fade me-2"></i>
+                  <h4 className="mb-0 text-dark">
+                  <img src={calendar} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
                     สินค้าใกล้หมดอายุ
                   </h4>
                   <span className="badge bg-danger fs-5">

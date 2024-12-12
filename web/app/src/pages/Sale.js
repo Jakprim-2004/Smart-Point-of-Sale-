@@ -10,6 +10,9 @@ import Barcode from "../components/Barcode";
 import { QRCodeSVG } from 'qrcode.react';
 import generatePayload from 'promptpay-qr';
 
+
+
+
 const styles = {
   productCard: {
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',

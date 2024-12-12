@@ -7,9 +7,15 @@ import Modal from "../components/Modal";
 import React from 'react';
 import ExitIcon from '../assets/Exit.svg';
 import logoGif from '../assets/coin.gif'; 
+import shopping from '../assets/shopping.gif'; 
+import report from '../assets/report.gif'; 
+import Selling from '../assets/Selling.gif'; 
+import checklist from '../assets/checklist.gif'; 
+
 
 const Sidebar = forwardRef((props, sidebarRef) => {
   const [memberName, setMemberName] = useState();
+  const [firstName, setfirstName] = useState();
   const [packageName, setPackageName] = useState();
   const [packages, setPackages] = useState([]);
   const [totalBill, setTotalBill] = useState(0);
@@ -27,6 +33,24 @@ const Sidebar = forwardRef((props, sidebarRef) => {
     fetchData();
     fetchDataTotalBill();
   }, []);
+
+
+//This will display:
+
+//5:00-11:59 = "Good Morning"
+//12:00-16:59 = "Good Afternoon"
+//17:00-4:59 = "Good Evening"
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) {
+      return "Good Morning";
+    } else if (hour >= 12 && hour < 17) {
+      return "Good Afternoon";
+    } else {
+      return "Good Evening";
+    }
+  };
 
   const handleSignOut = () => {
     Swal.fire({
@@ -94,6 +118,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
       );
       if (res.data.message === "success") {
         setMemberName(res.data.result.name);
+        setfirstName(res.data.result.firstName);
         setPackageName(res.data.result.package.name);
         setBillAmount(res.data.result.package.bill_amount);
       }
@@ -357,19 +382,21 @@ const Sidebar = forwardRef((props, sidebarRef) => {
             style={styles.brandImage}
           />
           <span style={styles.brandText}>POS on Cloud</span>
-        </a>
-
-        <div className="sidebar">
-          <div style={styles.userPanel}>
-            <button 
+          <button 
               onClick={handleSignOut} 
               style={styles.signOutButton}
               title="Sign out"
             >
               <i className="fas fa-sign-out-alt"></i>
             </button>
+        </a>
+
+        <div className="sidebar">
+          <div style={styles.userPanel}>
+           
             <div className="text-white">
-              <div className="h5 mb-2">{memberName}</div>
+              <div className="h5 mb-2 ">{getGreeting()} </div>
+              <div className="h5 mb-2 text-warning"> {firstName}</div>
               <div className="text-white-50 mb-3">Package: {packageName}</div>
               <button
                 onClick={fetchPackages}
@@ -411,12 +438,13 @@ const Sidebar = forwardRef((props, sidebarRef) => {
 
           <nav className="mt-3">
             <ul className="nav nav-pills nav-sidebar flex-column" style={styles.navContainer}>
-            <li className="nav-item" style={styles.navItem}>
+            <li className="nav-item " style={styles.navItem}>
                 <Link to="/sale" className="nav-link" style={styles.navLink}>
                   <span style={styles.navIcon}>
-                  <i class="fa-solid fa-shop"></i>
+                  <img src={Selling} alt="Selling" style={{ height: '50px', marginRight: '100px' }} />
+
                   </span>
-                  <span style={styles.navText}>ขายสินค้า</span>
+                  <span className="ml-3" style={styles.navText}>ขายสินค้า</span>
                 </Link>
               </li>
 
@@ -426,9 +454,9 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                    style={styles.navLink}
                    onClick={() => handleDropdownClick('reports')}>
                   <span style={styles.navIcon}>
-                    <i className="nav-icon fas fa-chart-pie"></i>
+                  <img src={report} alt="report" style={{ height: '50px', marginRight: '100px' }} />
                   </span>
-                  <span style={styles.navText}>
+                  <span className="ml-3" style={styles.navText}>
                     เอกสาร/รายงาน
                     <i className="right fas fa-angle-left ms-2"></i>
                   </span>
@@ -490,9 +518,9 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                    style={styles.navLink}
                    onClick={() => handleDropdownClick('documents')}>
                   <span style={styles.navIcon}>
-                  <i class="fa-solid fa-boxes-packing"></i>
+                 <img src={shopping} alt="shopping" style={{ height: '50px', marginRight: '100px' }} />
                   </span>
-                  <span style={styles.navText}>
+                  <span className="ml-3" style={styles.navText}>
                   สินค้า
                     <i className="right fas fa-angle-left ms-2"></i>
                   </span>
@@ -515,7 +543,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                   <span style={styles.navIcon}>
                     <i className="nav-icon fas fa-home"></i>
                   </span>
-                  <span style={styles.navText}>รับสินค้าเข้า Stock</span>
+                  <span  style={styles.navText}>รับสินค้าเข้า Stock</span>
                 </Link>
               </li>
                 </ul>
@@ -524,9 +552,10 @@ const Sidebar = forwardRef((props, sidebarRef) => {
               <li className="nav-item" style={styles.navItem}>
                 <Link to="/ReportUse" className="nav-link" style={styles.navLink}>
                   <span style={styles.navIcon}>
-                  <i class="fa-solid fa-address-card"></i>
+                  <img src={checklist} alt="shopping" style={{ height: '50px', marginRight: '100px' }} />
+
                   </span>
-                  <span style={styles.navText}>แจ้งปัญหาการใช้งาน</span>
+                  <span className="ml-3" style={styles.navText}>แจ้งปัญหาการใช้งาน</span>
                 </Link>
               </li>
             </ul>
