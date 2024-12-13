@@ -46,7 +46,6 @@ app.post("/member/register", async (req, res) => {
       packageId: req.body.packageId,
       email: req.body.email,
       phone: req.body.phone, 
-      name: req.body.name,
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       pass: req.body.password,
@@ -72,7 +71,7 @@ app.get("/member/info", service.isLogin, async (req, res, next) => {
 
     const payLoad = jwt.decode(service.getToken(req));
     const member = await MemberModel.findByPk(payLoad.id, {
-      attributes: ["id", "name", "phone","firstName"],
+      attributes: ["id",  "phone","firstName"],
       include: [
         {
           model: PackageModel,

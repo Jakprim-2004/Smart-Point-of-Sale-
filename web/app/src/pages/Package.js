@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from 'axios';
 import config from "../config";
-import Modal from "../components/Modal";
 import Swal from 'sweetalert2';
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaEnvelope, FaPhone, FaLock, FaStore, FaMapMarkerAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -10,7 +9,6 @@ import { fetchThailandData, getDistricts, getSubDistricts, getPostalCode } from 
 function Package() {
     const [packages, setPackages] = useState([]);
     const [yourPackage, setYourPackage] = useState({});
-    const [name, setname] = useState('');
     const [phone, setPhone] = useState('');
     const [pass, setPass] = useState('');
     const [confirmPass, setConfirmPass] = useState('');
@@ -202,7 +200,6 @@ function Package() {
                 const payload = {
                     packageId: 1, // Set packageId to 1 automatically
                     email: email,
-                    name: name,
                     phone: phone, 
                     password: pass,
                     firstName: firstName,
@@ -268,12 +265,7 @@ function Package() {
                                             required />
                                     </div>
                                 </div>
-                                <div className="col-12">
-                                    <div className="input-group">
-                                        <span className="input-group-text bg-light"><FaStore /></span>
-                                        <input type="text" className="form-control" placeholder="ชื่อร้าน" value={name} onChange={(e) => setname(e.target.value)} required />
-                                    </div>
-                                </div>
+                               
                             </div>
                         </div>
 

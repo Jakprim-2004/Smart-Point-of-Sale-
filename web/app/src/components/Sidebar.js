@@ -15,7 +15,6 @@ import candidates from '../assets/candidates.gif';
 
 
 const Sidebar = forwardRef((props, sidebarRef) => {
-  const [memberName, setMemberName] = useState();
   const [firstName, setfirstName] = useState();
   const [packageName, setPackageName] = useState();
   const [packages, setPackages] = useState([]);
@@ -120,13 +119,21 @@ const Sidebar = forwardRef((props, sidebarRef) => {
 
   const fetchData = async () => {
     try {
+      // Get stored user type to determine which endpoint to use
+      const userType = localStorage.getItem('userType');
+      const endpoint = userType === 'employee' ? '/user/info' : '/member/info';
+
       const res = await axios.get(
-        config.api_path + "/member/info", 
+        config.api_path + endpoint, 
         config.headers()
       );
+      
       if (res.data.message === "success") {
-        setMemberName(res.data.result.name);
-        setfirstName(res.data.result.firstName);
+        if (userType === 'employee') {
+          setfirstName(res.data.result.name);  // For employees, use name from user table
+        } else {
+          setfirstName(res.data.result.firstName);  // For owners, use firstName from member table
+        }
         setPackageName(res.data.result.package.name);
         setBillAmount(res.data.result.package.bill_amount);
       }
@@ -401,12 +408,21 @@ const Sidebar = forwardRef((props, sidebarRef) => {
 
         <div className="sidebar">
           <div style={styles.userPanel}>
-           
             <div className="text-white">
-              <div className="h5 mb-2 ">{getGreeting()} </div>
-              <div className="h5 mb-2 text-warning"> {firstName}</div>
+              <div className="h5 mb-2">{getGreeting()}</div>
+              <div className="h5 mb-2">
+                <span className="text-warning">{firstName}</span>
+                <span className="badge bg-info ms-2" style={{
+                  padding: '5px 10px',
+                  borderRadius: '15px',
+                  fontSize: '0.8rem',
+                  fontWeight: 'normal'
+                }}>
+                  {isOwner ? 'เจ้าของร้าน' : 'พนักงาน'}
+                </span>
+              </div>
               <div className="text-white-50 mb-3">Package: {packageName}</div>
-              {isOwner && ( // Only show upgrade button to owners
+              {isOwner && (
                 <button
                   onClick={fetchPackages}
                   data-toggle="modal"

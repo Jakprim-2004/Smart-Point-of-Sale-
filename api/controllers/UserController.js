@@ -3,6 +3,7 @@ const app = express();
 const Service = require('./Service')
 const UserModel = require('../models/UserModel')
 const MemberModel = require('../models/MemberModel'); // Add this import
+const PackageModel = require('../models/PackageModel'); // Add this import
 const jwt = require('jsonwebtoken'); // Add this import
 
 app.get('/user/list', Service.isLogin, Service.ownerOnly, async (req, res) => {
@@ -77,8 +78,7 @@ app.post('/user/signin', async (req, res) => {
             }
         });
 
-        // Debug logging
-        console.log('Found user:', JSON.stringify(user, null, 2));
+       
 
         // Check user exists
         if (!user) {
@@ -120,6 +120,42 @@ app.post('/user/signin', async (req, res) => {
         });
     } catch (e) {
         console.error('Login error:', e);
+        res.status(500).send({ message: e.message });
+    }
+});
+
+// New endpoint to get employee info
+app.get('/user/info', Service.isLogin, async (req, res) => {
+    try {
+        const employeeId = Service.getEmployeeId(req);
+
+        // Make sure MemberModel is associated with PackageModel
+        MemberModel.belongsTo(PackageModel, { foreignKey: 'packageId' });
+
+        const user = await UserModel.findOne({
+            where: { id: employeeId },
+            include: [{
+                model: MemberModel,
+                include: [{
+                    model: PackageModel,
+                    attributes: ['name', 'bill_amount']
+                }]
+            }]
+        });
+
+        if (!user) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+
+        res.send({ 
+            message: 'success',
+            result: {
+                name: user.name,
+                package: user.member.package // This will now have the package info
+            }
+        });
+    } catch (e) {
+        console.error('Error fetching user info:', e);
         res.status(500).send({ message: e.message });
     }
 });

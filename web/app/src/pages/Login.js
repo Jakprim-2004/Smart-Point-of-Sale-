@@ -61,14 +61,14 @@ function Login() {
                 localStorage.setItem(config.token_name, res.data.token);
                 localStorage.setItem('userType', loginType);
                 
-                // Store user level for employees
-                if (loginType === 'employee' && res.data.userInfo) {
+                // Store user level and redirect based on role
+                if (loginType === 'employee') {
                     localStorage.setItem('userLevel', res.data.userInfo.level);
+                    navigate('/sale'); // Redirect employees to sale page
                 } else {
                     localStorage.setItem('userLevel', 'owner');
+                    navigate('/dashboard'); // Owners go to dashboard
                 }
-
-                navigate('/dashboard');
             }
         } catch (error) {
             console.error(error);

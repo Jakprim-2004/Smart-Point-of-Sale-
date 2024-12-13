@@ -13,9 +13,6 @@ const MemberModel = conn.define('member', {
     email: {
         type: DataTypes.STRING(255)
     },
-    name: {
-        type: DataTypes.STRING(255)
-    },
     firstName: {
         type: DataTypes.STRING(255)
     },
