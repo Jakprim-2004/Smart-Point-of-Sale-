@@ -406,16 +406,18 @@ const Sidebar = forwardRef((props, sidebarRef) => {
               <div className="h5 mb-2 ">{getGreeting()} </div>
               <div className="h5 mb-2 text-warning"> {firstName}</div>
               <div className="text-white-50 mb-3">Package: {packageName}</div>
-              <button
-                onClick={fetchPackages}
-                data-toggle="modal"
-                data-target="#modalPackage"
-                className="btn"
-                style={styles.upgradeButton}
-              >
-                <i className="fa-solid fa-arrow-up-wide-short"></i>
-                Upgrade Package
-              </button>
+              {isOwner && ( // Only show upgrade button to owners
+                <button
+                  onClick={fetchPackages}
+                  data-toggle="modal"
+                  data-target="#modalPackage"
+                  className="btn"
+                  style={styles.upgradeButton}
+                >
+                  <i className="fa-solid fa-arrow-up-wide-short"></i>
+                  Upgrade Package
+                </button>
+              )}
             </div>
           </div>
 
@@ -591,109 +593,114 @@ const Sidebar = forwardRef((props, sidebarRef) => {
         
       </aside>
 
-      <Modal id="modalPackage" title="เลือกแพคเกจที่ต้องการ" modalSize="modal-lg">
-        <div className="row g-4">
-          {packages.length > 0
-            ? packages.map((item) => (
-                <div className="col-4" key={item.id}>
-                  <div className="card h-100 shadow-sm hover-shadow"
-                       style={{
-                         borderRadius: '12px',
-                         transition: 'all 0.3s ease',
-                         cursor: 'pointer',
-                         '&:hover': {
-                           transform: 'translateY(-5px)',
-                           boxShadow: '0 5px 15px rgba(0,0,0,0.1)'
-                         }
-                       }}>
-                    <div className="card-body d-flex flex-column">
-                      <div className="flex-grow-1">
-                        <div className="h3">{item.name}</div>
+      {/* Only render package modals if user is owner */}
+      {isOwner && (
+        <>
+          <Modal id="modalPackage" title="เลือกแพคเกจที่ต้องการ" modalSize="modal-lg">
+            <div className="row g-4">
+              {packages.length > 0
+                ? packages.map((item) => (
+                    <div className="col-4" key={item.id}>
+                      <div className="card h-100 shadow-sm hover-shadow"
+                           style={{
+                             borderRadius: '12px',
+                             transition: 'all 0.3s ease',
+                             cursor: 'pointer',
+                             '&:hover': {
+                               transform: 'translateY(-5px)',
+                               boxShadow: '0 5px 15px rgba(0,0,0,0.1)'
+                             }
+                           }}>
+                        <div className="card-body d-flex flex-column">
+                          <div className="flex-grow-1">
+                            <div className="h3">{item.name}</div>
 
-                        <div className="h4 mt-3 text-primary">
-                          <strong>
-                            {isNaN(item.price)
-                              ? item.price
-                              : parseInt(item.price).toLocaleString("th-TH")}{" "}
-                            .-
-                          </strong>
-                          <span className="ms-2">/ เดือน</span>
+                            <div className="h4 mt-3 text-primary">
+                              <strong>
+                                {isNaN(item.price)
+                                  ? item.price
+                                  : parseInt(item.price).toLocaleString("th-TH")}{" "}
+                                .-
+                              </strong>
+                              <span className="ms-2">/ เดือน</span>
+                            </div>
+
+                            <div className="mt-3">
+                              จำนวนบิล{" "}
+                              <span className="text-danger ms-2 me-2">
+                                <strong>
+                                  {isNaN(item.bill_amount)
+                                    ? item.bill_amount
+                                    : parseInt(item.bill_amount).toLocaleString(
+                                        "th-TH"
+                                      )}
+                                </strong>
+                              </span>
+                              ต่อเดือน
+                            </div>
+                          </div>
+
+                          <div className="mt-3 text-center">
+                            {renderButton(item)}
+                          </div>
                         </div>
-
-                        <div className="mt-3">
-                          จำนวนบิล{" "}
-                          <span className="text-danger ms-2 me-2">
-                            <strong>
-                              {isNaN(item.bill_amount)
-                                ? item.bill_amount
-                                : parseInt(item.bill_amount).toLocaleString(
-                                    "th-TH"
-                                  )}
-                            </strong>
-                          </span>
-                          ต่อเดือน
-                        </div>
-                      </div>
-
-                      <div className="mt-3 text-center">
-                        {renderButton(item)}
                       </div>
                     </div>
-                  </div>
-                </div>
-              ))
-            : ""}
-        </div>
-      </Modal>
+                  ))
+                : ""}
+            </div>
+          </Modal>
 
-      <Modal id="modalBank" title="ช่องทางชำระเงิน" modalSize="modal-lg">
-        <div className="h4 text-secondary">
-          Package ที่เลือกคือ{" "}
-          <span className="text-primary">{choosePackage.name}</span>
-        </div>
-        <div className="mt-3 h5">
-          ราคา{" "}
-          <span className="text-danger">
-            {parseInt(choosePackage.price).toLocaleString("th-TH")}
-          </span>{" "}
-          บาท/เดือน
-        </div>
+          <Modal id="modalBank" title="ช่องทางชำระเงิน" modalSize="modal-lg">
+            <div className="h4 text-secondary">
+              Package ที่เลือกคือ{" "}
+              <span className="text-primary">{choosePackage.name}</span>
+            </div>
+            <div className="mt-3 h5">
+              ราคา{" "}
+              <span className="text-danger">
+                {parseInt(choosePackage.price).toLocaleString("th-TH")}
+              </span>{" "}
+              บาท/เดือน
+            </div>
 
-        <table className="table table-bordered table-striped mt-3">
-          <thead>
-            <tr>
-              <th>ธนาคาร</th>
-              <th>เลขบัญชี</th>
-              <th>เจ้าของบัญชี</th>
-              <th>สาขา</th>
-            </tr>
-          </thead>
-          <tbody>
-            {banks.length > 0
-              ? banks.map((item) => (
-                  <tr key={item.bankCode}>
-                    <td>{item.bankType}</td>
-                    <td>{item.bankCode}</td>
-                    <td>{item.bankName}</td>
-                    <td>{item.bankBranch}</td>
-                  </tr>
-                ))
-              : ""}
-          </tbody>
-        </table>
+            <table className="table table-bordered table-striped mt-3">
+              <thead>
+                <tr>
+                  <th>ธนาคาร</th>
+                  <th>เลขบัญชี</th>
+                  <th>เจ้าของบัญชี</th>
+                  <th>สาขา</th>
+                </tr>
+              </thead>
+              <tbody>
+                {banks.length > 0
+                  ? banks.map((item) => (
+                      <tr key={item.bankCode}>
+                        <td>{item.bankType}</td>
+                        <td>{item.bankCode}</td>
+                        <td>{item.bankName}</td>
+                        <td>{item.bankBranch}</td>
+                      </tr>
+                    ))
+                  : ""}
+              </tbody>
+            </table>
 
-        <div className="alert mt-3 alert-warning">
-          <i className="fa fa-info-circle me-2"></i>
-          เมื่อโอนชำระเงินแล้ว ให้แจ้งที่ไลน์ ID = Min0ru21 ชื่อ Kaimuk.j
-        </div>
+            <div className="alert mt-3 alert-warning">
+              <i className="fa fa-info-circle me-2"></i>
+              เมื่อโอนชำระเงินแล้ว ให้แจ้งที่ไลน์ ID = Min0ru21 ชื่อ Kaimuk.j
+            </div>
 
-        <div className="mt-3 text-center">
-          <button onClick={handleChangePackage} className="btn btn-primary">
-            <i className="fa fa-check me-2"></i>
-            ยืนยันการสมัคร
-          </button>
-        </div>
-      </Modal>
+            <div className="mt-3 text-center">
+              <button onClick={handleChangePackage} className="btn btn-primary">
+                <i className="fa fa-check me-2"></i>
+                ยืนยันการสมัคร
+              </button>
+            </div>
+          </Modal>
+        </>
+      )}
     </>
   );
 });

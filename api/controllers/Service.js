@@ -91,6 +91,15 @@ const getToken = (req) => {
     return req.headers.authorization?.split(' ')[1];
 }
 
+const getAdminId = (req) => {
+    const jwt = require('jsonwebtoken');
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    const payLoad = jwt.decode(token);
+
+    // ตรวจสอบว่ามี payLoad และมี id
+    return payLoad && payLoad.id ? payLoad.id : null;
+}
+
 module.exports = {
     isLogin,
     ownerOnly,
@@ -98,5 +107,6 @@ module.exports = {
     getEmployeeId,
     getUserLevel,
     getToken,
-    checkRouteAccess
+    checkRouteAccess,
+    getAdminId
 }
