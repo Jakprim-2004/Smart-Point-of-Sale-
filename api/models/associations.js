@@ -23,3 +23,18 @@ BillSaleDetailModel.belongsTo(BillSaleModel, {
   as: 'billSale'
 });
 
+// Add User and Member association
+const MemberModel = require('./MemberModel');
+UserModel.belongsTo(MemberModel, { 
+    foreignKey: 'userId',
+    targetKey: 'id', // Add this
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+});
+MemberModel.hasMany(UserModel, { 
+    foreignKey: 'userId',
+    sourceKey: 'id', // Add this
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+});
+

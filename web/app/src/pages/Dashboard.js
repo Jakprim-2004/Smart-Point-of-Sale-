@@ -4,12 +4,13 @@ import config from "../config";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from 'react-router-dom';
-import banknotes from '../assets/banknotes.gif'; // Add this import at the top with other imports
-import growth from '../assets/growth.gif'; // Add this import at the top with other imports
-import product from '../assets/product.gif'; // Add this import at the top with other imports
-import star from '../assets/star.gif'; // Add this import at the top with other imports
-import time from '../assets/time.gif'; // Add this import at the top with other imports
-import calendar from '../assets/calendar.gif'; // Add this import at the top with other imports
+import banknotes from '../assets/banknotes.gif'; 
+import growth from '../assets/growth.gif'; 
+import product from '../assets/product.gif'; 
+import star from '../assets/star.gif'; 
+import time from '../assets/time.gif';
+import calendar from '../assets/calendar.gif'; 
+import search from '../assets/search.gif'; 
 
 import {
   Chart as ChartJS,
@@ -377,6 +378,8 @@ function Dashboard() {
         </div>
       ) : (
         <div className="alert alert-info text-center">
+        <img src={search} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
+
           ไม่มีข้อมูลสินค้าขายดี
         </div>
       );

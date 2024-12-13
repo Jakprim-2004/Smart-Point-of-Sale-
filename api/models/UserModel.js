@@ -18,8 +18,14 @@ const UserModel = conn.define('user', {
     level: {
         type: DataTypes.STRING
     },
+    // Added foreign key constraint to ensure valid store association
     userId: {
-        type: DataTypes.BIGINT
+        type: DataTypes.BIGINT,
+        allowNull: false, // Ensure store association exists
+        references: {     // Add reference to members table
+            model: 'members',
+            key: 'id'
+        }
     }
 })
 

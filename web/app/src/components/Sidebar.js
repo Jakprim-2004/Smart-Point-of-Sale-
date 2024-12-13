@@ -11,6 +11,7 @@ import shopping from '../assets/shopping.gif';
 import report from '../assets/report.gif'; 
 import Selling from '../assets/Selling.gif'; 
 import checklist from '../assets/checklist.gif'; 
+import candidates from '../assets/candidates.gif'; 
 
 
 const Sidebar = forwardRef((props, sidebarRef) => {
@@ -27,12 +28,19 @@ const Sidebar = forwardRef((props, sidebarRef) => {
     reports: false,
     documents: false
   });
+  const [userLevel, setUserLevel] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
     fetchDataTotalBill();
+    // Get user level from localStorage
+    const storedUserType = localStorage.getItem('userType');
+    const storedUserLevel = localStorage.getItem('userLevel');
+    setUserLevel(storedUserLevel || (storedUserType === 'member' ? 'owner' : 'employee'));
   }, []);
+
+  const isOwner = userLevel === 'owner';
 
 
 //This will display:
@@ -438,7 +446,8 @@ const Sidebar = forwardRef((props, sidebarRef) => {
 
           <nav className="mt-3">
             <ul className="nav nav-pills nav-sidebar flex-column" style={styles.navContainer}>
-            <li className="nav-item " style={styles.navItem}>
+              {/* Sale menu - visible to all */}
+              <li className="nav-item" style={styles.navItem}>
                 <Link to="/sale" className="nav-link" style={styles.navLink}>
                   <span style={styles.navIcon}>
                   <img src={Selling} alt="Selling" style={{ height: '50px', marginRight: '100px' }} />
@@ -448,8 +457,10 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                 </Link>
               </li>
 
-              <li className={`nav-item ${dropdownStates.reports ? "menu-open" : ""}`} style={styles.navItem}>
-                <a href="#" 
+              {/* Reports menu - visible only to owner */}
+              {isOwner && (
+                <li className={`nav-item ${dropdownStates.reports ? "menu-open" : ""}`}>
+                  <a href="#" 
                    className="nav-link" 
                    style={styles.navLink}
                    onClick={() => handleDropdownClick('reports')}>
@@ -510,8 +521,10 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                 </Link>
               </li>
                 </ul>
-              </li>
+                </li>
+              )}
 
+              {/* Products menu - visible to all */}
               <li className={`nav-item ${dropdownStates.documents ? "menu-open" : ""}`} style={styles.navItem}>
                 <a href="#" 
                    className="nav-link" 
@@ -549,6 +562,20 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                 </ul>
               </li>
               
+              {/* Users management - visible only to owner */}
+              {isOwner && (
+                <li className="nav-item" style={styles.navItem}>
+                <Link to="/user" className="nav-link" style={styles.navLink}>
+                  <span style={styles.navIcon}>
+                  <img src={candidates} alt="candidates" style={{ height: '45px', marginRight: '100px' }} />
+
+                  </span>
+                  <span className="ml-4" style={styles.navText}>ผู้ใช้งานระบบ</span>
+                </Link>
+              </li>
+              )}
+
+              {/* Report issues - visible to all */}
               <li className="nav-item" style={styles.navItem}>
                 <Link to="/ReportUse" className="nav-link" style={styles.navLink}>
                   <span style={styles.navIcon}>

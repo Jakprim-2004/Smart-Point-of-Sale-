@@ -176,6 +176,8 @@ function Sale() {
   const [heldBills, setHeldBills] = useState([]);
   const [showQR, setShowQR] = useState(false);
   const promptPayNumber = "0000000000"; // Replace with your actual PromptPay number
+  const [totalBill, setTotalBill] = useState(0);
+  const [billAmount, setBillAmount] = useState(0);
 
   const saleRef = useRef();
   const searchInputRef = useRef();
@@ -184,6 +186,7 @@ function Sale() {
     fetchData();
     openBill();
     fetchBillSaleDetail();
+    fetchBillLimitInfo(); // Add this line
 
     if (searchInputRef.current) {
       searchInputRef.current.focus();
@@ -568,6 +571,15 @@ function Sale() {
   );
 
   const handleProductClick = (product) => {
+    if (totalBill >= billAmount) {
+      Swal.fire({
+        title: "ไม่สามารถขายได้",
+        text: "คุณได้ใช้จำนวนบิลครบตามแพ็คเกจแล้ว กรุณาอัพเกรดแพ็คเกจ",
+        icon: "warning"
+      });
+      return;
+    }
+
     if (product.remainingQty <= 0) {
       Swal.fire({
         title: "สินค้าหมด",
@@ -662,6 +674,28 @@ function Sale() {
     setShowQR(method === "PromptPay");
   };
 
+  const fetchBillLimitInfo = async () => {
+    try {
+      const res = await axios.get(
+        config.api_path + "/member/info",
+        config.headers()
+      );
+      if (res.data.message === "success") {
+        setBillAmount(res.data.result.package.bill_amount);
+        
+        const billsRes = await axios.get(
+          config.api_path + "/package/countBill", 
+          config.headers()
+        );
+        if (billsRes.data.totalBill !== undefined) {
+          setTotalBill(billsRes.data.totalBill);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching bill limit info:", error);
+    }
+  };
+
   return (
     <>
       <Template ref={saleRef}>
@@ -675,7 +709,6 @@ function Sale() {
                 ขายสินค้า
               </h5>
               <div className="button-group">
-                {/** ปุ่มสำหรับพักบิล */}
                 <button
                   onClick={() => handlePauseBill(currentBill)}
                   className="btn btn-success me-2"
@@ -1123,11 +1156,9 @@ function Sale() {
      
       <div id="slip" style={{ display: "none", width: '400px', fontFamily: 'Arial, sans-serif', fontSize: '12px', lineHeight: '1.5' }}>
   <div style={{ padding: '10px' }}>
-    
     {/* Header */}
     <div style={{ textAlign: 'center', marginBottom: '10px' }}>
       <h4 style={{ margin: '0', fontSize: '14px', fontWeight: 'bold' }}>{memberInfo?.name || ''}</h4>
-     
     </div>
 
     {/* Bill Info */}
@@ -1160,20 +1191,19 @@ function Sale() {
 
     {/* Summary */}
     <div style={{ fontSize: '12px', borderBottom: '1px dashed #000', paddingBottom: '10px' }}>
-  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-    <span style={{ flex: '1', textAlign: 'left', minWidth: '80px' }}>รวมทั้งสิ้น:</span>
-    <span style={{ flex: '1', textAlign: 'right', minWidth: '80px' }}>{(sumTotal ).toFixed(2)} บาท</span>
-  </div>
-  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-    <span style={{ flex: '1', textAlign: 'left', minWidth: '80px' }}>VAT 7%:</span>
-    <span style={{ flex: '1', textAlign: 'right', minWidth: '80px' }}>{(sumTotal * 0.07).toFixed(2)} บาท</span>
-  </div>
-  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 'bold', borderTop: '1px dashed #000', paddingTop: '5px', marginTop: '5px' }}>
-    <span style={{ flex: '1', textAlign: 'left', minWidth: '80px' }}>สุทธิ:</span>
-    <span style={{ flex: '1', textAlign: 'right', minWidth: '80px' }}>{sumTotal.toFixed(2)} บาท</span>
-  </div>
-</div>
-    
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span style={{ flex: '1', textAlign: 'left', minWidth: '80px' }}>รวมทั้งสิ้น:</span>
+        <span style={{ flex: '1', textAlign: 'right', minWidth: '80px' }}>{(sumTotal).toFixed(2)} บาท</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span style={{ flex: '1', textAlign: 'left', minWidth: '80px' }}>VAT 7%:</span>
+        <span style={{ flex: '1', textAlign: 'right', minWidth: '80px' }}>{(sumTotal * 0.07).toFixed(2)} บาท</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 'bold', borderTop: '1px dashed #000', paddingTop: '5px', marginTop: '5px' }}>
+        <span style={{ flex: '1', textAlign: 'left', minWidth: '80px' }}>สุทธิ:</span>
+        <span style={{ flex: '1', textAlign: 'right', minWidth: '80px' }}>{sumTotal.toFixed(2)} บาท</span>
+      </div>
+    </div>
 
     {/* Footer */}
     <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '12px' }}>

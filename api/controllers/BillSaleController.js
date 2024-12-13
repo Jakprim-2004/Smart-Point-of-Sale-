@@ -14,6 +14,40 @@ const getThaiDateTime = () => {
     return new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
 };
 
+// Add this helper function at the top
+const checkBillLimit = async (userId) => {
+    const MemberModel = require('../models/MemberModel');
+    const PackageModel = require('../models/PackageModel');
+    const { Op } = require('sequelize');
+
+    const member = await MemberModel.findOne({
+        where: { id: userId },
+        include: [{
+            model: PackageModel,
+            attributes: ['bill_amount']
+        }]
+    });
+
+    const currentMonth = new Date();
+    const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+
+    const billCount = await BillSaleModel.count({
+        where: {
+            userId: userId,
+            status: 'pay',
+            createdAt: {
+                [Op.gte]: startOfMonth
+            }
+        }
+    });
+
+    return {
+        hasReachedLimit: billCount >= member.package.bill_amount,
+        current: billCount,
+        limit: member.package.bill_amount
+    };
+};
+
 // API สำหรับเปิดบิล
 app.get('/billSale/openBill', service.isLogin, async (req, res) => {
     try {
@@ -41,9 +75,20 @@ app.get('/billSale/openBill', service.isLogin, async (req, res) => {
     }
 });
 
-// API สำหรับการขายสินค้า
+// Modify the sale endpoint
 app.post('/billSale/sale', service.isLogin, async (req, res) => {
     try {
+        const userId = service.getMemberId(req);
+        
+        // Check bill limit
+        const billLimit = await checkBillLimit(userId);
+        if (billLimit.hasReachedLimit) {
+            return res.status(403).send({ 
+                message: 'ไม่สามารถขายได้ เนื่องจากถึงขีดจำกัดจำนวนบิลแล้ว',
+                billInfo: billLimit
+            });
+        }
+
         const payload = {
             userId: service.getMemberId(req),
             status: 'open'

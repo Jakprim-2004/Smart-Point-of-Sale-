@@ -12,16 +12,31 @@ function Login() {
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
     const [pass, setPass] = useState('');
+    const [loginType, setLoginType] = useState('member');
+    const [username, setUsername] = useState('');
     const navigate = useNavigate();
 
     const handleSignIn = async () => {
         try {
-            const payload = { 
-                phone: phone || '', 
-                email: email || '', 
-                pass 
-            };
-            if (!phone && !email) {
+            let payload;
+            let endpoint;
+            
+            if (loginType === 'member') {
+                payload = { 
+                    phone: phone || '', 
+                    email: email || '', 
+                    pass 
+                };
+                endpoint = '/member/signin';
+            } else {
+                payload = {
+                    usr: username,
+                    pwd: pass
+                };
+                endpoint = '/user/signin';
+            }
+
+            if (loginType === 'member' && !phone && !email) {
                 Swal.fire({
                     title: 'Sign In',
                     text: 'กรุณากรอกอีเมลหรือเบอร์โทรศัพท์',
@@ -30,36 +45,38 @@ function Login() {
                 });
                 return;
             }
-            await axios.post(config.api_path + '/member/signin', payload)
-                .then(res => {
-                    if (res.data.message === 'success') {
-                        Swal.fire({
-                            title: 'Sign In',
-                            text: 'เข้าสู่ระบบแล้ว',
-                            imageUrl: welcomeIcon,
-                            imageWidth: 200,
-                            imageHeight: 200,
-                            timer: 2000
-                        });
 
-                        localStorage.setItem(config.token_name, res.data.token);
-                        navigate('/dashboard');
-                    } else {
-                        Swal.fire({
-                            title: 'Sign In',
-                            text: 'ไม่พบข้อมูลในระบบ',
-                            icon: 'warning',
-                            timer: 2000
-                        });
-                    }
-                }).catch(err => {
-                    throw err.response.data;
+            const res = await axios.post(config.api_path + endpoint, payload);
+            
+            if (res.data.message === 'success') {
+                Swal.fire({
+                    title: 'Sign In',
+                    text: 'เข้าสู่ระบบแล้ว',
+                    imageUrl: welcomeIcon,
+                    imageWidth: 200,
+                    imageHeight: 200,
+                    timer: 2000
                 });
+
+                localStorage.setItem(config.token_name, res.data.token);
+                localStorage.setItem('userType', loginType);
+                
+                // Store user level for employees
+                if (loginType === 'employee' && res.data.userInfo) {
+                    localStorage.setItem('userLevel', res.data.userInfo.level);
+                } else {
+                    localStorage.setItem('userLevel', 'owner');
+                }
+
+                navigate('/dashboard');
+            }
         } catch (error) {
             console.error(error);
             Swal.fire({
                 title: 'Sign In',
-                text: 'อีเมล/เบอร์โทร หรือรหัสผ่านไม่ถูกต้อง',
+                text: loginType === 'member' ? 
+                    'อีเมล/เบอร์โทร หรือรหัสผ่านไม่ถูกต้อง' : 
+                    'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
                 icon: 'error',
                 timer: 2000
             });
@@ -85,23 +102,44 @@ function Login() {
                         <h3 className="text-center mb-4 mt-5">Login to Retail Point of Sale </h3>
                         <div className="form-group mb-3 mt-5">
                             <label htmlFor="loginField">Email or Phone Number</label>
-                            <input 
-                                type="text" 
-                                id="loginField" 
-                                value={phone || email} 
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    if (value.includes('@')) {
-                                        setEmail(value);
-                                        setPhone('');
-                                    } else {
-                                        setPhone(value);
-                                        setEmail('');
-                                    }
-                                }} 
-                                className="form-control form-control-lg" 
-                                placeholder="Enter your email or phone number"
-                            />
+                            <div className="btn-group w-100 mb-3">
+                                <button 
+                                    className={`btn ${loginType === 'member' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                    onClick={() => setLoginType('member')}>
+                                    เจ้าของร้าน
+                                </button>
+                                <button 
+                                    className={`btn ${loginType === 'employee' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                    onClick={() => setLoginType('employee')}>
+                                    พนักงาน
+                                </button>
+                            </div>
+                            {loginType === 'member' ? (
+                                <input 
+                                    type="text" 
+                                    className="form-control form-control-lg" 
+                                    placeholder="Enter your email or phone number"
+                                    value={phone || email} 
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (value.includes('@')) {
+                                            setEmail(value);
+                                            setPhone('');
+                                        } else {
+                                            setPhone(value);
+                                            setEmail('');
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                <input 
+                                    type="text" 
+                                    className="form-control form-control-lg" 
+                                    placeholder="Enter your username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                />
+                            )}
                         </div>
                         <div className="form-group mb-4">
                             <label htmlFor="pass">Password</label>
