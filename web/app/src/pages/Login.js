@@ -88,7 +88,7 @@ function Login() {
             <div className="card login-card shadow-lg p-4">
                 <div className="row">
                     <div className="col-md-6 d-flex flex-column align-items-center justify-content-center">
-                        <h3 className="login-title">Retail Point of Sale </h3>
+                        <h3 className="login-title">Retail Point of Sale</h3>
                         <p className="login-subtitle">Online inventory management system</p>
                         <div className="w-32 h-32 mx-auto mb-4">
                             <Lottie
@@ -99,62 +99,98 @@ function Login() {
                         </div>
                     </div>
                     <div className="col-md-6 login-form-container">
-                        <h3 className="text-center mb-4 mt-5">Login to Retail Point of Sale </h3>
-                        <div className="form-group mb-3 mt-5">
-                            <label htmlFor="loginField">Email or Phone Number</label>
-                            <div className="btn-group w-100 mb-3">
-                                <button 
-                                    className={`btn ${loginType === 'member' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                    onClick={() => setLoginType('member')}>
-                                    เจ้าของร้าน
-                                </button>
-                                <button 
-                                    className={`btn ${loginType === 'employee' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                    onClick={() => setLoginType('employee')}>
-                                    พนักงาน
-                                </button>
+                        <h3 className="text-center mb-4">เข้าสู่ระบบ</h3>
+                        
+                        <nav className="nav nav-pills nav-justified mb-4">
+                            <button 
+                                className={`nav-link ${loginType === 'member' ? 'active' : ''}`}
+                                onClick={() => setLoginType('member')}>
+                                <i className="fas fa-user-tie me-2"></i>
+                                เจ้าของร้าน
+                            </button>
+                            <button 
+                                className={`nav-link ${loginType === 'employee' ? 'active' : ''}`}
+                                onClick={() => setLoginType('employee')}>
+                                <i className="fas fa-user me-2"></i>
+                                พนักงาน
+                            </button>
+                        </nav>
+
+                        <div className="login-form p-3">
+                            <div className="form-group mb-4">
+                                <label className="form-label">
+                                    {loginType === 'member' ? 'อีเมลหรือเบอร์โทรศัพท์' : 'ชื่อผู้ใช้'}
+                                </label>
+                                {loginType === 'member' ? (
+                                    <div className="input-group">
+                                        <span className="input-group-text">
+                                            <i className="fas fa-user"></i>
+                                        </span>
+                                        <input 
+                                            type="text" 
+                                            className="form-control" 
+                                            placeholder={loginType === 'member' ? "กรอกอีเมลหรือเบอร์โทรศัพท์" : "กรอกชื่อผู้ใช้"}
+                                            value={loginType === 'member' ? (phone || email) : username}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                if (loginType === 'member') {
+                                                    if (value.includes('@')) {
+                                                        setEmail(value);
+                                                        setPhone('');
+                                                    } else {
+                                                        setPhone(value);
+                                                        setEmail('');
+                                                    }
+                                                } else {
+                                                    setUsername(value);
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="input-group">
+                                        <span className="input-group-text">
+                                            <i className="fas fa-user"></i>
+                                        </span>
+                                        <input 
+                                            type="text" 
+                                            className="form-control" 
+                                            placeholder="กรอกชื่อผู้ใช้"
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value)}
+                                        />
+                                    </div>
+                                )}
                             </div>
-                            {loginType === 'member' ? (
-                                <input 
-                                    type="text" 
-                                    className="form-control form-control-lg" 
-                                    placeholder="Enter your email or phone number"
-                                    value={phone || email} 
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        if (value.includes('@')) {
-                                            setEmail(value);
-                                            setPhone('');
-                                        } else {
-                                            setPhone(value);
-                                            setEmail('');
-                                        }
-                                    }}
-                                />
-                            ) : (
-                                <input 
-                                    type="text" 
-                                    className="form-control form-control-lg" 
-                                    placeholder="Enter your username"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                />
+
+                            <div className="form-group mb-4">
+                                <label className="form-label">รหัสผ่าน</label>
+                                <div className="input-group">
+                                    <span className="input-group-text">
+                                        <i className="fas fa-lock"></i>
+                                    </span>
+                                    <input 
+                                        type="password" 
+                                        className="form-control"
+                                        placeholder="กรอกรหัสผ่าน"
+                                        value={pass}
+                                        onChange={(e) => setPass(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={handleSignIn} 
+                                className="btn btn-primary w-100 py-2 mb-3">
+                                <i className="fas fa-sign-in-alt me-2"></i>
+                                เข้าสู่ระบบ
+                            </button>
+
+                            {loginType === 'member' && (
+                                <div className="text-center">
+                                    <p className="mb-0">ยังไม่มีบัญชี? <a href="/package" className="text-primary text-decoration-none">สมัครสมาชิก</a></p>
+                                </div>
                             )}
-                        </div>
-                        <div className="form-group mb-4">
-                            <label htmlFor="pass">Password</label>
-                            <input 
-                                type="password" 
-                                id="pass" 
-                                value={pass} 
-                                onChange={(e) => setPass(e.target.value)} 
-                                className="form-control form-control-lg" 
-                                placeholder="Enter your password"
-                            />
-                        </div>
-                        <button onClick={handleSignIn} className="btn btn-primary w-100 btn-lg mb-3 mt-5">Sign In</button>
-                        <div className="text-center">
-                            <p>คุณยังไม่มีบัญชีใช้งาน? <a href="/package" className="text-primary">สร้างบัญชีใหม่</a></p>
                         </div>
                     </div>
                 </div>
