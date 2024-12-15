@@ -223,7 +223,7 @@ function User() {
                     <label>ระดับ</label>
                     <select value={user.level} onChange={e => setUser({ ...user, level: e.target.value })} className="form-control">
                         <option value="พนักงาน">พนักงาน</option>
-                        <option value="ผู้จัดการ">ผู้จัดการ</option>
+                        
                     </select>
                 </div>
                 <div className="mt-3">

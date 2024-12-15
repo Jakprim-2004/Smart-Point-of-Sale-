@@ -7,156 +7,9 @@ import Modal from "../components/Modal";
 import * as dayjs from "dayjs";
 import PrintJS from "print-js";
 import Barcode from "../components/Barcode";
-import { QRCodeSVG } from 'qrcode.react';
-import generatePayload from 'promptpay-qr';
-
-
-
-
-const styles = {
-  productCard: {
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    cursor: 'pointer',
-    background: 'linear-gradient(145deg, #ffffff, #f3f4f6)',
-    borderRadius: '20px',
-    overflow: 'hidden',
-    boxShadow: '5px 5px 15px #d1d1d1, -5px -5px 15px #ffffff',
-    '&:hover': {
-      transform: 'translateY(-5px)',
-      boxShadow: '8px 8px 20px #d1d1d1, -8px -8px 20px #ffffff'
-    }
-  },
-  totalDisplay: {
-    background: 'linear-gradient(135deg, #000428 0%, #004e92 100%)',
-    color: '#ffffff',
-    padding: '25px',
-    borderRadius: '25px',
-    textAlign: 'right',
-    fontWeight: '600',
-    fontSize: '2.5rem',
-    marginBottom: '25px',
-    boxShadow: '0 10px 20px rgba(0,0,0,0.2)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    position: 'relative',
-    overflow: 'hidden',
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      background: 'linear-gradient(45deg, transparent, rgba(255,255,255,0.1))',
-      zIndex: 1
-    }
-  },
-  searchInput: {
-    padding: '18px 25px',
-    borderRadius: '50px',
-    border: 'none',
-    fontSize: '1.1rem',
-    backgroundColor: '#f8fafc',
-    boxShadow: 'inset 2px 2px 5px #d1d1d1, inset -2px -2px 5px #ffffff',
-    width: '100%',
-    maxWidth: '500px',
-    transition: 'all 0.3s ease',
-    '&:focus': {
-      boxShadow: 'inset 4px 4px 8px #d1d1d1, inset -4px -4px 8px #ffffff',
-      outline: 'none'
-    }
-  },
-  productImage: {
-    height: '140px', 
-    width: '100%',
-    objectFit: 'contain', 
-    objectPosition: 'center',
-    borderRadius: '20px 20px 0 0',
-    transition: 'transform 0.3s ease',
-    padding: '10px', 
-    background: '#ffffff' 
-  },
-  productInfo: {
-    padding: '20px',
-    background: 'rgba(255,255,255,0.9)',
-    backdropFilter: 'blur(10px)'
-  },
-  stockBadge: {
-    position: 'absolute',
-    top: '15px',
-    right: '15px',
-    padding: '8px 15px',
-    borderRadius: '25px',
-    fontSize: '0.85rem',
-    fontWeight: '600',
-    backdropFilter: 'blur(5px)',
-    border: '1px solid rgba(255,255,255,0.2)'
-  },
-  cartContainer: {
-    background: 'linear-gradient(145deg, #ffffff, #f8fafc)',
-    borderRadius: '25px',
-    padding: '20px',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-  },
-  cartHeader: {
-    background: 'linear-gradient(135deg, #000428 0%, #004e92 100%)',
-    padding: '25px',
-    borderRadius: '20px',
-    marginBottom: '20px',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  cartTotal: {
-    color: '#ffffff',
-    fontSize: '2.5rem',
-    fontWeight: '600',
-    textAlign: 'right',
-    marginBottom: '5px',
-    textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
-  },
-  cartLabel: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: '0.9rem',
-    textAlign: 'right',
-  },
-  cartItem: {
-    background: '#ffffff',
-    borderRadius: '15px',
-    padding: '15px',
-    marginBottom: '15px',
-    transition: 'all 0.3s ease',
-    border: '1px solid #eef2f7',
-    position: 'relative',
-    '&:hover': {
-      transform: 'translateX(5px)',
-      boxShadow: '0 5px 15px rgba(0,0,0,0.05)',
-    }
-  },
-  deleteButton: {
-    width: '30px',
-    height: '30px',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    border: 'none',
-    background: '#fee2e2',
-    color: '#dc2626',
-    transition: 'all 0.3s ease',
-    '&:hover': {
-      background: '#dc2626',
-      color: '#ffffff',
-      transform: 'rotate(90deg)',
-    }
-  },
-  quantityBadge: {
-    background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-    color: '#ffffff',
-    padding: '5px 12px',
-    borderRadius: '20px',
-    fontSize: '0.9rem',
-    fontWeight: '600',
-  }
-};
+import { QRCodeSVG } from "qrcode.react";
+import generatePayload from "promptpay-qr";
+import "../styles/Sale.css";
 
 function Sale() {
   const [products, setProducts] = useState([]);
@@ -171,11 +24,11 @@ function Sale() {
   const [memberInfo, setMemberInfo] = useState({});
   const [sumTotal, setSumTotal] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, ] = useState("ทั้งหมด");
+  const [categoryFilter] = useState("ทั้งหมด");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [heldBills, setHeldBills] = useState([]);
   const [showQR, setShowQR] = useState(false);
-  const promptPayNumber = "0000000000"; // Replace with your actual PromptPay number
+  const promptPayNumber = "0656922937"; // หมายเลขพร้อมเพย์
   const [totalBill, setTotalBill] = useState(0);
   const [billAmount, setBillAmount] = useState(0);
 
@@ -186,7 +39,7 @@ function Sale() {
     fetchData();
     openBill();
     fetchBillSaleDetail();
-    fetchBillLimitInfo(); // Add this line
+    fetchBillLimitInfo();
 
     if (searchInputRef.current) {
       searchInputRef.current.focus();
@@ -278,7 +131,7 @@ function Sale() {
         });
         const updatedHeldBills = [...heldBills, bill];
         setHeldBills(updatedHeldBills);
-        localStorage.setItem("heldBills", JSON.stringify(updatedHeldBills)); 
+        localStorage.setItem("heldBills", JSON.stringify(updatedHeldBills));
         setCurrentBill({});
         setTotalPrice(0);
         setInputMoney(0);
@@ -420,8 +273,7 @@ function Sale() {
             billSaleDetails: billSaleDetailsWithVAT,
           };
 
-          
-          const currentBillStatus = currentBill.status; 
+          const currentBillStatus = currentBill.status;
           if (currentBillStatus === "paused" || currentBillStatus === "open") {
             await axios
               .post(
@@ -478,8 +330,6 @@ function Sale() {
     });
   };
 
-  
-
   const handleBillToday = async () => {
     try {
       await axios
@@ -503,31 +353,32 @@ function Sale() {
 
   const handlePrint = async () => {
     try {
-      
       const [memberRes, billRes] = await Promise.all([
         axios.get(config.api_path + "/member/info", config.headers()),
-        axios.get(config.api_path + "/billSale/lastBill", config.headers())
+        axios.get(config.api_path + "/billSale/lastBill", config.headers()),
       ]);
 
       if (memberRes.data.message === "success") {
         setMemberInfo(memberRes.data.result);
       }
 
-      if (billRes.data.message === "success" && billRes.data.result.length > 0) {
+      if (
+        billRes.data.message === "success" &&
+        billRes.data.result.length > 0
+      ) {
         const currentBill = billRes.data.result[0];
         setLastBill(currentBill);
-        
+
         // คำนวณยอดรวม
         let sum = currentBill.billSaleDetails.reduce((acc, item) => {
-          return acc + (parseInt(item.qty) * parseInt(item.price));
+          return acc + parseInt(item.qty) * parseInt(item.price);
         }, 0);
 
         const vatAmount = calculateVAT(sum, 7);
         const totalWithVAT = sum + vatAmount;
         setSumTotal(totalWithVAT);
 
-        // รอให้ state อัพเดทและ DOM เรนเดอร์
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
         // พิมพ์บิล
         const slip = document.getElementById("slip");
@@ -541,19 +392,18 @@ function Sale() {
             maxWidth: 300,
             onLoadingEnd: () => {
               slip.style.display = "none";
-            }
+            },
           });
         }
       } else {
         throw new Error("ไม่พบข้อมูลบิลล่าสุด");
       }
-
     } catch (error) {
       console.error("Print error:", error);
       Swal.fire({
         title: "พิมพ์บิลไม่สำเร็จ",
         text: error.message,
-        icon: "error"
+        icon: "error",
       });
     }
   };
@@ -566,7 +416,7 @@ function Sale() {
     (product) =>
       (product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.barcode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchQuery.toLowerCase())) && 
+        product.category.toLowerCase().includes(searchQuery.toLowerCase())) &&
       (categoryFilter === "ทั้งหมด" || product.category === categoryFilter)
   );
 
@@ -575,7 +425,7 @@ function Sale() {
       Swal.fire({
         title: "ไม่สามารถขายได้",
         text: "คุณได้ใช้จำนวนบิลครบตามแพ็คเกจแล้ว กรุณาอัพเกรดแพ็คเกจ",
-        icon: "warning"
+        icon: "warning",
       });
       return;
     }
@@ -682,9 +532,9 @@ function Sale() {
       );
       if (res.data.message === "success") {
         setBillAmount(res.data.result.package.bill_amount);
-        
+
         const billsRes = await axios.get(
-          config.api_path + "/package/countBill", 
+          config.api_path + "/package/countBill",
           config.headers()
         );
         if (billsRes.data.totalBill !== undefined) {
@@ -749,7 +599,7 @@ function Sale() {
                   <i className="fa fa-file me-2"></i>บิลวันนี้
                 </button>
                 {/** ปุ่มสำหรับดูบิลล่าสุด */}
-                
+
                 {/** ปุ่มสำหรับพิมพ์บิลล่าสุด */}
                 <button
                   onClick={handlePrint}
@@ -767,61 +617,61 @@ function Sale() {
             <div className="row g-4">
               <div className="col-lg-9 col-md-8">
                 <div className="d-flex justify-content-between align-items-center mb-4">
-                  <input 
+                  <input
                     type="text"
-                    className="form-control form-control-lg"
+                    className="form-control form-control-lg search-input"
                     placeholder="🔍 ค้นหาสินค้า..."
-                    style={styles.searchInput}
                     value={searchQuery}
                     onChange={handleSearchChange}
                     ref={searchInputRef}
                   />
-                  
-                 
                 </div>
 
                 <div className="row g-4">
                   {filteredProducts.length > 0 ? (
                     filteredProducts.map((item) => (
                       <div className="col-sm-6 col-md-4 col-lg-3" key={item.id}>
-                        <div 
-                          className="card h-100" 
-                          style={styles.productCard}
+                        <div
+                          className="card h-100 product-card"
                           onClick={() => handleProductClick(item)}
                         >
                           <div className="position-relative">
                             <img
                               src={`${config.api_path}/uploads/${item.productImages[0].imageName}`}
-                              style={styles.productImage}
+                              className="product-image"
                               alt={item.name}
                             />
-                            <div 
+                            <div
+                              className="stock-badge"
                               style={{
-                                ...styles.stockBadge,
-                                background: item.remainingQty > 0 
-                                  ? 'rgba(52, 211, 153, 0.9)' 
-                                  : 'rgba(239, 68, 68, 0.9)',
-                                color: '#ffffff'
+                                background:
+                                  item.remainingQty > 0
+                                    ? "rgba(52, 211, 153, 0.9)"
+                                    : "rgba(239, 68, 68, 0.9)",
+                                color: "#ffffff",
                               }}
                             >
-                               {item.remainingQty}
+                              {item.remainingQty}
                             </div>
                           </div>
-                          
-                          <div style={styles.productInfo}>
-                            <h6 className="fw-bold mb-2">{item.name } </h6><span className="h5 mb-0" style={{color: '#2563eb'}}>
-                                ฿{parseInt(item.price).toLocaleString("th-TH")}
-                              </span>
+
+                          <div className="product-info">
+                            <h6 className="fw-bold mb-2">{item.name} </h6>
+                            <span
+                              className="h5 mb-0"
+                              style={{ color: "#2563eb" }}
+                            >
+                              ฿{parseInt(item.price).toLocaleString("th-TH")}
+                            </span>
                             <div className="text-center mb-3">
-                              <Barcode 
-                                value={item.barcode} 
-                                width={1} 
+                              <Barcode
+                                value={item.barcode}
+                                width={1}
                                 height={40}
                                 fontSize={12}
                                 background="transparent"
                               />
                             </div>
-                            
                           </div>
                         </div>
                       </div>
@@ -833,70 +683,90 @@ function Sale() {
               </div>
 
               <div className="col-lg-3 col-md-4">
-                <div className="position-sticky" style={{top: '1rem'}}>
-                  <div style={styles.cartContainer}>
-                    <div style={styles.cartHeader}>
-                      <div style={styles.cartTotal}>
+                <div className="position-sticky" style={{ top: "1rem" }}>
+                  <div className="cart-container">
+                    <div className="cart-header">
+                      <div className="cart-total">
                         {totalPrice.toLocaleString("th-TH")} ฿
                       </div>
-                      <div style={styles.cartLabel}>
-                        รวม VAT 7%
-                      </div>
+                      <div className="cart-label">รวม VAT 7%</div>
                     </div>
 
-                    <div className="cart-items" style={{
-                      maxHeight: '65vh',
-                      overflowY: 'auto',
-                      padding: '5px'
-                    }}>
+                    <div
+                      className="cart-items"
+                      style={{
+                        maxHeight: "65vh",
+                        overflowY: "auto",
+                        padding: "5px",
+                      }}
+                    >
                       {currentBill?.billSaleDetails?.length > 0 ? (
                         currentBill.billSaleDetails.map((item) => (
-                          <div key={item.id} style={styles.cartItem}>
+                          <div key={item.id} className="cart-item">
                             <div className="d-flex align-items-center mb-2">
                               <div className="flex-grow-1">
-                                <h6 className="mb-0" style={{color: '#1e40af', fontWeight: '600'}}>
-                                  {item.product.name} 
+                                <h6
+                                  className="mb-0"
+                                  style={{
+                                    color: "#1e40af",
+                                    fontWeight: "600",
+                                  }}
+                                >
+                                  {item.product.name}
                                 </h6>
                                 <small className="text-muted">
                                   {item.barcode}
                                 </small>
                               </div>
-                              <span style={styles.quantityBadge}>
-                                {item.qty}
-                              </span>
+                              <span className="quantity-badge">{item.qty}</span>
                             </div>
-                            
+
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <span className="text-muted" style={{fontSize: '0.9rem'}}>
-                                  {parseInt(item.price).toLocaleString("th-TH")} ฿ × {item.qty}
+                                <span
+                                  className="text-muted"
+                                  style={{ fontSize: "0.9rem" }}
+                                >
+                                  {parseInt(item.price).toLocaleString("th-TH")}{" "}
+                                  ฿ × {item.qty}
                                 </span>
                               </div>
                               <div className="d-flex align-items-center">
-                                <span className="me-3" style={{
-                                  color: '#059669',
-                                  fontWeight: '600',
-                                  fontSize: '1.1rem'
-                                }}>
-                                  {(item.qty * item.price).toLocaleString("th-TH")} ฿
+                                <span
+                                  className="me-3"
+                                  style={{
+                                    color: "#059669",
+                                    fontWeight: "600",
+                                    fontSize: "1.1rem",
+                                  }}
+                                >
+                                  {(item.qty * item.price).toLocaleString(
+                                    "th-TH"
+                                  )}{" "}
+                                  ฿
                                 </span>
                                 <button
                                   onClick={() => handleDelete(item)}
-                                  style={styles.deleteButton}
+                                  className="delete-button"
                                   title="ลบรายการ"
                                 >
                                   <i className="fa fa-times"></i>
                                 </button>
                               </div>
                             </div>
-                            
-                            <div className="progress mt-2" style={{height: '4px'}}>
-                              <div 
-                                className="progress-bar bg-success" 
-                                role="progressbar" 
+
+                            <div
+                              className="progress mt-2"
+                              style={{ height: "4px" }}
+                            >
+                              <div
+                                className="progress-bar bg-success"
+                                role="progressbar"
                                 style={{
-                                  width: `${(item.qty / item.product.remainingQty) * 100}%`,
-                                  borderRadius: '2px'
+                                  width: `${
+                                    (item.qty / item.product.remainingQty) * 100
+                                  }%`,
+                                  borderRadius: "2px",
                                 }}
                               />
                             </div>
@@ -904,10 +774,13 @@ function Sale() {
                         ))
                       ) : (
                         <div className="text-center py-5">
-                          <i className="fa fa-shopping-cart mb-3" style={{
-                            fontSize: '3rem',
-                            color: '#cbd5e1'
-                          }}></i>
+                          <i
+                            className="fa fa-shopping-cart mb-3"
+                            style={{
+                              fontSize: "3rem",
+                              color: "#cbd5e1",
+                            }}
+                          ></i>
                           <p className="text-muted mb-0">ไม่มีสินค้าในตะกร้า</p>
                         </div>
                       )}
@@ -1056,16 +929,9 @@ function Sale() {
 
           {paymentMethod === "PromptPay" ? (
             <div className="text-center mt-4">
-              <QRCodeSVG 
-                value={generateQRCode()}
-                size={256}
-                level="L"
-              />
+              <QRCodeSVG value={generateQRCode()} size={256} level="L" />
               <p className="mt-2">สแกนเพื่อชำระเงิน</p>
-              <button
-                onClick={handleEndSale}
-                className="btn btn-success mt-2"
-              >
+              <button onClick={handleEndSale} className="btn btn-success mt-2">
                 ยืนยันการชำระเงิน
               </button>
             </div>
@@ -1110,222 +976,174 @@ function Sale() {
       </Modal>
 
       <Modal
-  id="modalBillSaleDetail"
-  title="รายละเอียดในบิล"
-  modalSize="modal-lg"
->
-  <div className="p-4" style={{ fontFamily: "'Kanit', sans-serif" }}>
-    <div className="bg-light p-3 rounded mb-4 shadow-sm">
- 
-      <table className="table table-hover table-striped">
-        <thead>
-          <tr>
-            <th>รายการ</th>
-            <th>จำนวน</th>
-            <th>ราคา</th>
-            <th>ยอดรวม</th>
-          </tr>
-        </thead>
-        <tbody>
-          {selectedBill?.billSaleDetails?.length > 0 ? (
-            selectedBill.billSaleDetails.map((item, index) => (
-              <tr key={index}>
-                <td>{item.product.name}</td>
-                <td className="text-start">{item.qty}</td>
-                <td className="text-start">
-                  {item.price.toLocaleString("th-TH")} บาท
-                </td>
-                <td className="text-start">
-                  {(item.qty * item.price).toLocaleString("th-TH")} บาท
-                </td>
+        id="modalBillSaleDetail"
+        title="รายละเอียดในบิล"
+        modalSize="modal-lg"
+      >
+        <div className="p-4" style={{ fontFamily: "'Kanit', sans-serif" }}>
+          <div className="bg-light p-3 rounded mb-4 shadow-sm">
+            <table className="table table-hover table-striped">
+              <thead>
+                <tr>
+                  <th>รายการ</th>
+                  <th>จำนวน</th>
+                  <th>ราคา</th>
+                  <th>ยอดรวม</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedBill?.billSaleDetails?.length > 0 ? (
+                  selectedBill.billSaleDetails.map((item, index) => (
+                    <tr key={index}>
+                      <td>{item.product.name}</td>
+                      <td className="text-start">{item.qty}</td>
+                      <td className="text-start">
+                        {item.price.toLocaleString("th-TH")} บาท
+                      </td>
+                      <td className="text-start">
+                        {(item.qty * item.price).toLocaleString("th-TH")} บาท
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="text-center text-muted">
+                      ไม่มีรายการสินค้า
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </Modal>
+
+      <div
+        id="slip"
+        style={{
+          display: "none",
+          width: "400px",
+          fontFamily: "Arial, sans-serif",
+          fontSize: "12px",
+          lineHeight: "1.5",
+        }}
+      >
+        <div style={{ padding: "10px" }}>
+          {/* Header */}
+          <div style={{ textAlign: "center", marginBottom: "10px" }}>
+            <h4 style={{ margin: "0", fontSize: "14px", fontWeight: "bold" }}>
+              {memberInfo?.name || ""}
+            </h4>
+          </div>
+
+          {/* Bill Info */}
+          <div
+            style={{
+              marginBottom: "10px",
+              borderBottom: "1px dashed #000",
+              paddingBottom: "10px",
+            }}
+          >
+            <p style={{ margin: "0" }}>
+              วันที่: {dayjs(lastBill?.createdAt).format("DD/MM/YYYY HH:mm")}
+            </p>
+            <p style={{ margin: "0" }}>เลขที่บิล: {lastBill?.id || "-"}</p>
+          </div>
+
+          {/* Items Table */}
+          <table
+            style={{
+              width: "100%",
+              marginBottom: "10px",
+              borderBottom: "1px dashed #000",
+            }}
+          >
+            <thead>
+              <tr>
+                <th
+                  style={{
+                    textAlign: "left",
+                    fontSize: "12px",
+                    paddingBottom: "5px",
+                  }}
+                >
+                  รายการ
+                </th>
+                <th style={{ textAlign: "center", fontSize: "12px" }}>จำนวน</th>
+                <th style={{ textAlign: "right", fontSize: "12px" }}>ราคา</th>
+                <th style={{ textAlign: "right", fontSize: "12px" }}>รวม</th>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="3" className="text-center text-muted">
-                ไม่มีรายการสินค้า
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</Modal>
+            </thead>
+            <tbody>
+              {lastBill?.billSaleDetails?.map((item, index) => (
+                <tr key={index}>
+                  <td style={{ textAlign: "left", paddingTop: "3px" }}>
+                    {item.product.name || "D"}
+                  </td>
+                  <td style={{ textAlign: "center" }}>{item.qty || 1}</td>
+                  <td style={{ textAlign: "right" }}>
+                    {parseFloat(item.price).toLocaleString("th-TH")}
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    {(item.qty * item.price).toLocaleString("th-TH")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-     
-      <div id="slip" style={{ display: "none", width: '400px', fontFamily: 'Arial, sans-serif', fontSize: '12px', lineHeight: '1.5' }}>
-  <div style={{ padding: '10px' }}>
-    {/* Header */}
-    <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-      <h4 style={{ margin: '0', fontSize: '14px', fontWeight: 'bold' }}>{memberInfo?.name || ''}</h4>
-    </div>
+          {/* Summary */}
+          <div
+            style={{
+              fontSize: "12px",
+              borderBottom: "1px dashed #000",
+              paddingBottom: "10px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ flex: "1", textAlign: "left", minWidth: "80px" }}>
+                รวมทั้งสิ้น:
+              </span>
+              <span style={{ flex: "1", textAlign: "right", minWidth: "80px" }}>
+                {sumTotal.toFixed(2)} บาท
+              </span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ flex: "1", textAlign: "left", minWidth: "80px" }}>
+                VAT 7%:
+              </span>
+              <span style={{ flex: "1", textAlign: "right", minWidth: "80px" }}>
+                {(sumTotal * 0.07).toFixed(2)} บาท
+              </span>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "14px",
+                fontWeight: "bold",
+                borderTop: "1px dashed #000",
+                paddingTop: "5px",
+                marginTop: "5px",
+              }}
+            >
+              <span style={{ flex: "1", textAlign: "left", minWidth: "80px" }}>
+                สุทธิ:
+              </span>
+              <span style={{ flex: "1", textAlign: "right", minWidth: "80px" }}>
+                {sumTotal.toFixed(2)} บาท
+              </span>
+            </div>
+          </div>
 
-    {/* Bill Info */}
-    <div style={{ marginBottom: '10px', borderBottom: '1px dashed #000', paddingBottom: '10px' }}>
-      <p style={{ margin: '0' }}>วันที่: {dayjs(lastBill?.createdAt).format('DD/MM/YYYY HH:mm')}</p>
-      <p style={{ margin: '0' }}>เลขที่บิล: {lastBill?.id || '-'}</p>
-    </div>
-
-    {/* Items Table */}
-    <table style={{ width: '100%', marginBottom: '10px', borderBottom: '1px dashed #000' }}>
-      <thead>
-        <tr>
-          <th style={{ textAlign: 'left', fontSize: '12px', paddingBottom: '5px' }}>รายการ</th>
-          <th style={{ textAlign: 'center', fontSize: '12px' }}>จำนวน</th>
-          <th style={{ textAlign: 'right', fontSize: '12px' }}>ราคา</th>
-          <th style={{ textAlign: 'right', fontSize: '12px' }}>รวม</th>
-        </tr>
-      </thead>
-      <tbody>
-        {lastBill?.billSaleDetails?.map((item, index) => (
-          <tr key={index}>
-            <td style={{ textAlign: 'left', paddingTop: '3px' }}>{item.product.name || 'D'}</td>
-            <td style={{ textAlign: 'center' }}>{item.qty || 1}</td>
-            <td style={{ textAlign: 'right' }}>{parseFloat(item.price).toLocaleString('th-TH')}</td>
-            <td style={{ textAlign: 'right' }}>{(item.qty * item.price).toLocaleString('th-TH')}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-
-    {/* Summary */}
-    <div style={{ fontSize: '12px', borderBottom: '1px dashed #000', paddingBottom: '10px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ flex: '1', textAlign: 'left', minWidth: '80px' }}>รวมทั้งสิ้น:</span>
-        <span style={{ flex: '1', textAlign: 'right', minWidth: '80px' }}>{(sumTotal).toFixed(2)} บาท</span>
+          {/* Footer */}
+          <div
+            style={{ textAlign: "center", marginTop: "10px", fontSize: "12px" }}
+          >
+            <p style={{ margin: "0" }}>*** ขอบคุณที่ใช้บริการ ***</p>
+          </div>
+        </div>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ flex: '1', textAlign: 'left', minWidth: '80px' }}>VAT 7%:</span>
-        <span style={{ flex: '1', textAlign: 'right', minWidth: '80px' }}>{(sumTotal * 0.07).toFixed(2)} บาท</span>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 'bold', borderTop: '1px dashed #000', paddingTop: '5px', marginTop: '5px' }}>
-        <span style={{ flex: '1', textAlign: 'left', minWidth: '80px' }}>สุทธิ:</span>
-        <span style={{ flex: '1', textAlign: 'right', minWidth: '80px' }}>{sumTotal.toFixed(2)} บาท</span>
-      </div>
-    </div>
-
-    {/* Footer */}
-    <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '12px' }}>
-      <p style={{ margin: '0' }}>*** ขอบคุณที่ใช้บริการ ***</p>
-    </div>
-  </div>
-</div>
-
-      <style>
-        {`
-          @keyframes glow {
-            from {
-              box-shadow: 0 0 10px rgba(112, 254, 63, 0.2),
-                          0 0 20px rgba(112, 254, 63, 0.1);
-            }
-            to {
-              box-shadow: 0 0 20px rgba(112, 254, 63, 0.4),
-                          0 0 30px rgba(112, 254, 63, 0.2);
-            }
-          }
-
-          .cart-items::-webkit-scrollbar {
-            width: 8px;
-          }
-
-          .cart-items::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-          }
-
-          .cart-items::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-          }
-
-          .cart-items::-webkit-scrollbar-thumb:hover {
-            background: #555;
-          }
-
-          .card {
-            border: none;
-            transition: all 0.3s ease;
-          }
-          
-          .btn {
-            transition: all 0.3s ease;
-          }
-          
-          .btn:hover {
-            transform: translateY(-2px);
-          }
-          
-          .cart-items {
-            border-radius: 20px;
-            background: linear-gradient(145deg, #ffffff, #f3f4f6);
-            padding: 20px;
-          }
-          
-          .cart-items::-webkit-scrollbar {
-            width: 8px;
-            border-radius: 4px;
-          }
-          
-          .cart-items::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-          }
-          
-          .cart-items::-webkit-scrollbar-thumb {
-            background: linear-gradient(45deg, #3b82f6, #2563eb);
-            border-radius: 4px;
-          }
-          
-          @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
-            100% { transform: translateY(0px); }
-          }
-          
-          .product-card:hover img {
-            transform: scale(1.05);
-          }
-          
-          .cart-items {
-            scrollbar-width: thin;
-            scrollbar-color: #94a3b8 #f1f5f9;
-          }
-          
-          .cart-items::-webkit-scrollbar {
-            width: 6px;
-          }
-          
-          .cart-items::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 3px;
-          }
-          
-          .cart-items::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-            border-radius: 3px;
-          }
-          
-          .cart-items::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-          }
-          
-          @keyframes slideIn {
-            from {
-              opacity: 0;
-              transform: translateX(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
-          
-          .cart-item {
-            animation: slideIn 0.3s ease;
-          }
-        `}
-      </style>
     </>
   );
 }
