@@ -14,6 +14,7 @@ const isLogin = (req, res, next) => {
             res.send({ message: 'กรูณาเข้าสู่ระบบใหม่' });
         }
     } catch (e) {
+        console.log('Token error:', e); // เพิ่มบรรทัดนี้
         res.statusCode = 401;
         res.send({ message: e.message });
     }
@@ -44,7 +45,8 @@ const ownerOnly = (req, res, next) => {
 const allowedEmployeeRoutes = [
   '/sale',
   '/product',
-  '/ReportUse'
+  '/ReportUse',
+  
 ];
 
 // ฟังก์ชั่นตรวจสอบสิทธิ์การเข้าถึงเส้นทาง

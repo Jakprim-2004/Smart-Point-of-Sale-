@@ -792,7 +792,6 @@ router.post('/stock/combinedReport', async (req, res) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // Get sales data with product information
     const results = await BillSaleDetailModel.findAll({
       attributes: [
         'productId',
@@ -813,6 +812,7 @@ router.post('/stock/combinedReport', async (req, res) => {
       },
       group: ['productId', 'product.name', 'product.cost', 'product.price'],
       having: sequelize.literal('SUM(qty) > 0'),
+      order: [[sequelize.literal('SUM(qty)'), 'DESC']],
       raw: true
     });
 
@@ -820,10 +820,10 @@ router.post('/stock/combinedReport', async (req, res) => {
       message: 'success',
       results: results.map(item => ({
         productId: item.productId,
-        name: item['product.name'] || '',
+        name: item.product?.name || '',
         soldQty: parseInt(item.soldQty) || 0,
-        cost: parseFloat(item['product.cost']) || 0,
-        price: parseFloat(item['product.price']) || 0,
+        cost: parseFloat(item.product?.cost) || 0,
+        price: parseFloat(item.product?.price) || 0,
         totalAmount: parseFloat(item.totalAmount) || 0,
         netProfit: parseFloat(item.netProfit) || 0
       }))

@@ -4,13 +4,12 @@ import config from "../config";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from 'react-router-dom';
-import banknotes from '../assets/banknotes.gif'; 
-import growth from '../assets/growth.gif'; 
-import product from '../assets/product.gif'; 
-import star from '../assets/star.gif'; 
-import time from '../assets/time.gif';
-import calendar from '../assets/calendar.gif'; 
-import search from '../assets/search.gif'; 
+import banknotes from '../assets/banknotes.png';
+import growth from '../assets/growth.svg';
+import product from '../assets/product.png';
+import star from '../assets/star.png';
+import time from '../assets/time.svg';
+import calendar from '../assets/calendar.svg';
 
 import {
   Chart as ChartJS,
@@ -154,7 +153,7 @@ function Dashboard() {
 
   const reportTopSellingProducts = async () => {
     try {
-      const url = config.api_path + "/reportTopSellingProducts"; 
+      const url = config.api_path + "/reportTopSellingProducts";
       const res = await axios.get(url, config.headers());
       if (res.data.message === "success") {
         const results = res.data.results;
@@ -258,7 +257,7 @@ function Dashboard() {
     const WARNING_THRESHOLD = 10;  // สีเหลือง
     const lowStockProducts = stockData.filter(item => item.remainingQty <= WARNING_THRESHOLD);
     setLowStockCount(lowStockProducts.length);
-    setLowStockItems(lowStockProducts); 
+    setLowStockItems(lowStockProducts);
   };
 
   const navigateToBillSales = () => {
@@ -271,9 +270,9 @@ function Dashboard() {
 
   const renderTopSellingContent = () => {
     if (topSellingViewType === 'products') {
-      const totalAmount = topSellingProducts.reduce((sum, item) => 
+      const totalAmount = topSellingProducts.reduce((sum, item) =>
         sum + parseFloat(item.totalAmount || 0), 0);
-  
+
       const chartData = {
         labels: topSellingProducts.map(item => ''),  // Empty labels for chart
         datasets: [{
@@ -287,7 +286,7 @@ function Dashboard() {
           ],
         }]
       };
-  
+
       return topSellingProducts.length > 0 ? (
         <div style={{ position: 'relative', height: '100%', padding: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'start' }}>
@@ -297,10 +296,10 @@ function Dashboard() {
                   data={chartData}
                   options={{
                     maintainAspectRatio: true,
-                    aspectRatio: 1, // ปรับให้กราฟเป็นวงกลมสมบูรณ์
+                    aspectRatio: 1,
                     plugins: {
                       legend: { display: false },
-                      tooltip: { 
+                      tooltip: {
                         enabled: true,
                         callbacks: {
                           title: (items) => {
@@ -355,7 +354,7 @@ function Dashboard() {
                 const amount = parseFloat(item.totalAmount || 0);
                 const percentage = ((amount / totalAmount) * 100).toFixed(2);
                 return (
-                  <div 
+                  <div
                     key={index}
                     style={{
                       marginBottom: '15px',
@@ -377,16 +376,16 @@ function Dashboard() {
           </div>
         </div>
       ) : (
-        <div className="alert alert-info text-center">
-        <img src={search} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
 
-          ไม่มีข้อมูลสินค้าขายดี
+        <div className="alert alert-info text-center">
+          <i className="fas fa-question-circle fa-2x mb-2"></i>
+          <p>ไม่มีข้อมูลสินค้าขายดี</p>
         </div>
       );
     } else {
-      const totalAmount = topSellingCategories.reduce((sum, item) => 
+      const totalAmount = topSellingCategories.reduce((sum, item) =>
         sum + parseFloat(item.totalAmount || 0), 0);
-  
+
       const chartData = {
         labels: topSellingCategories.map(item => ''),
         datasets: [{
@@ -400,18 +399,18 @@ function Dashboard() {
           ],
         }]
       };
-  
+
       return topSellingCategories.length > 0 ? (
         <div style={{ position: 'relative', height: '100%', padding: '10px' }}>
           <div className="d-flex justify-content-end mb-2">
-            <i 
-              className="fas fa-chart-pie mx-2" 
+            <i
+              className="fas fa-chart-pie mx-2"
               style={topSellingChartType === 'pie' ? styles.activeIcon : styles.inactiveIcon}
               onClick={() => setTopSellingChartType('pie')}
               title="กราฟวงกลม"
             />
-            <i 
-              className="fas fa-chart-bar mx-2" 
+            <i
+              className="fas fa-chart-bar mx-2"
               style={topSellingChartType === 'bar' ? styles.activeIcon : styles.inactiveIcon}
               onClick={() => setTopSellingChartType('bar')}
               title="กราฟแท่ง"
@@ -427,7 +426,7 @@ function Dashboard() {
                     aspectRatio: 1, // ปรับให้กราฟเป็นวงกลมสมบูรณ์
                     plugins: {
                       legend: { display: false },
-                      tooltip: { 
+                      tooltip: {
                         enabled: true,
                         callbacks: {
                           title: (items) => {
@@ -507,11 +506,11 @@ function Dashboard() {
       );
     }
   };
-  
+
 
   const renderPaymentChart = () => {
     const total = paymentStats.reduce((sum, stat) => sum + parseFloat(stat.total || 0), 0);
-  
+
     const chartData = {
       labels: paymentStats.map(stat => ''), // Empty labels
       datasets: [{
@@ -524,11 +523,11 @@ function Dashboard() {
         ]
       }]
     };
-  
+
     const barChartOptions = {
       indexAxis: 'y',
       maintainAspectRatio: false,
-      plugins: { 
+      plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
@@ -557,9 +556,9 @@ function Dashboard() {
                 options={{
                   maintainAspectRatio: true,
                   aspectRatio: 1, // ปรับให้กราฟเป็นวงกลมสมบูรณ์
-                  plugins: { 
+                  plugins: {
                     legend: { display: false },
-                    tooltip: { 
+                    tooltip: {
                       enabled: true,
                       callbacks: {
                         title: (items) => {
@@ -594,7 +593,7 @@ function Dashboard() {
               const amount = parseFloat(stat.total || 0);
               const percentage = ((amount / total) * 100).toFixed(2);
               return (
-                <div 
+                <div
                   key={index}
                   style={{
                     marginBottom: '15px',
@@ -617,7 +616,7 @@ function Dashboard() {
       </div>
     );
   };
-  
+
 
   // Consolidate styles into a single styles object
   const styles = {
@@ -685,13 +684,13 @@ function Dashboard() {
         <div className="row mb-4">
 
           <div className="col-12">
-            <div style={{...styles.chartContainer, background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'}}>
+            <div style={{ ...styles.chartContainer, background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)' }}>
 
 
               <div style={styles.modernHeader}>
                 <h4 className="text-dark" style={{ margin: 0, fontWeight: '600' }}>
-                <img src={growth} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
-                  ยอดขายวันนี้ {currentTime.toLocaleDateString('th-TH')} 
+                  <img src={growth} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
+                  ยอดขายวันนี้ {currentTime.toLocaleDateString('th-TH')}
                   <span className="ms-2 badge bg-secondary text-dark">
                     {currentTime.toLocaleTimeString('th-TH')}
                   </span>
@@ -706,7 +705,7 @@ function Dashboard() {
                       <i className="fas fa-wallet text-primary fa-lg"></i>
                     </div>
                     <h3 className="text-primary mb-0">฿ {todaySales.totalAmount.toLocaleString()}</h3>
-                    
+
                   </div>
                 </div>
 
@@ -731,7 +730,7 @@ function Dashboard() {
                       <h5 className="mb-0">จำนวนบิล</h5>
                       <i className="fas fa-receipt text-info fa-lg"></i>
                     </div>
-                    <h3 
+                    <h3
                       className="text-info mb-0"
                       style={{
                         ...styles.clickableNumber,
@@ -758,7 +757,7 @@ function Dashboard() {
                       <h5 className="mb-0">เฉลี่ย/บิล</h5>
                       <i className="fas fa-calculator text-info fa-lg"></i>
                     </div>
-                    <h3 
+                    <h3
                       className="text-info mb-0"
                       style={{
                         ...styles.clickableNumber,
@@ -779,25 +778,25 @@ function Dashboard() {
                   </div>
                 </div>
 
-                
+
 
               </div>
 
               <div className="p-4">
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <h5 className="mb-0">
-                  <img src={time} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
+                    <img src={time} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
                     ยอดขายตามช่วงเวลา
                   </h5>
                   <div>
-                    <i 
-                      className="fas fa-chart-line mx-2" 
+                    <i
+                      className="fas fa-chart-line mx-2"
                       style={hourlyChartType === 'line' ? styles.activeIcon : styles.inactiveIcon}
                       onClick={() => setHourlyChartType('line')}
                       title="กราฟเส้น"
                     />
-                    <i 
-                      className="fas fa-chart-bar mx-2" 
+                    <i
+                      className="fas fa-chart-bar mx-2"
                       style={hourlyChartType === 'bar' ? styles.activeIcon : styles.inactiveIcon}
                       onClick={() => setHourlyChartType('bar')}
                       title="กราฟแท่ง"
@@ -848,16 +847,16 @@ function Dashboard() {
 
 
         <div className="row g-4">
-        <div className="col-md-4 ">
+          <div className="col-md-4 ">
             <div className="card h-100" style={styles.summaryCard}>
               <div className="card-header text-center bg-muted">
-                <div className="d-flex justify-content-between align-items-center">                      
+                <div className="d-flex justify-content-between align-items-center">
                   <div className="d-flex align-items-center gap-2">
-                  <img src={star} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
+                    <img src={star} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
 
-                    <select 
-                      className="form-select form-select-sm" 
-                      style={{ 
+                    <select
+                      className="form-select form-select-sm"
+                      style={{
                         width: 'auto',
                         backgroundColor: 'transparent',
                         border: 'none',
@@ -868,29 +867,29 @@ function Dashboard() {
                       }}
                       value={topSellingViewType}
                       onChange={(e) => setTopSellingViewType(e.target.value)}
-                    > 
+                    >
                       <option value="products" style={{ color: 'black' }}> สินค้า</option>
                       <option value="categories" style={{ color: 'black' }}>หมวดหมู่ </option>
                     </select>
-                    <span 
-                    
-                    className="text-black"> ขายดี 5 อันดับ</span>
+                    <span
+
+                      className="text-black"> ขายดี 5 อันดับ</span>
                   </div>
                   <div>
-                    <i 
-                      className="fas fa-chart-pie mx-2" 
+                    <i
+                      className="fas fa-chart-pie mx-2"
                       style={topSellingChartType === 'pie' ? styles.activeIcon : styles.inactiveIcon}
                       onClick={() => setTopSellingChartType('pie')}
                       title="กราฟวงกลม"
                     />
-                    <i 
-                      className="fas fa-chart-bar mx-2" 
+                    <i
+                      className="fas fa-chart-bar mx-2"
                       style={topSellingChartType === 'bar' ? styles.activeIcon : styles.inactiveIcon}
                       onClick={() => setTopSellingChartType('bar')}
                       title="กราฟแท่ง"
                     />
                   </div>
-                </div>   
+                </div>
               </div>
               <div
                 className="card-body"
@@ -919,14 +918,14 @@ function Dashboard() {
                     วิธีการชำระเงิน
                   </h4>
                   <div>
-                    <i 
-                      className="fas fa-chart-pie mx-2" 
+                    <i
+                      className="fas fa-chart-pie mx-2"
                       style={paymentChartType === 'pie' ? styles.activeIcon : styles.inactiveIcon}
                       onClick={() => setPaymentChartType('pie')}
                       title="กราฟวงกลม"
                     />
-                    <i 
-                      className="fas fa-chart-bar mx-2" 
+                    <i
+                      className="fas fa-chart-bar mx-2"
                       style={paymentChartType === 'bar' ? styles.activeIcon : styles.inactiveIcon}
                       onClick={() => setPaymentChartType('bar')}
                       title="กราฟแท่ง"
@@ -945,13 +944,13 @@ function Dashboard() {
               <div className="card-header text-center bg-muted">
                 <div className="d-flex justify-content-between align-items-center">
                   <h4 className="mb-0">
-                  <img src={product} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
+                    <img src={product} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
                     สินค้าใกล้หมด
                   </h4>
-                  <span 
+                  <span
                     onClick={navigateToStock}
-                    className="badge bg-danger fs-5" 
-                    style={{ 
+                    className="badge bg-danger fs-5"
+                    style={{
                       padding: '8px 15px',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
@@ -970,7 +969,7 @@ function Dashboard() {
                   </span>
                 </div>
               </div>
-              <div 
+              <div
                 className="card-body"
                 style={{
                   height: "320px",
@@ -1003,7 +1002,7 @@ function Dashboard() {
                             </div>
                           </div>
                         </div>
-                    ))}
+                      ))}
 
                     {/* แสดงสินค้าที่ใกล้หมดระดับเตือน (สีเหลือง) */}
                     {lowStockItems
@@ -1028,7 +1027,7 @@ function Dashboard() {
                             </div>
                           </div>
                         </div>
-                    ))}
+                      ))}
                   </div>
                 ) : (
                   <div className="alert alert-success m-3 text-center">
@@ -1044,7 +1043,7 @@ function Dashboard() {
               <div className="card-header text-center bg-muted text-white">
                 <div className="d-flex justify-content-between align-items-center">
                   <h4 className="mb-0 text-dark">
-                  <img src={calendar} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
+                    <img src={calendar} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
                     สินค้าใกล้หมดอายุ
                   </h4>
                   <span className="badge bg-danger fs-5">
@@ -1052,7 +1051,7 @@ function Dashboard() {
                   </span>
                 </div>
               </div>
-              <div 
+              <div
                 className="card-body"
                 style={{
                   height: "320px",
@@ -1066,7 +1065,7 @@ function Dashboard() {
                       const expiryDate = new Date(item.expirationdate);
                       const daysUntilExpiry = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
                       const isVeryNear = daysUntilExpiry <= 30;
-                      
+
                       return (
                         <div
                           key={index}

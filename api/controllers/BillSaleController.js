@@ -6,15 +6,14 @@ const service = require("./Service");
 const PausedBillModel = require("../models/PausedBillModel");
 const BillSaleModel = require("../models/BillSaleModel");
 const BillSaleDetailModel = require("../models/BillSaleDetailModel");
-
-
+const CustomerModel = require("../models/CustomerModel"); 
 
 const getThaiDateTime = () => {
     const now = new Date();
     return new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
 };
 
-// Add this helper function at the top
+// Add this helper function at the top 
 const checkBillLimit = async (userId) => {
     const MemberModel = require('../models/MemberModel');
     const PackageModel = require('../models/PackageModel');
@@ -22,7 +21,7 @@ const checkBillLimit = async (userId) => {
 
     const member = await MemberModel.findOne({
         where: { id: userId },
-        include: [{
+        include: [{ 
             model: PackageModel,
             attributes: ['bill_amount']
         }]
@@ -265,15 +264,18 @@ app.post('/billSale/updateQty', service.isLogin, async (req, res) => {
 // API สำหรับจบการขาย
 app.post('/billSale/endSale', service.isLogin, async (req, res) => {
     try {
-        const { method, amount, vatAmount, billSaleDetails } = req.body;
-        const currentTime = getThaiDateTime(); 
+        const { method, amount, vatAmount, billSaleDetails, customerId } = req.body;
+        const currentTime = getThaiDateTime();
+        const vatRate = 0.07; // VAT 7%
 
-        await BillSaleModel.update({
+        // Update bill with customerId
+        const updatedBill = await BillSaleModel.update({
             status: 'pay',
             paymentMethod: method,
             payDate: currentTime,
             totalAmount: amount,
             vatAmount: vatAmount,
+            customerId: customerId,
             createdAt: currentTime,
             updatedAt: currentTime
         }, {
@@ -283,22 +285,58 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
             }
         });
 
-        // อัปเดตรายละเอียดบิล
+        // อัพเดท billSaleDetail
         for (const detail of billSaleDetails) {
+            const subtotal = detail.qty * detail.price;
+            const totalWithVat = subtotal * (1 + vatRate); // คำนวณราคารวม VAT
+
             await BillSaleDetailModel.update({
-                totalprice: detail.totalprice,
-                createdAt: currentTime,
+                customerId: customerId || null,
+                pointsEarned: customerId ? Math.floor(totalWithVat / 100) : 0,
+                totalprice: totalWithVat, // บันทึกเฉพาะราคารวม VAT
                 updatedAt: currentTime
             }, {
-                where: {
-                    id: detail.id
-                }
+                where: { id: detail.id }
             });
         }
 
-        res.send({ message: 'success' });
-    } catch (e) {
-        res.status(500).send({ message: 'error', error: e.message });
+        // อัพเดทแต้มลูกค้าและ billSaleDetail
+        if (customerId) {
+            const customer = await CustomerModel.findByPk(customerId);
+            if (customer) {
+                const pointsEarned = customer.calculatePoints(amount);
+                customer.points += pointsEarned;
+                customer.totalSpent = parseFloat(customer.totalSpent || 0) + parseFloat(amount);
+                customer.lastPurchaseDate = new Date();
+                customer.updateMembershipTier();
+                await customer.save();
+            }
+        }
+
+        // อัพเดท billSaleDetail พร้อมคำนวณ VAT
+        for (const detail of billSaleDetails) {
+            const subtotal = detail.qty * detail.price;
+            const itemVat = subtotal * vatRate;
+            const totalWithVat = subtotal + itemVat;
+
+            await BillSaleDetailModel.update({
+                customerId: customerId || null,
+                pointsEarned: customerId ? Math.floor(totalWithVat / 100) : 0,
+                totalprice: totalWithVat, // บันทึกราคารวม VAT
+                vatAmount: itemVat, // บันทึก VAT แยกต่างหาก
+                updatedAt: currentTime
+            }, {
+                where: { id: detail.id }
+            });
+        }
+
+        res.json({ message: 'success', result: updatedBill });
+    } catch (error) {
+        console.error('Error in endSale:', error);
+        res.status(500).json({ 
+            message: 'error', 
+            error: error.message 
+        });
     }
 });
 

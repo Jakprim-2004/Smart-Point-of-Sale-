@@ -12,6 +12,7 @@ function Stock() {
     const [productId, setProductId] = useState(0);
     const [qty, setQty] = useState(0);
     const [stocks, setStocks] = useState([]);
+    const [showModal, setShowModal] = useState(false); // Add state for controlling modal visibility
 
     useEffect(() => {
         fetchDataStock();
@@ -22,6 +23,7 @@ function Stock() {
             await axios.get(config.api_path + '/product/list', config.headers()).then(res => {
                 if (res.data.message === 'success') {
                     setProducts(res.data.results);
+                    setShowModal(true); // Show modal after getting products
                 }
             })
         } catch (e) {
@@ -54,6 +56,7 @@ function Stock() {
     const handleChooseProduct = (item) => {
         setProductName(item.name);
         setProductId(item.id);
+        setShowModal(false); // Hide modal after selection
 
         const btns = document.getElementsByClassName('btnClose');
         for (let i = 0; i < btns.length; i++) btns[i].click();
@@ -139,8 +142,6 @@ function Stock() {
                                     <span className="input-group-text">สินค้า</span>
                                     <input value={productName} className="form-control" disabled />
                                     <button onClick={fetchData}
-                                        data-toggle="modal"
-                                        data-target='#modalProduct'
                                         className="btn btn-primary">
                                         <i className="fa fa-search"></i>
                                     </button>
@@ -206,7 +207,12 @@ function Stock() {
                 </div>
             </Template>
 
-            <Modal id="modalProduct" title="เลือกสินค้า" modalSize="modal-lg">
+            <Modal 
+                show={showModal} // Add state for controlling modal visibility
+                onHide={() => setShowModal(false)} 
+                title="เลือกสินค้า" 
+                modalSize="modal-lg"
+            >
                 <table className="table table-bordered table-striped">
                     <thead>
                         <tr>

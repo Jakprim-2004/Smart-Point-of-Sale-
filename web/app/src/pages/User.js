@@ -10,6 +10,7 @@ function User() {
     const [users, setUsers] = useState([]);
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
+    const [showUserModal, setShowUserModal] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -41,27 +42,24 @@ function User() {
                 url = '/user/edit';
             }
 
-            await axios.post(config.api_path + url, user, config.headers()).then(res => {
-                if (res.data.message === 'success') {
-                    Swal.fire({
-                        title: 'บันทึกข้อมูล',
-                        text: 'บันทึกข้อมูลเข้าระบบแล้ว',
-                        icon: 'success',
-                        timer: 2000
-                    })
+            const res = await axios.post(config.api_path + url, user, config.headers());
+            if (res.data.message === 'success') {
+                Swal.fire({
+                    title: 'บันทึกข้อมูล',
+                    text: 'บันทึกข้อมูลเข้าระบบแล้ว',
+                    icon: 'success',
+                    timer: 2000
+                });
 
-                    handleClose();
-                    fetchData();
-                }
-            }).catch(err => {
-                throw err.response.data;
-            })
+                setShowUserModal(false); // ปิด Modal หลังบันทึก
+                fetchData();
+            }
         } catch (e) {
             Swal.fire({
                 title: 'error',
                 text: e.message,
                 icon: 'error'
-            })
+            });
         }
     }
 
@@ -81,6 +79,7 @@ function User() {
         });
         setPassword('');
         setPasswordConfirm('');
+        setShowUserModal(true); // เปิด Modal เมื่อกดปุ่มเพิ่มรายการ
     }
 
     const changePassword = (item) => {
@@ -153,7 +152,7 @@ function User() {
                         <div className="card-title">ผู้ใช้งานระบบ</div>
                     </div>
                     <div className="card-body">
-                        <button onClick={clearForm} data-toggle="modal" data-target="#modalUser" className="btn btn-primary">
+                        <button onClick={clearForm} className="btn btn-primary">
                             <i className="fa fa-plus me-2"></i>
                             เพิ่มรายการ
                         </button>
@@ -174,10 +173,13 @@ function User() {
                                         <td>{item.usr}</td>
                                         <td>{item.level}</td>
                                         <td className="text-center">
-                                            <button onClick={e => setUser(item)}
-                                                data-toggle="modal"
-                                                data-target="#modalUser"
-                                                className="btn btn-info me-2">
+                                            <button 
+                                                onClick={() => {
+                                                    setUser(item);
+                                                    setShowUserModal(true);
+                                                }}
+                                                className="btn btn-info me-2"
+                                            >
                                                 <i className="fa fa-pencil"></i>
                                             </button>
                                             <button onClick={e => handleDelete(item)} className="btn btn-danger">
@@ -192,7 +194,12 @@ function User() {
                 </div>
             </Template>
 
-            <Modal id="modalUser" title="ผู้ใช้งานระบบ" modalSize="modal-lg">
+            <Modal 
+                show={showUserModal}
+                onHide={() => setShowUserModal(false)}
+                title="ผู้ใช้งานระบบ" 
+                modalSize="modal-lg"
+            >
                 <div>
                     <label>ชื่อ</label>
                     <input value={user.name} onChange={e => setUser({ ...user, name: e.target.value })} className="form-control" />
@@ -222,7 +229,7 @@ function User() {
                 <div className="mt-3">
                     <label>ระดับ</label>
                     <select value={user.level} onChange={e => setUser({ ...user, level: e.target.value })} className="form-control">
-                        <option value="พนักงาน">พนักงาน</option>
+                        <option value="user">พนักงาน</option>
                         
                     </select>
                 </div>

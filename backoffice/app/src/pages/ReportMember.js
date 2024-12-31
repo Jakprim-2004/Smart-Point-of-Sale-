@@ -94,7 +94,7 @@ function ReportMember() {
                     <th className="border-0 px-4">ชื่อ</th>
                     <th className="border-0">เบอร์โทร</th>
                     <th className="border-0">วันที่สมัคร</th>
-                    <th className="border-0">แพ็กเกจ</th>
+                    <th className="border-0">แพคเกจ</th>
                   </tr>
                 </thead>
                 <tbody>

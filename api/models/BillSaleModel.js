@@ -1,5 +1,6 @@
 const conn = require("../connect");
 const { DataTypes } = require("sequelize");
+const CustomerModel = require("./CustomerModel");
 
 const BillSaleModel = conn.define("billSale", {
   id: {
@@ -22,9 +23,28 @@ const BillSaleModel = conn.define("billSale", {
     type: DataTypes.STRING,
     allowNull: false,
     defaultValue: "", 
+  },
+  customerId: {
+    type: DataTypes.BIGINT,
+    references: {
+      model: CustomerModel,
+      key: 'id'
+    }
+  },
+  totalAmount: {
+    type: DataTypes.DECIMAL(10, 2)
+  },
+  vatAmount: {
+    type: DataTypes.DECIMAL(10, 2)
   }
+}, {
+  tableName: 'billSale',
+  freezeTableName: true
 });
 
-BillSaleModel.sync({ alter: true });
+// เพิ่มความสัมพันธ์
+BillSaleModel.belongsTo(CustomerModel, {
+  foreignKey: 'customerId'
+});
 
 module.exports = BillSaleModel;

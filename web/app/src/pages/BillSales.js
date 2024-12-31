@@ -14,6 +14,7 @@ function BillSales() {
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
   const [filteredBills, setFilteredBills] = useState([]);
+  const [showBillDetailModal, setShowBillDetailModal] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -140,9 +141,10 @@ function BillSales() {
                           <tr key={index}>
                             <td className="text-center">
                               <button
-                                data-toggle="modal"
-                                data-target="#modalBillSaleDetail"
-                                onClick={(e) => setSelectBill(item)}
+                                onClick={() => {
+                                  setSelectBill(item);
+                                  setShowBillDetailModal(true);
+                                }}
                                 className="btn btn-outline-primary btn-sm"
                               >
                                 <i className="fa fa-file-alt me-2"></i>
@@ -178,7 +180,12 @@ function BillSales() {
         </div>
       </Template>
 
-      <Modal id="modalBillSaleDetail" title="" modalSize="modal-lg">
+      <Modal 
+        show={showBillDetailModal}
+        onHide={() => setShowBillDetailModal(false)}
+        title={`รายละเอียดบิล #${selectBill?.id}`}
+        modalSize="modal-lg"
+      >
         <div className="modal-header border-0 pb-0">
           <h5 className="modal-title">
             <i className="fas fa-receipt text-primary me-2"></i>

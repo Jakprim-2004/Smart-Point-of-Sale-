@@ -136,7 +136,7 @@ app.post(
             },
             {
               model: MemberModel,
-              attributes: ["name", "phone"],
+              attributes: ["firstName", "lastName", "phone"],
             },
           ],
         });
@@ -204,11 +204,11 @@ app.post(
           include: [
             {
               model: PackageModel,
-              attributes: ["name", "price"],
+              attributes: ["name", "price"], // Changed from firstName to name
             },
             {
               model: MemberModel,
-              attributes: ["name", "phone"],
+              attributes: ["firstName", "lastName", "phone"],
             },
           ],
         });
@@ -278,12 +278,19 @@ app.get(
             },
             {
               model: MemberModel,
-              attributes: ["name", "phone"],
+              attributes: ["firstName", "lastName", "phone"],
             },
           ],
         });
 
         let sum = 0;
+        const processedResults = results.map(result => ({
+          ...result.toJSON(),
+          member: {
+            ...result.member,
+            name: `${result.member.firstName || ''} ${result.member.lastName || ''}`.trim()
+          }
+        }));
 
         for (let j = 0; j < results.length; j++) {
           const item = results[j];
@@ -292,7 +299,7 @@ app.get(
 
         arr.push({
           year: i,
-          results: results,
+          results: processedResults,
           sum: sum,
         });
       }

@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const ProductModel = require("../models/ProductModel");
 const Service = require("./Service");
-const { Op } = require('sequelize'); // Add this import
+const { Op } = require('sequelize'); 
 
 app.post("/product/insert", Service.isLogin, async (req, res) => {
   try {

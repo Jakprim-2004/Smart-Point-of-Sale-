@@ -18,6 +18,8 @@ import Dashboard from "./pages/Dashboard";
 import Terms from "./pages/Terms";
 import ReportUse from "./pages/Report";
 import DashboardReport from "./pages/DashboardReport";
+import Customer from "./pages/Customer";
+import Reward from "./pages/Reward";
 
 const router = createBrowserRouter([
   {
@@ -76,6 +78,13 @@ const router = createBrowserRouter([
     path: "/dashboardreport",
     element: <DashboardReport />,
   },
+  {
+    path: "/customer",
+    element: <Customer />,
+  },{
+    path: "/reward",
+    element: <Reward />,
+  }
 ]);
 
 const root = ReactDOM.createRoot(document.getElementById("root"));

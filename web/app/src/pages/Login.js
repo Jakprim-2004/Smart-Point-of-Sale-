@@ -25,7 +25,7 @@ function Login() {
                 payload = { 
                     phone: phone || '', 
                     email: email || '', 
-                    pass 
+                    password: pass 
                 };
                 endpoint = '/member/signin';
             } else {

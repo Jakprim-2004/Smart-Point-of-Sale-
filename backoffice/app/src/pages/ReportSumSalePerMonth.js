@@ -147,7 +147,7 @@ function ReportSumSalePerMonth() {
             </tr>
           </thead>
           <tbody>
-            {selectedMonth.results != undefined
+            {selectedMonth.results !== undefined
               ? selectedMonth.results.map((item) => (
                   <tr>
                     <td>{dayjs(item.createdAt).format("DD/MM/YYYY HH:mm")}</td>
@@ -155,7 +155,7 @@ function ReportSumSalePerMonth() {
                       {dayjs(item.payDate).format("DD/MM/YYYY")} {item.payHour}.
                       {item.payMinute}
                     </td>
-                    <td>{item.member.name}</td>
+                    <td>{item.member.firstName}</td>
                     <td>{item.package.name}</td>
                     <td className="text-end">
                       {parseInt(item.package.price).toLocaleString("th-TH")}

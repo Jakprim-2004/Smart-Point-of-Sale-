@@ -194,13 +194,7 @@ function Template(props) {
               รายงานรายได้รายปี
             </Link>
 
-            <Link
-              to="/admin"
-              className="btn btn-outline-default text-secondary text-start my-menu"
-            >
-              <i className="fa fa-user me-3"></i>
-              ผู้ใช้ระบบ
-            </Link>
+           
           </div>
         </div>
         <div

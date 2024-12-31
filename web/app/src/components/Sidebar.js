@@ -12,6 +12,7 @@ import report from "../assets/report.gif";
 import Selling from "../assets/Selling.gif";
 import checklist from "../assets/checklist.gif";
 import candidates from "../assets/candidates.gif";
+import service from "../assets/service.gif";
 
 const Sidebar = forwardRef((props, sidebarRef) => {
   const [firstName, setfirstName] = useState();
@@ -25,9 +26,12 @@ const Sidebar = forwardRef((props, sidebarRef) => {
   const [dropdownStates, setDropdownStates] = useState({
     reports: false,
     documents: false,
+    CRM: false,
   });
   const [userLevel, setUserLevel] = useState("");
   const navigate = useNavigate();
+  const [showPackageModal, setShowPackageModal] = useState(false);
+  const [showBankModal, setShowBankModal] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -174,9 +178,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
     } else {
       return (
         <button
-          data-toggle="modal"
-          data-target="#modalBank"
-          onClick={(e) => handleChoosePackage(item)}
+          onClick={() => handleChoosePackage(item)}
           className="btn btn-primary btn-lg"
         >
           <i className="fa fa-check me-2"></i>
@@ -188,6 +190,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
 
   const handleChoosePackage = (item) => {
     setChoosePackage(item);
+    setShowBankModal(true); // Add this line
     fetchDataBank();
   };
 
@@ -429,9 +432,10 @@ const Sidebar = forwardRef((props, sidebarRef) => {
               <div className="text-white-50 mb-3">Package: {packageName}</div>
               {isOwner && (
                 <button
-                  onClick={fetchPackages}
-                  data-toggle="modal"
-                  data-target="#modalPackage"
+                  onClick={() => {
+                    fetchPackages();
+                    setShowPackageModal(true);  // Add this state
+                  }}
                   className="btn"
                   style={styles.upgradeButton}
                 >
@@ -493,9 +497,8 @@ const Sidebar = forwardRef((props, sidebarRef) => {
               {/* Reports menu - visible only to owner */}
               {isOwner && (
                 <li
-                  className={`nav-item ${
-                    dropdownStates.reports ? "menu-open" : ""
-                  }`}
+                  className={`nav-item ${dropdownStates.reports ? "menu-open" : ""
+                    }`}
                 >
                   <a
                     href="#"
@@ -591,9 +594,8 @@ const Sidebar = forwardRef((props, sidebarRef) => {
 
               {/* Products menu - visible to all */}
               <li
-                className={`nav-item ${
-                  dropdownStates.documents ? "menu-open" : ""
-                }`}
+                className={`nav-item ${dropdownStates.documents ? "menu-open" : ""
+                  }`}
                 style={styles.navItem}
               >
                 <a
@@ -648,7 +650,68 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                   </li>
                 </ul>
               </li>
+              <li
+                className={`nav-item ${dropdownStates.CRM ? "menu-open" : ""
+                  }`}
+                style={styles.navItem}
+              >
+                <a
+                  href="#"
+                  className="nav-link"
+                  style={styles.navLink}
+                  onClick={() => handleDropdownClick("CRM")}
+                >
+                  <span style={styles.navIcon}>
+                    <img
+                      src={checklist}
+                      alt="shopping"
+                      style={{ height: "50px", marginRight: "100px" }}
+                    />
+                  </span>
+                  <span className="ml-3" style={styles.navText}>
+                    CRM
+                    <i className="right fas fa-angle-left ms-2"></i>
+                  </span>
+                </a>
+                <ul
+                  className="nav nav-treeview"
+                  style={{
+                    ...styles.subMenu,
+                    display: dropdownStates.CRM ? "block" : "none" 
+                  }}
+                >
+                  <li className="nav-item" style={styles.navItem}>
+                    <Link
+                      to="/customer"
+                      className="nav-link"
+                      style={styles.navLink}
+                    >
+                      <span style={styles.navIcon}>
+                        <i className="fas fa-users"></i>
+                      </span>
+                      <span className="ml-3" style={styles.navText}>
+                        ข้อมูลลูกค้า
+                      </span>
+                    </Link>
+                  </li>
 
+                  <li className="nav-item" style={styles.navItem}>
+                    <Link
+                      to="/reward"
+                      className="nav-link"
+                      style={styles.navLink}
+                    >
+                      <span style={styles.navIcon}>
+                        <i className="fas fa-gift"></i>
+                      </span>
+                      <span className="ml-3" style={styles.navText}>
+                        แลกของรางวัล
+                      </span>
+                    </Link>
+                  </li>
+                </ul>
+              </li>
+              
               {/* Users management - visible only to owner */}
               {isOwner && (
                 <li className="nav-item" style={styles.navItem}>
@@ -667,6 +730,8 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                 </li>
               )}
 
+             
+
               {/* Report issues - visible to all */}
               <li className="nav-item" style={styles.navItem}>
                 <Link
@@ -676,8 +741,8 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                 >
                   <span style={styles.navIcon}>
                     <img
-                      src={checklist}
-                      alt="shopping"
+                      src={service}
+                      alt="bendy-customer-service-man-answering-question"
                       style={{ height: "50px", marginRight: "100px" }}
                     />
                   </span>
@@ -695,69 +760,75 @@ const Sidebar = forwardRef((props, sidebarRef) => {
       {isOwner && (
         <>
           <Modal
-            id="modalPackage"
+            show={showPackageModal}
+            onHide={() => setShowPackageModal(false)}
             title="เลือกแพคเกจที่ต้องการ"
             modalSize="modal-lg"
           >
             <div className="row g-4">
               {packages.length > 0
                 ? packages.map((item) => (
-                    <div className="col-4" key={item.id}>
-                      <div
-                        className="card h-100 shadow-sm hover-shadow"
-                        style={{
-                          borderRadius: "12px",
-                          transition: "all 0.3s ease",
-                          cursor: "pointer",
-                          "&:hover": {
-                            transform: "translateY(-5px)",
-                            boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
-                          },
-                        }}
-                      >
-                        <div className="card-body d-flex flex-column">
-                          <div className="flex-grow-1">
-                            <div className="h3">{item.name}</div>
+                  <div className="col-4" key={item.id}>
+                    <div
+                      className="card h-100 shadow-sm hover-shadow"
+                      style={{
+                        borderRadius: "12px",
+                        transition: "all 0.3s ease",
+                        cursor: "pointer",
+                        "&:hover": {
+                          transform: "translateY(-5px)",
+                          boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
+                        },
+                      }}
+                    >
+                      <div className="card-body d-flex flex-column">
+                        <div className="flex-grow-1">
+                          <div className="h3">{item.name}</div>
 
-                            <div className="h4 mt-3 text-primary">
+                          <div className="h4 mt-3 text-primary">
+                            <strong>
+                              {isNaN(item.price)
+                                ? item.price
+                                : parseInt(item.price).toLocaleString(
+                                  "th-TH"
+                                )}{" "}
+                              .-
+                            </strong>
+                            <span className="ms-2">/ เดือน</span>
+                          </div>
+
+                          <div className="mt-3">
+                            จำนวนบิล{" "}
+                            <span className="text-danger ms-2 me-2">
                               <strong>
-                                {isNaN(item.price)
-                                  ? item.price
-                                  : parseInt(item.price).toLocaleString(
-                                      "th-TH"
-                                    )}{" "}
-                                .-
+                                {isNaN(item.bill_amount)
+                                  ? item.bill_amount
+                                  : parseInt(item.bill_amount).toLocaleString(
+                                    "th-TH"
+                                  )}
                               </strong>
-                              <span className="ms-2">/ เดือน</span>
-                            </div>
-
-                            <div className="mt-3">
-                              จำนวนบิล{" "}
-                              <span className="text-danger ms-2 me-2">
-                                <strong>
-                                  {isNaN(item.bill_amount)
-                                    ? item.bill_amount
-                                    : parseInt(item.bill_amount).toLocaleString(
-                                        "th-TH"
-                                      )}
-                                </strong>
-                              </span>
-                              ต่อเดือน
-                            </div>
+                            </span>
+                            ต่อเดือน
                           </div>
+                        </div>
 
-                          <div className="mt-3 text-center">
-                            {renderButton(item)}
-                          </div>
+                        <div className="mt-3 text-center">
+                          {renderButton(item)}
                         </div>
                       </div>
                     </div>
-                  ))
+                  </div>
+                ))
                 : ""}
             </div>
           </Modal>
 
-          <Modal id="modalBank" title="ช่องทางชำระเงิน" modalSize="modal-lg">
+          <Modal 
+            show={showBankModal}
+            onHide={() => setShowBankModal(false)}
+            title="ช่องทางชำระเงิน" 
+            modalSize="modal-lg"
+          >
             <div className="h4 text-secondary">
               Package ที่เลือกคือ{" "}
               <span className="text-primary">{choosePackage.name}</span>
@@ -782,13 +853,13 @@ const Sidebar = forwardRef((props, sidebarRef) => {
               <tbody>
                 {banks.length > 0
                   ? banks.map((item) => (
-                      <tr key={item.bankCode}>
-                        <td>{item.bankType}</td>
-                        <td>{item.bankCode}</td>
-                        <td>{item.bankName}</td>
-                        <td>{item.bankBranch}</td>
-                      </tr>
-                    ))
+                    <tr key={item.bankCode}>
+                      <td>{item.bankType}</td>
+                      <td>{item.bankCode}</td>
+                      <td>{item.bankName}</td>
+                      <td>{item.bankBranch}</td>
+                    </tr>
+                  ))
                   : ""}
               </tbody>
             </table>

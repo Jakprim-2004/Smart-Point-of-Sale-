@@ -11,6 +11,7 @@ import { QRCodeSVG } from "qrcode.react";
 import generatePayload from "promptpay-qr";
 import "../styles/Sale.css";
 
+
 function Sale() {
   const [products, setProducts] = useState([]);
   const [, setBillSale] = useState({});
@@ -31,6 +32,15 @@ function Sale() {
   const promptPayNumber = "0656922937"; // หมายเลขพร้อมเพย์
   const [totalBill, setTotalBill] = useState(0);
   const [billAmount, setBillAmount] = useState(0);
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [showQtyModal, setShowQtyModal] = useState(false);
+  const [showHeldBillsModal, setShowHeldBillsModal] = useState(false);
+  const [showEndSaleModal, setShowEndSaleModal] = useState(false);
+  const [showBillTodayModal, setShowBillTodayModal] = useState(false);
+  const [showBillDetailModal, setShowBillDetailModal] = useState(false);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [discountFromPoints, setDiscountFromPoints] = useState(0);
 
   const saleRef = useRef();
   const searchInputRef = useRef();
@@ -40,6 +50,7 @@ function Sale() {
     openBill();
     fetchBillSaleDetail();
     fetchBillLimitInfo();
+    loadCustomers();
 
     if (searchInputRef.current) {
       searchInputRef.current.focus();
@@ -230,105 +241,88 @@ function Sale() {
   };
 
   const handleEndSale = () => {
-    if (
-      !currentBill.billSaleDetails ||
-      currentBill.billSaleDetails.length === 0
-    ) {
-      Swal.fire({
-        title: "ไม่สามารถจบการขายได้",
-        text: "ไม่มีสินค้าในตะกร้า",
-        icon: "warning",
-      });
-      return;
+    if (!currentBill.billSaleDetails || currentBill.billSaleDetails.length === 0) {
+        Swal.fire({
+            title: "ไม่สามารถจบการขายได้",
+            text: "ไม่มีสินค้าในตะกร้า",
+            icon: "warning",
+        });
+        return;
     }
 
     Swal.fire({
-      title: "จบการขาย",
-      text: "ยืนยันจบการขาย",
-      icon: "question",
-      showCancelButton: true,
-      showConfirmButton: true,
-    }).then(async (res) => {
-      if (res.isConfirmed) {
-        try {
-          const vatRate = 7; // อัตรา VAT 7%
-          const vatAmount = calculateVAT(totalPrice, vatRate);
-          const totalWithVAT = totalPrice + vatAmount;
+        title: "จบการขาย",
+        text: "ยืนยันจบการขาย",
+        icon: "question",
+        showCancelButton: true,
+        showConfirmButton: true,
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                const vatRate = 7;
+                const vatAmount = calculateVAT(totalPrice, vatRate);
+                const totalWithVAT = totalPrice + vatAmount;
 
-          // คำนวณ totalprice สำหรับแต่ละรายการสินค้า
-          const billSaleDetailsWithVAT = currentBill.billSaleDetails.map(
-            (item) => {
-              const priceWithVAT = parseInt(item.price) * (1 + vatRate / 100);
-              return {
-                ...item,
-                totalprice: priceWithVAT,
-              };
-            }
-          );
+                const paymentData = {
+                    method: paymentMethod,
+                    amount: totalWithVAT,
+                    vatAmount: vatAmount,
+                    billSaleDetails: currentBill.billSaleDetails,
+                    customerId: selectedCustomer?.id || null
+                };
 
-          const paymentData = {
-            method: paymentMethod,
-            amount: totalWithVAT,
-            vatAmount: vatAmount,
-            billSaleDetails: billSaleDetailsWithVAT,
-          };
+                const res = await axios.post(
+                    config.api_path + "/billSale/endSale",
+                    paymentData,
+                    config.headers()
+                );
 
-          const currentBillStatus = currentBill.status;
-          if (currentBillStatus === "paused" || currentBillStatus === "open") {
-            await axios
-              .post(
-                config.api_path + "/billSale/endSale",
-                paymentData,
-                config.headers()
-              )
-              .then((res) => {
                 if (res.data.message === "success") {
-                  Swal.fire({
-                    title: "จบการขาย",
-                    text: "จบการขายสำเร็จแล้ว",
-                    icon: "success",
-                    timer: 1000,
-                  });
-                  // รีเซ็ตค่าที่เกี่ยวข้อง
-                  setCurrentBill({});
-                  setTotalPrice(0);
-                  setInputMoney(0);
-                  setMemberInfo({});
-                  setLastBill({});
-                  setSumTotal(0);
+                    Swal.fire({
+                        title: "จบการขาย",
+                        text: "จบการขายสำเร็จแล้ว",
+                        icon: "success",
+                        timer: 1000,
+                    });
 
-                  // รีเฟรชข้อมูลบิล
-                  openBill();
-                  fetchBillSaleDetail();
+                    // รีเซ็ตค่าต่างๆ
+                    setCurrentBill({});
+                    setTotalPrice(0);
+                    setInputMoney(0);
+                    setMemberInfo({});
+                    setLastBill({});
+                    setSumTotal(0);
+                    setSelectedCustomer(null);
 
-                  let btns = document.getElementsByClassName("btnClose");
-                  for (let i = 0; i < btns.length; i++) btns[i].click();
+                    // เรียก API เพื่อรีเฟรชข้อมูล
+                    await Promise.all([
+                        openBill(),
+                        fetchBillSaleDetail(),
+                        fetchData()
+                    ]);
 
-                  if (saleRef.current) {
-                    saleRef.current.refreshCountBill();
-                  }
+                    // ปิด Modal
+                    const modalEndSale = document.getElementById('modalEndSale');
+                    if (modalEndSale) {
+                        const modalBackdrop = document.querySelector('.modal-backdrop');
+                        if (modalBackdrop) {
+                            modalBackdrop.parentNode.removeChild(modalBackdrop);
+                        }
+                        modalEndSale.style.display = 'none';
+                        document.body.classList.remove('modal-open');
+                    }
                 }
-              })
-              .catch((err) => {
-                throw err.response.data;
-              });
-          } else {
-            Swal.fire({
-              title: "ไม่สามารถจบการขายได้",
-              text: "สถานะบิลไม่ถูกต้อง",
-              icon: "warning",
-            });
-          }
-        } catch (e) {
-          Swal.fire({
-            title: "เกิดข้อผิดพลาด",
-            text: e.message,
-            icon: "error",
-          });
+            } catch (error) {
+                console.error('End sale error:', error);
+                Swal.fire({
+                    title: "เกิดข้อผิดพลาด",
+                    text: error.response?.data?.error || error.message,
+                    icon: "error",
+                });
+            }
         }
-      }
     });
-  };
+};
 
   const handleBillToday = async () => {
     try {
@@ -440,7 +434,8 @@ function Sale() {
     }
 
     setItem({ ...product, qty: 1 });
-    document.getElementById("modalQtyButton").click();
+    // เปลี่ยนจากการใช้ ID button เป็นการควบคุม Modal โดยตรง
+    setShowQtyModal(true);
   };
 
   const handleAddToBill = async () => {
@@ -546,6 +541,45 @@ function Sale() {
     }
   };
 
+  const loadCustomers = async () => {
+    try {
+      const response = await axios.get(
+        config.api_path + "/customers", 
+        config.headers()
+      );
+      if (response.data.result) {
+        // แปลงข้อมูล id เป็น number
+        const formattedCustomers = response.data.result.map(customer => ({
+          ...customer,
+          id: Number(customer.id)
+        }));
+        setCustomers(formattedCustomers);
+        console.log("Loaded customers:", formattedCustomers);
+      }
+    } catch (error) {
+      console.error("Error loading customers:", error);
+    }
+  };
+
+  const handlePointsRedemption = (points) => {
+    const maxPoints = selectedCustomer ? selectedCustomer.points : 0;
+    const maxPointsByPrice = Math.floor(totalPrice / 10); // จำนวนแต้มสูงสุดที่ใช้ได้ตามราคาสินค้า
+    const maxAllowedPoints = Math.min(maxPoints, maxPointsByPrice);
+    
+    const validPoints = Math.min(Math.max(0, points), maxAllowedPoints);
+    
+    if (points > maxAllowedPoints) {
+      Swal.fire({
+        title: "ไม่สามารถใช้แต้มได้",
+        text: `สามารถใช้แต้มได้สูงสุด ${maxAllowedPoints} แต้ม ตามราคาสินค้า`,
+        icon: "warning"
+      });
+    }
+    
+    setPointsToRedeem(validPoints);
+    setDiscountFromPoints(validPoints * 10);
+  };
+
   return (
     <>
       <Template ref={saleRef}>
@@ -569,8 +603,7 @@ function Sale() {
                 </button>
                 {/** ปุ่มสำหรับดูบิลที่พักไว้ */}
                 <button
-                  data-toggle="modal"
-                  data-target="#heldBillsModal"
+                  onClick={() => setShowHeldBillsModal(true)}
                   className="btn btn-warning me-2"
                   style={{ fontSize: "1rem", padding: "10px 15px" }}
                   title="ดูบิลที่พักไว้"
@@ -579,8 +612,7 @@ function Sale() {
                 </button>
                 {/** ปุ่มสำหรับจบการขาย */}
                 <button
-                  data-toggle="modal"
-                  data-target="#modalEndSale"
+                  onClick={() => setShowEndSaleModal(true)}
                   className="btn btn-success me-2"
                   style={{ fontSize: "1rem", padding: "10px 15px" }}
                   title="จบการขาย"
@@ -589,9 +621,10 @@ function Sale() {
                 </button>
 
                 <button
-                  onClick={handleBillToday}
-                  data-toggle="modal"
-                  data-target="#modalBillToday"
+                  onClick={() => {
+                    handleBillToday();
+                    setShowBillTodayModal(true);
+                  }}
                   className="btn btn-info me-2"
                   style={{ fontSize: "1rem", padding: "10px 15px" }}
                   title="ดูบิลวันนี้"
@@ -794,11 +827,8 @@ function Sale() {
       </Template>
 
       <Modal
-        className="modal fade"
-        id="heldBillsModal"
-        tabIndex="-1"
-        aria-labelledby="heldBillsModalLabel"
-        aria-hidden="true"
+        show={showHeldBillsModal}
+        onHide={() => setShowHeldBillsModal(false)}
         title="บิลที่พักไว้"
       >
         <div className="modal-body">
@@ -825,7 +855,12 @@ function Sale() {
         </div>
       </Modal>
 
-      <Modal id="modalBillToday" title="บิลวันนี้" modalSize="modal-lg">
+      <Modal
+        show={showBillTodayModal}
+        onHide={() => setShowBillTodayModal(false)}
+        title="บิลวันนี้"
+        modalSize="modal-lg"
+      >
         <table className="table table-bordered table-striped">
           <thead>
             <tr>
@@ -837,7 +872,7 @@ function Sale() {
           <tbody>
             {billToday.length > 0
               ? billToday.map((item) => (
-                  <tr>
+                  <tr key={item.id}>
                     <td className="text-center">
                       <button
                         onClick={(e) => setSelectedBill(item)}
@@ -853,12 +888,16 @@ function Sale() {
                     <td>{dayjs(item.createdAt).format("DD/MM/YYYY HH:mm")}</td>
                   </tr>
                 ))
-              : ""}
+              : null}
           </tbody>
         </table>
       </Modal>
 
-      <Modal id="modalQty" title="ปรับจำนวน">
+      <Modal 
+        show={showQtyModal}
+        onHide={() => setShowQtyModal(false)}
+        title="ปรับจำนวน"
+      >
         <div>
           <label>จำนวน</label>
           <input
@@ -887,22 +926,111 @@ function Sale() {
           />
 
           <div className="mt-3">
-            <button onClick={handleAddToBill} className="btn btn-primary">
+            <button 
+              onClick={() => {
+                handleAddToBill();
+                setShowQtyModal(false);
+              }} 
+              className="btn btn-primary"
+            >
               <i className="fa fa-check me-2"></i>เพิ่มลงบิล
             </button>
           </div>
         </div>
       </Modal>
 
-      <button
-        id="modalQtyButton"
-        data-toggle="modal"
-        data-target="#modalQty"
-        style={{ display: "none" }}
-      ></button>
-
-      <Modal id="modalEndSale" title="จบการขาย">
+      <Modal
+        show={showEndSaleModal}
+        onHide={() => setShowEndSaleModal(false)}
+        title="จบการขาย"
+      >
         <div>
+          <div className="mb-3">
+            <label className="form-label">เลือกลูกค้าเพื่อสะสมแต้ม (ไม่บังคับ)</label>
+            <div className="input-group">
+              <select 
+                className="form-control"
+                value={selectedCustomer?.id || ''}
+                onChange={(e) => {
+                  const customerId = e.target.value;
+                  if (customerId) {
+                    const customer = customers.find(c => c.id === Number(customerId));
+                    setSelectedCustomer(customer || null);
+                    // รีเซ็ตค่าแต้มที่ใช้เมื่อเปลี่ยนลูกค้า
+                    setPointsToRedeem(0);
+                    setDiscountFromPoints(0);
+                  } else {
+                    setSelectedCustomer(null);
+                    setPointsToRedeem(0);
+                    setDiscountFromPoints(0);
+                  }
+                }}
+              >
+                <option value="">-- ไม่เลือก --</option>
+                {customers && customers.map(customer => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name} - {customer.phone}
+                  </option>
+                ))}
+              </select>
+              {selectedCustomer && (
+                <button 
+                  className="btn btn-outline-secondary"
+                  type="button"
+                  onClick={() => {
+                    setSelectedCustomer(null);
+                    setPointsToRedeem(0);
+                    setDiscountFromPoints(0);
+                  }}
+                >
+                  <i className="fa fa-times"></i>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {selectedCustomer && (
+            <>
+              <div className="alert alert-muted mb-3">
+                <h6 className="mb-1">ข้อมูลลูกค้า</h6>
+                <div><strong>ชื่อ:</strong> {selectedCustomer.name}</div>
+                <div><strong>เบอร์โทร:</strong> {selectedCustomer.phone}</div>
+                <div><strong>แต้มสะสม:</strong> {selectedCustomer.points || 0} แต้ม</div>
+                <div><strong>ระดับสมาชิก:</strong> {selectedCustomer.membershipTier}</div>
+                <div><strong>ยอดใช้จ่ายสะสม:</strong> {selectedCustomer.totalSpent || 0} บาท</div>
+                <div className="mt-2 text-success">
+                  <i className="fas fa-plus-circle me-1"></i>
+                  จะได้รับแต้มเพิ่ม {Math.floor(totalPrice / 100)} แต้ม จากยอดซื้อครั้งนี้
+                </div>
+              </div>
+
+              {selectedCustomer.points > 0 && (
+                <div className="mb-3">
+                  <label className="form-label">ใช้แต้มสะสม (1 แต้ม = 10 บาท)</label>
+                  <div className="input-group">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={pointsToRedeem}
+                      onChange={(e) => handlePointsRedemption(parseInt(e.target.value) || 0)}
+                      max={Math.min(selectedCustomer.points, Math.floor(totalPrice / 10))}
+                      min="0"
+                    />
+                    <span className="input-group-text">แต้ม</span>
+                  </div>
+                  {discountFromPoints > 0 && (
+                    <div className="text-success mt-1">
+                      <small>ส่วนลดจากแต้มสะสม: {discountFromPoints.toLocaleString()} บาท</small>
+                    </div>
+                  )}
+                  <small className="text-muted">
+                    (สามารถใช้แต้มได้สูงสุด {Math.min(selectedCustomer.points, Math.floor(totalPrice / 10))} แต้ม)
+                  </small>
+                </div>
+              )}
+            </>
+          )}
+
           <div>
             <label>ยอดรวมราคาสินค้า</label>
           </div>
@@ -976,7 +1104,8 @@ function Sale() {
       </Modal>
 
       <Modal
-        id="modalBillSaleDetail"
+        show={showBillDetailModal}
+        onHide={() => setShowBillDetailModal(false)}
         title="รายละเอียดในบิล"
         modalSize="modal-lg"
       >

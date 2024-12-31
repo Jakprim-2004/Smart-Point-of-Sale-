@@ -2,7 +2,7 @@ const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
 const sequelize = new Sequelize(
-    process.env.DB_NAME || 'DDPOs',
+    process.env.DB_NAME || 'SPOS',
     process.env.DB_USER || 'postgres',
     process.env.DB_PASSWORD || '6540200349',
     {
@@ -21,4 +21,4 @@ sequelize.authenticate()
 module.exports = sequelize;
 
 
-// /config/database.js
+

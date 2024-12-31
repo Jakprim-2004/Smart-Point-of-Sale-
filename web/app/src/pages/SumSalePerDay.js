@@ -47,6 +47,8 @@ function SumSalePerDay() {
     const [billSales, setBillSales] = useState([]);
     const [currentBillSale, setCurrentBillSale] = useState({});
     const [billSaleDetails, setBillSaleDetails] = useState([]);
+    const [showBillSaleModal, setShowBillSaleModal] = useState(false);
+    const [showBillDetailModal, setShowBillDetailModal] = useState(false);
 
     useEffect(() => {
         handleShowReport();
@@ -130,11 +132,13 @@ function SumSalePerDay() {
                                     <tr key={index}>
                                         <td className="text-center">
                                             <button
-                                                data-toggle="modal"
-                                                data-target="#modalBillSale"
-                                                onClick={e => setCurrentBillSale(item.results)}
+                                                onClick={() => {
+                                                    setCurrentBillSale(item.results);
+                                                    setShowBillSaleModal(true);
+                                                }}
                                                 className="btn btn-primary"
-                                                disabled={item.results.length === 0}>
+                                                disabled={item.results.length === 0}
+                                            >
                                                 <i className="fa fa-file-alt me-2"></i>
                                                 แสดงรายการ
                                             </button>
@@ -155,7 +159,11 @@ function SumSalePerDay() {
                 </div>
             </Template>
 
-            <Modal id="modalBillSale" title="บิลขาย">
+            <Modal 
+                show={showBillSaleModal}
+                onHide={() => setShowBillSaleModal(false)}
+                title="บิลขาย"
+            >
                 <table className="table table-bordered table-striped">
                     <thead>
                         <tr>
@@ -166,12 +174,13 @@ function SumSalePerDay() {
                     </thead>
                     <tbody>
                         {currentBillSale.length > 0 ? currentBillSale.map(item =>
-                            <tr>
+                            <tr key={item.id}>
                                 <td className="text-center">
                                     <button
-                                        data-toggle="modal"
-                                        data-target="#modalBillSaleDetail"
-                                        onClick={e => setBillSaleDetails(item.billSaleDetails)}
+                                        onClick={() => {
+                                            setBillSaleDetails(item.billSaleDetails);
+                                            setShowBillDetailModal(true);
+                                        }}
                                         className="btn btn-primary">
                                         <i className="fa fa-file-alt me-2"></i>
                                         แสดงรายการ
@@ -180,12 +189,17 @@ function SumSalePerDay() {
                                 <td className="text-end">{item.id}</td>
                                 <td>{item.createdAt}</td>
                             </tr>
-                        ) : ''}
+                        ) : null}
                     </tbody>
                 </table>
             </Modal>
 
-            <Modal id="modalBillSaleDetail" title="รายละเอียดบิลขาย" modalSize="modal-lg">
+            <Modal 
+                show={showBillDetailModal}
+                onHide={() => setShowBillDetailModal(false)}
+                title="รายละเอียดบิลขาย" 
+                modalSize="modal-lg"
+            >
                 <table className="table table-bordered table-striped">
                     <thead>
                         <tr>
@@ -197,7 +211,7 @@ function SumSalePerDay() {
                     </thead>
                     <tbody>
                         {billSaleDetails.length > 0 ? billSaleDetails.map(item =>
-                            <tr>
+                            <tr key={item.id}>
                                 <td>{item.product.name}</td>
                                 <td className="text-end">{parseInt(item.price).toLocaleString('th-TH')}</td>
                                 <td className="text-end">{item.qty}</td>
@@ -205,7 +219,7 @@ function SumSalePerDay() {
                                     {(item.price * item.qty).toLocaleString('th-TH')}
                                 </td>
                             </tr>
-                        ) : ''}
+                        ) : null}
                     </tbody>
                 </table>
             </Modal>

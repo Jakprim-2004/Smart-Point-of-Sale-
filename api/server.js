@@ -4,6 +4,7 @@ const app = express();
 const port = 3000;
 const bodyParser = require('body-parser');
 const events = require('events'); 
+const bcrypt = require('bcrypt');
 
 app.use(cors());
 
@@ -25,10 +26,34 @@ app.use(require("./controllers/AdminController"));
 app.use(require("./controllers/ChangePackageController"));
 app.use( require("./controllers/DashboardController"));
 app.use( require('./controllers/ReportController'));
+app.use( require('./controllers/CustomerControllers'));
+app.use( require('./controllers/RewardController'));
 
 
-require('./models/associations');
+const init = async () => {
+  try {
+    // Import all models that need to be synced
+    const BillSaleModel = require('./models/BillSaleModel');
+    const BillSaleDetailModel = require('./models/BillSaleDetailModel');
+    const RewardModel = require('./models/RewardModel');
+    
+    
+    // Require associations after models are loaded
+    require('./models/associations');
 
-app.listen(port, () => {
-  console.log(`Example app listening on port `, port);
-});
+    // Sync models in correct order
+    await RewardModel.sync({ alter: true });
+    
+    await BillSaleModel.sync({ alter: true });
+    await BillSaleDetailModel.sync({ alter: true });
+
+    app.listen(port, () => {
+      console.log(`Example app listening on port `, port);
+    });
+  } catch (error) {
+    console.error('Database initialization error:', error);
+    process.exit(1);
+  }
+};
+
+init();

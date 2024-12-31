@@ -41,6 +41,7 @@ app.post('/productImage/insert', Service.isLogin, async (req, res) => {
         res.send({message: e.message});
     }
 })
+
 app.get('/productImage/list/:productId', Service.isLogin, async (req, res) => {
     try {
         const results = await ProductImageModel.findAll({

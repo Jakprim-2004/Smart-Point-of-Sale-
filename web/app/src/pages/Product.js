@@ -14,6 +14,8 @@ function Product() {
   const [productImage, setProductImage] = useState({});
   const [productImages, setProductImages] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [showProductImageModal, setShowProductImageModal] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -43,6 +45,7 @@ function Product() {
       barcode: "",
       category: "",
     });
+    setShowProductModal(true);
   };
 
   const handleSave = async (e) => {
@@ -296,8 +299,6 @@ function Product() {
               <div className="col-md-10">
                 <button
                   onClick={clearForm}
-                  data-toggle="modal"
-                  data-target="#modalProduct"
                   className="btn btn-primary shadow-sm d-flex align-items-center hover-scale"
                   style={{ transition: "transform 0.2s" }}
                 >
@@ -351,18 +352,20 @@ function Product() {
                           <td className="text-center py-2">
                             <div className="btn-group">
                               <button
-                                onClick={() => handleChooseProduct(item)}
-                                data-toggle="modal"
-                                data-target="#modalProductImage"
+                                onClick={() => {
+                                  handleChooseProduct(item);
+                                  setShowProductImageModal(true);
+                                }}
                                 className="btn btn-primary btn-sm mr-1"
                                 title="จัดการรูปภาพ"
                               >
                                 <i className="fa fa-image"></i>
                               </button>
                               <button
-                                onClick={() => setProduct(item)}
-                                data-toggle="modal"
-                                data-target="#modalProduct"
+                                onClick={() => {
+                                  setProduct(item);
+                                  setShowProductModal(true);
+                                }}
                                 className="btn btn-info btn-sm mr-1"
                                 title="แก้ไข"
                               >
@@ -420,7 +423,12 @@ function Product() {
         `}</style>
 
         {/* Product Images Modal */}
-        <Modal id="modalProductImage" title="ภาพสินค้า" modalSize="modal-lg">
+        <Modal
+          show={showProductImageModal}
+          onHide={() => setShowProductImageModal(false)}
+          title="ภาพสินค้า"
+          modalSize="modal-lg"
+        >
           <div className="row">
             <div className="col-4">
               <div>Barcode</div>
@@ -457,7 +465,7 @@ function Product() {
                   <div className="card shadow-sm border-0">
                     <img
                       className="card-img-top"
-                      src={config.api_path + "/uploads/" + item.imageName}
+                      src={config.api_path + "/uploads/" + item.imageName}ช
                       width="100%"
                       alt=""
                     />
@@ -488,8 +496,16 @@ function Product() {
         </Modal>
 
         {/* Product Details Modal */}
-        <Modal title="ฟอร์มสินค้า" id="modalProduct">
-          <form onSubmit={handleSave}>
+        <Modal
+          show={showProductModal}
+          onHide={() => setShowProductModal(false)}
+          title="ฟอร์มสินค้า"
+        >
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handleSave(e);
+            setShowProductModal(false);
+          }}>
             <div className="row">
               <div className="form-group col-md-6">
                 <label>ชื่อสินค้า</label>
@@ -549,7 +565,7 @@ function Product() {
                   <option value="อาหารสดและเบเกอรี่">อาหารสดและเบเกอรี่</option>
                   <option value="ไข่ นม และผลิตภัณฑ์จากนม">ไข่ นม และผลิตภัณฑ์จากนม</option>
                   <option value="น้ำดื่ม เครื่องดื่ม และผงชงดื่ม">น้ำดื่ม เครื่องดื่ม และผงชงดื่ม</option>
-                  <option value="ของแห้งและเครื่องปรุง">ของแห้งและเครื่องป��ุง</option>
+                  <option value="ของแห้งและเครื่องปรุง">ของแห้งและเครื่องปรุง</option>
                   <option value="ขนมขบเคี้ยวและของหวาน">ขนมขบเคี้ยวและของหวาน</option>
                   <option value="ความงามและของใช้ส่วนตัว">ความงามและของใช้ส่วนตัว</option>
                   <option value="แม่และเด็ก">แม่และเด็ก</option>

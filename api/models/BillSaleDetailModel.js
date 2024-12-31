@@ -1,5 +1,6 @@
 const conn = require("../connect");
 const { DataTypes } = require("sequelize");
+const CustomerModel = require("./CustomerModel");
 
 const BillSaleDetailModel = conn.define("billSaleDetail", {
   id: {
@@ -9,6 +10,10 @@ const BillSaleDetailModel = conn.define("billSaleDetail", {
   },
   billSaleId: {
     type: DataTypes.BIGINT,
+    references: {
+      model: 'billSale',
+      key: 'id'
+    }
   },
   productId: {
     type: DataTypes.BIGINT,
@@ -19,15 +24,43 @@ const BillSaleDetailModel = conn.define("billSaleDetail", {
   price: {
     type: DataTypes.BIGINT,
   },
-  
   userId: {
     type: DataTypes.BIGINT
   },
   totalprice: {
-    type: DataTypes.FLOAT
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    
   },
+  customerId: {
+    type: DataTypes.BIGINT,
+    references: {
+      model: CustomerModel,
+      key: 'id'
+    }
+  },
+  pointsEarned: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  }
+}, {
+  tableName: 'billSaleDetail',
+  freezeTableName: true
 });
 
-BillSaleDetailModel.sync({ alter: true });
+// hook สำหรับคำนวณแต้มอัตโนมัติ
+BillSaleDetailModel.addHook('afterCreate', async (billDetail) => {
+  if (billDetail.customerId) {
+    const customer = await CustomerModel.findByPk(billDetail.customerId);
+    if (customer) {
+      const pointsEarned = customer.calculatePoints(billDetail.totalprice);
+      customer.points += pointsEarned;
+      customer.totalSpent += billDetail.totalprice;
+      customer.lastPurchaseDate = new Date();
+      customer.updateMembershipTier();
+      await customer.save();
+    }
+  }
+});
 
 module.exports = BillSaleDetailModel;
