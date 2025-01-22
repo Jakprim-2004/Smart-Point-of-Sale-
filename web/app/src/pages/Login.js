@@ -39,7 +39,7 @@ function Login() {
             if (loginType === 'member' && !phone && !email) {
                 Swal.fire({
                     title: 'Sign In',
-                    text: 'กรุณากรอกอีเมลหรือเบอร์โทรศัพท์',
+                    text: 'กรุณากรอกเบอร์โทรศัพท์',
                     icon: 'warning',
                     timer: 2000
                 });
@@ -75,7 +75,7 @@ function Login() {
             Swal.fire({
                 title: 'Sign In',
                 text: loginType === 'member' ? 
-                    'อีเมล/เบอร์โทร หรือรหัสผ่านไม่ถูกต้อง' : 
+                    'อีเมลหรือเบอร์โทร หรือรหัสผ่านไม่ถูกต้อง' : 
                     'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
                 icon: 'error',
                 timer: 2000
@@ -119,7 +119,7 @@ function Login() {
                         <div className="login-form p-3">
                             <div className="form-group mb-4">
                                 <label className="form-label">
-                                    {loginType === 'member' ? 'อีเมลหรือเบอร์โทรศัพท์' : 'ชื่อผู้ใช้'}
+                                    {loginType === 'member' ? 'เบอร์โทรศัพท์' : 'ชื่อผู้ใช้'}
                                 </label>
                                 {loginType === 'member' ? (
                                     <div className="input-group">
@@ -129,7 +129,7 @@ function Login() {
                                         <input 
                                             type="text" 
                                             className="form-control" 
-                                            placeholder={loginType === 'member' ? "กรอกอีเมลหรือเบอร์โทรศัพท์" : "กรอกชื่อผู้ใช้"}
+                                            placeholder={loginType === 'member' ? "กรอกเบอร์โทรศัพท์" : "กรอกชื่อผู้ใช้"}
                                             value={loginType === 'member' ? (phone || email) : username}
                                             onChange={(e) => {
                                                 const value = e.target.value;

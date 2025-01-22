@@ -25,9 +25,9 @@ app.use(require("./controllers/BankController"));
 app.use(require("./controllers/AdminController"));
 app.use(require("./controllers/ChangePackageController"));
 app.use( require("./controllers/DashboardController"));
-app.use( require('./controllers/ReportController'));
 app.use( require('./controllers/CustomerControllers'));
 app.use( require('./controllers/RewardController'));
+app.use( require('./controllers/CategoryController'));
 
 
 const init = async () => {

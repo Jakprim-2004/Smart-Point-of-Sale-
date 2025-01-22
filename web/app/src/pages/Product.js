@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 import config from "../config";
 import axios from "axios";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Modal from "../components/Modal";
 import Barcode from "../components/Barcode";
 
@@ -16,9 +17,13 @@ function Product() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showProductModal, setShowProductModal] = useState(false);
   const [showProductImageModal, setShowProductImageModal] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [imagePreview, setImagePreview] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
+    fetchCategories();
   }, []);
 
   const fetchData = async () => {
@@ -33,6 +38,17 @@ function Product() {
         text: e.message,
         icon: "error",
       });
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get(config.api_path + "/category/list", config.headers());
+      if (res.data.message === "success") {
+        setCategories(res.data.results);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
     }
   };
 
@@ -116,8 +132,22 @@ function Product() {
   };
 
   const handleChangeFile = (files) => {
-    setProductImage(files[0]);
+    if (files && files[0]) {
+      setProductImage(files[0]);
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(files[0]);
+      setImagePreview(previewUrl);
+    }
   };
+
+  // Cleanup preview URL when component unmounts or new image is selected
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   const handleUpload = () => {
     Swal.fire({
@@ -284,7 +314,10 @@ function Product() {
     printWindow.document.write("<script>renderBarcode();</script>");
     printWindow.document.close();
   };
-  
+
+  const handleCategoryManagement = () => {
+    navigate('/category');
+  };
 
 
   return (
@@ -297,13 +330,22 @@ function Product() {
           <div className="card-body bg-light">
             <div className="row mb-4">
               <div className="col-md-10">
-                <button
-                  onClick={clearForm}
-                  className="btn btn-primary shadow-sm d-flex align-items-center hover-scale"
-                  style={{ transition: "transform 0.2s" }}
-                >
-                  <i className="fa fa-plus mr-2"></i> เพิ่มรายการ
-                </button>
+                <div className="d-flex">
+                  <button
+                    onClick={clearForm}
+                    className="btn btn-primary shadow-sm d-flex align-items-center hover-scale mr-2"
+                    style={{ transition: "transform 0.2s" }}
+                  >
+                    <i className="fa fa-plus mr-2"></i> เพิ่มรายการ
+                  </button>
+                  <button
+                    onClick={handleCategoryManagement}
+                    className="btn btn-secondary shadow-sm d-flex align-items-center hover-scale"
+                    style={{ transition: "transform 0.2s" }}
+                  >
+                    <i className="fa fa-tags mr-2"></i> จัดการหมวดหมู่
+                  </button>
+                </div>
               </div>
               <div className="col-md-2">
                 <input
@@ -425,7 +467,10 @@ function Product() {
         {/* Product Images Modal */}
         <Modal
           show={showProductImageModal}
-          onHide={() => setShowProductImageModal(false)}
+          onHide={() => {
+            setShowProductImageModal(false);
+            setImagePreview(null);
+          }}
           title="ภาพสินค้า"
           modalSize="modal-lg"
         >
@@ -439,20 +484,46 @@ function Product() {
               <input value={product.name} disabled className="form-control shadow-sm" />
             </div>
             <div className="col-12 mt-3">
-              <div>เลือกภาพสินค้า</div>
-              <input
-                onChange={(e) => handleChangeFile(e.target.files)}
-                type="file"
-                name="imageName"
-                className="form-control shadow-sm"
-              />
+              <div className="form-group">
+                <label>เลือกภาพสินค้า</label>
+                <div className="custom-file">
+                  <input
+                    type="file"
+                    className="custom-file-input"
+                    id="productImageInput"
+                    accept="image/*"
+                    onChange={(e) => handleChangeFile(e.target.files)}
+                  />
+                  <label className="custom-file-label" htmlFor="productImageInput">
+                    {productImage.name || 'เลือกไฟล์รูปภาพ...'}
+                  </label>
+                </div>
+              </div>
+              
+              {imagePreview && (
+                <div className="mt-3">
+                  <label>ตัวอย่างรูปภาพ</label>
+                  <div className="image-preview-container border rounded p-2">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="img-fluid"
+                      style={{ maxHeight: '200px', objectFit: 'contain' }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           <div className="mt-3">
             {productImage.name !== undefined && (
-              <button onClick={handleUpload} className="btn btn-primary shadow-sm">
-                <i className="fa fa-check mr-2"></i> Upload and Save
+              <button 
+                onClick={handleUpload} 
+                className="btn btn-primary shadow-sm"
+                disabled={!imagePreview}
+              >
+                <i className="fa fa-cloud-upload mr-2"></i> อัพโหลดรูปภาพ
               </button>
             )}
           </div>
@@ -556,26 +627,30 @@ function Product() {
               </div>
               <div className="form-group col-md-6">
                 <label>ประเภทสินค้า</label>
-                <select
-                  className="form-control shadow-sm"
-                  value={product.category}
-                  onChange={(e) => setProduct({ ...product, category: e.target.value })}
-                >
-                  <option value="">เลือกประเภทสินค้า</option>
-                  <option value="อาหารสดและเบเกอรี่">อาหารสดและเบเกอรี่</option>
-                  <option value="ไข่ นม และผลิตภัณฑ์จากนม">ไข่ นม และผลิตภัณฑ์จากนม</option>
-                  <option value="น้ำดื่ม เครื่องดื่ม และผงชงดื่ม">น้ำดื่ม เครื่องดื่ม และผงชงดื่ม</option>
-                  <option value="ของแห้งและเครื่องปรุง">ของแห้งและเครื่องปรุง</option>
-                  <option value="ขนมขบเคี้ยวและของหวาน">ขนมขบเคี้ยวและของหวาน</option>
-                  <option value="ความงามและของใช้ส่วนตัว">ความงามและของใช้ส่วนตัว</option>
-                  <option value="แม่และเด็ก">แม่และเด็ก</option>
-                  <option value="ของใช้ในบ้าน">ของใช้ในบ้าน</option>
-                  <option value="บ้านและไลฟ์สไตล์">บ้านและไลฟ์สไตล์</option>
-                  <option value="เครื่องเขียนและอุปกรณ์สำนักงาน">เครื่องเขียนและอุปกรณ์สำนักงาน</option>
-                  <option value="อาหารและอุปกรณ์สัตว์เลี้ยง">อาหารและอุปกรณ์สัตว์เลี้ยง</option>
-                  <option value="เครื่องใช้ไฟฟ้า อุปกรณ์อิเล็กทรอนิกส์">เครื่องใช้ไฟฟ้า อุปกรณ์อิเล็กทรอนิกส์</option>
-                  <option value="เสื้อผ้าและเครื่องประดับ">เสื้อผ้าและเครื่องประดับ</option>
-                </select>
+                <div className="input-group">
+                  <select
+                    className="form-control shadow-sm"
+                    value={product.category || ""}
+                    onChange={(e) => setProduct({ ...product, category: e.target.value })}
+                  >
+                    <option value="">เลือกประเภทสินค้า</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="input-group-append">
+                    <button 
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={handleCategoryManagement}
+                      title="จัดการหมวดหมู่"
+                    >
+                      <i className="fa fa-cog"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 

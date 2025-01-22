@@ -620,18 +620,8 @@ function Sale() {
                   <i className="fa fa-check me-2"></i>จบการขาย
                 </button>
 
-                <button
-                  onClick={() => {
-                    handleBillToday();
-                    setShowBillTodayModal(true);
-                  }}
-                  className="btn btn-info me-2"
-                  style={{ fontSize: "1rem", padding: "10px 15px" }}
-                  title="ดูบิลวันนี้"
-                >
-                  <i className="fa fa-file me-2"></i>บิลวันนี้
-                </button>
-                {/** ปุ่มสำหรับดูบิลล่าสุด */}
+                
+                
 
                 {/** ปุ่มสำหรับพิมพ์บิลล่าสุด */}
                 <button
@@ -875,9 +865,10 @@ function Sale() {
                   <tr key={item.id}>
                     <td className="text-center">
                       <button
-                        onClick={(e) => setSelectedBill(item)}
-                        data-toggle="modal"
-                        data-target="#modalBillSaleDetail"
+                        onClick={() => {
+                          setSelectedBill(item);
+                          setShowBillDetailModal(true);
+                        }}
                         className="btn btn-primary"
                       >
                         <i className="fa fa-eye me-2"></i>
@@ -996,8 +987,7 @@ function Sale() {
                 <div><strong>ชื่อ:</strong> {selectedCustomer.name}</div>
                 <div><strong>เบอร์โทร:</strong> {selectedCustomer.phone}</div>
                 <div><strong>แต้มสะสม:</strong> {selectedCustomer.points || 0} แต้ม</div>
-                <div><strong>ระดับสมาชิก:</strong> {selectedCustomer.membershipTier}</div>
-                <div><strong>ยอดใช้จ่ายสะสม:</strong> {selectedCustomer.totalSpent || 0} บาท</div>
+               
                 <div className="mt-2 text-success">
                   <i className="fas fa-plus-circle me-1"></i>
                   จะได้รับแต้มเพิ่ม {Math.floor(totalPrice / 100)} แต้ม จากยอดซื้อครั้งนี้
@@ -1116,31 +1106,23 @@ function Sale() {
                 <tr>
                   <th>รายการ</th>
                   <th>จำนวน</th>
-                  <th>ราคา</th>
-                  <th>ยอดรวม</th>
+                  <th className="text-end">ราคา</th>
+                
                 </tr>
               </thead>
               <tbody>
-                {selectedBill?.billSaleDetails?.length > 0 ? (
-                  selectedBill.billSaleDetails.map((item, index) => (
+              {selectedBill?.billSaleDetails?.map((item, index) => {
+                  const priceWithVat = item.price * 1.07; // คำนวณราคารวม VAT
+                  return (
                     <tr key={index}>
                       <td>{item.product.name}</td>
-                      <td className="text-start">{item.qty}</td>
-                      <td className="text-start">
-                        {item.price.toLocaleString("th-TH")} บาท
-                      </td>
-                      <td className="text-start">
-                        {(item.qty * item.price).toLocaleString("th-TH")} บาท
+                      <td className="text-center">{item.qty}</td>
+                      <td className="text-end">
+                        {(item.qty * priceWithVat).toLocaleString("th-TH")} บาท
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="3" className="text-center text-muted">
-                      ไม่มีรายการสินค้า
-                    </td>
-                  </tr>
-                )}
+                  );
+                })}
               </tbody>
             </table>
           </div>

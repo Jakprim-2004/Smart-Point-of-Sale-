@@ -54,10 +54,10 @@ CustomerModel.prototype.calculatePoints = function(purchaseAmount) {
 };
 
 CustomerModel.prototype.updateMembershipTier = function() {
-    if (this.points >= 10000) this.membershipTier = 'PLATINUM';
-    else if (this.points >= 5000) this.membershipTier = 'GOLD';
-    else if (this.points >= 1000) this.membershipTier = 'SILVER';
-    else if (this.points >= 100) this.membershipTier = 'Bronze';
+    if (this.points >= 1000) this.membershipTier = 'PLATINUM';
+    else if (this.points >= 500) this.membershipTier = 'GOLD';
+    else if (this.points >= 100) this.membershipTier = 'SILVER';
+    else if (this.points >= 10) this.membershipTier = 'Bronze';
     else this.membershipTier = 'NORMAL';
 };
 

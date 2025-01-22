@@ -771,7 +771,7 @@ router.post('/reportTopSalesDays', async (req, res) => {
       raw: true
     });
 
-    // ส่งเฉพาะผลลัพธ์ 5 อันดับแรก ไม่ต้องสร้าง datesInRange
+    // ส่งเฉพาะผลลัพธ์ 5 อันดับแรก 
     res.send({
       message: 'success',
       results: results.map(item => ({

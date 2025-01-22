@@ -132,16 +132,16 @@ function ReportChangePackage() {
                   <th>ชื่อ</th>
                   <th>เบอร์โทร</th>
                   <th>วันที่ขอเปลี่ยน</th>
-                  <th>แพคเกจที่ต้องการ</th>
+                  <th>แพคเกจที่ต้องการเปลี่ยน</th>
                   <th className="text-end">ค่าบริการต่อเดือน</th>
-                  <th width="180px"></th>
+                  <th width="180px"> ยืนยันการชำระเงิน    </th>
                 </tr>
               </thead>
               <tbody>
                 {members.length > 0
                   ? members.map((item) => (
                       <tr key={item.id}>
-                        <td>{item.member.name}</td>
+                        <td>{item.member.firstName}</td>
                         <td>{item.member.phone}</td>
                         <td>
                           {dayjs(item.createdAt).format("DD/MM/YYYY HH:mm")}

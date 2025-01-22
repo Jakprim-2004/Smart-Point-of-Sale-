@@ -12,8 +12,7 @@ function Stock() {
     const [productId, setProductId] = useState(0);
     const [qty, setQty] = useState(0);
     const [stocks, setStocks] = useState([]);
-    const [showModal, setShowModal] = useState(false); // Add state for controlling modal visibility
-
+    const [showModal, setShowModal] = useState(false); 
     useEffect(() => {
         fetchDataStock();
     }, []);
@@ -23,7 +22,7 @@ function Stock() {
             await axios.get(config.api_path + '/product/list', config.headers()).then(res => {
                 if (res.data.message === 'success') {
                     setProducts(res.data.results);
-                    setShowModal(true); // Show modal after getting products
+                    setShowModal(true); 
                 }
             })
         } catch (e) {
@@ -56,10 +55,7 @@ function Stock() {
     const handleChooseProduct = (item) => {
         setProductName(item.name);
         setProductId(item.id);
-        setShowModal(false); // Hide modal after selection
-
-        const btns = document.getElementsByClassName('btnClose');
-        for (let i = 0; i < btns.length; i++) btns[i].click();
+        setShowModal(false); 
     }
 
     const handleSave = async () => {
@@ -171,7 +167,7 @@ function Stock() {
                                     <th>รายการ</th>
                                     <th width="100px" className="text-end">จำนวน</th>
                                     <th width="180px">วันที่</th>
-                                    <th width="100px"></th>
+                                    <th width="100px">จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -179,7 +175,7 @@ function Stock() {
         <tr key={index}>
             {item && item.product ? (
                 <>
-                    <td>{item.product.barcode}</td>
+                    <td>{item.product.barcode || '-'}</td>
                     <td>{item.product.name}</td>
                     <td className="text-end">{item.qty}</td>
                     <td>{dayjs(item.createdAt).format('DD/MM/YYYY HH:mm')}</td>
@@ -198,6 +194,7 @@ function Stock() {
         </tr>
     )) : (
         <tr>
+            <td colSpan="5" className="text-center text-muted">ไม่พบข้อมูล</td>
         </tr>
     )}
 </tbody>
@@ -208,7 +205,7 @@ function Stock() {
             </Template>
 
             <Modal 
-                show={showModal} // Add state for controlling modal visibility
+                show={showModal} 
                 onHide={() => setShowModal(false)} 
                 title="เลือกสินค้า" 
                 modalSize="modal-lg"
@@ -233,7 +230,7 @@ function Stock() {
                                             เลือกรายการ
                                         </button>
                                     </td>
-                                    <td>{item.barcode}</td>
+                                    <td>{item.barcode || '-'}</td>
                                     <td>{item.name}</td>
                                 </tr>
                             ) : (
@@ -243,7 +240,11 @@ function Stock() {
                             )
                         ) 
                             
-                        : ''}
+                        : (
+                            <tr>
+                                <td colSpan="3" className="text-center text-muted">ไม่พบข้อมูล</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </Modal>

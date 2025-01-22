@@ -514,7 +514,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                       />
                     </span>
                     <span className="ml-3" style={styles.navText}>
-                      เอกสาร/รายงาน
+                      รายงาน
                       <i className="right fas fa-angle-left ms-2"></i>
                     </span>
                   </a>
@@ -733,24 +733,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
              
 
               {/* Report issues - visible to all */}
-              <li className="nav-item" style={styles.navItem}>
-                <Link
-                  to="/ReportUse"
-                  className="nav-link"
-                  style={styles.navLink}
-                >
-                  <span style={styles.navIcon}>
-                    <img
-                      src={service}
-                      alt="bendy-customer-service-man-answering-question"
-                      style={{ height: "50px", marginRight: "100px" }}
-                    />
-                  </span>
-                  <span className="ml-3" style={styles.navText}>
-                    แจ้งปัญหาการใช้งาน
-                  </span>
-                </Link>
-              </li>
+             
             </ul>
           </nav>
         </div>

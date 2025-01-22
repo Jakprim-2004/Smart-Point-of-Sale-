@@ -133,15 +133,7 @@ function Template(props) {
                 <i className="fa fa-times me-2"></i>
                 Sign Out
               </button>
-              <button
-                data-bs-toggle="modal"
-                data-bs-target="#modalMyInfo"
-                className="btn btn-outline-info"
-                onClick={(e) => setUsr(admin.usr)}
-              >
-                <i className="fa fa-pencil me-2"></i>
-                Edit Info
-              </button>
+              
             </div>
             <hr className="mt-4" />
           </div>
@@ -154,45 +146,11 @@ function Template(props) {
               Dashbaord
             </Link>
 
-            <Link
-              to="/reportMember"
-              className="btn btn-default text-secondary text-start my-menu"
-            >
-              <i className="fa fa-file-alt me-3"></i>
-              รายงานคนที่สมัครใช้บริการ
-            </Link>
+        
 
-            <Link
-              to="/reportChangePackage"
-              className="btn btn-default text-secondary text-start my-menu"
-            >
-              <i className="fa fa-file-alt me-3"></i>
-              รายงานคนที่ขอเปลี่ยน แพคเกจ
-            </Link>
+           
 
-            <Link
-              to="/reportSumSalePerDay"
-              className="btn btn-default text-secondary text-start my-menu"
-            >
-              <i className="fa fa-file-alt me-3"></i>
-              รายงานรายได้รายวัน
-            </Link>
-
-            <Link
-              to="/reportSumSalePerMonth"
-              className="btn btn-default text-secondary text-start my-menu"
-            >
-              <i className="fa fa-file-alt me-3"></i>
-              รายงานรายได้รายเดือน
-            </Link>
-
-            <Link
-              to="/reportSumSalePerYear"
-              className="btn btn-default text-secondary text-start my-menu"
-            >
-              <i className="fa fa-file-alt me-3"></i>
-              รายงานรายได้รายปี
-            </Link>
+         
 
            
           </div>

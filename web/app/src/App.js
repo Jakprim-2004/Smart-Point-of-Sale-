@@ -1,6 +1,7 @@
 import logo from './logo.svg';
 import './App.css';
 import PrivateRoute from './components/PrivateRoute';
+import Category from "./pages/Category";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       {/* Add PrivateRoute to other owner-only routes */}
       
       {/* ...other routes... */}
+      <Route path="/category" element={<Category />} />
     </Routes>
   );
 }

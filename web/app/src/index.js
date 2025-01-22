@@ -16,10 +16,10 @@ import Stock from "./pages/Stock";
 import ReportStock from "./pages/ReportStock";
 import Dashboard from "./pages/Dashboard";
 import Terms from "./pages/Terms";
-import ReportUse from "./pages/Report";
 import DashboardReport from "./pages/DashboardReport";
 import Customer from "./pages/Customer";
 import Reward from "./pages/Reward";
+import Category from "./pages/Category";
 
 const router = createBrowserRouter([
   {
@@ -71,10 +71,6 @@ const router = createBrowserRouter([
     element: <Terms/>,
   },
   {
-    path: "/reportuse",
-    element: <ReportUse />,
-  },
-  {
     path: "/dashboardreport",
     element: <DashboardReport />,
   },
@@ -84,6 +80,9 @@ const router = createBrowserRouter([
   },{
     path: "/reward",
     element: <Reward />,
+  },{
+    path: "/category",
+    element: <Category />,
   }
 ]);
 

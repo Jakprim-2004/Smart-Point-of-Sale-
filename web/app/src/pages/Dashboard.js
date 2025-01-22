@@ -41,11 +41,10 @@ function Dashboard() {
   const myDate = new Date();
   const [year] = useState(myDate.getFullYear());
   const [month] = useState(myDate.getMonth() + 1);
-  const [viewType] = useState("daily"); // unused but kept for future use with API
+  const [viewType] = useState("daily"); 
   const [topSellingViewType, setTopSellingViewType] = useState('products');
   const [paymentChartType, setPaymentChartType] = useState('pie');
-  const [topSellingChartType, setTopSellingChartType] = useState('pie');
-  const [hourlyChartType, setHourlyChartType] = useState('line'); // Add this state
+  const [hourlyChartType, setHourlyChartType] = useState('line');
   const [nearExpiryProducts, setNearExpiryProducts] = useState([]);
   const [nearExpiryCount, setNearExpiryCount] = useState(0);
   const navigate = useNavigate();
@@ -273,83 +272,48 @@ function Dashboard() {
       const totalAmount = topSellingProducts.reduce((sum, item) =>
         sum + parseFloat(item.totalAmount || 0), 0);
 
-      const chartData = {
-        labels: topSellingProducts.map(item => ''),  // Empty labels for chart
-        datasets: [{
-          data: topSellingProducts.map(item => parseFloat(item.totalAmount || 0)),
-          backgroundColor: [
-            'rgba(255, 99, 132, 0.8)',
-            'rgba(54, 162, 235, 0.8)',
-            'rgba(255, 206, 86, 0.8)',
-            'rgba(75, 192, 192, 0.8)',
-            'rgba(153, 102, 255, 0.8)',
-          ],
-        }]
-      };
-
       return topSellingProducts.length > 0 ? (
         <div style={{ position: 'relative', height: '100%', padding: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'start' }}>
-            <div style={{ width: '35%', height: '150px' }}> {/* ปรับขนาดตรงนี้ */}
-              {topSellingChartType === 'pie' ? (
-                <Pie
-                  data={chartData}
-                  options={{
-                    maintainAspectRatio: true,
-                    aspectRatio: 1,
-                    plugins: {
-                      legend: { display: false },
-                      tooltip: {
-                        enabled: true,
-                        callbacks: {
-                          title: (items) => {
-                            if (!items.length) return '';
-                            const index = items[0].dataIndex;
-                            return topSellingProducts[index]?.productName || '';
-                          },
-                          label: (item) => {
-                            const value = parseFloat(item.raw || 0);
-                            return `฿${value.toLocaleString()}`;
-                          }
+            <div style={{ width: '35%', height: '150px' }}>
+              <Bar
+                data={{
+                  labels: topSellingProducts.map(() => ''), // Empty labels
+                  datasets: [{
+                    data: topSellingProducts.map(item => parseFloat(item.totalAmount || 0)),
+                    backgroundColor: [
+                      'rgba(255, 99, 132, 0.8)',
+                      'rgba(54, 162, 235, 0.8)',
+                      'rgba(255, 206, 86, 0.8)',
+                      'rgba(75, 192, 192, 0.8)',
+                      'rgba(153, 102, 255, 0.8)',
+                    ]
+                  }]
+                }}
+                options={{
+                  indexAxis: 'y',
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      callbacks: {
+                        title: (items) => {
+                          if (!items.length) return '';
+                          const index = items[0].dataIndex;
+                          return topSellingProducts[index]?.productName || '';
                         }
                       }
                     }
-                  }}
-                />
-              ) : (
-                <Bar
-                  data={{
-                    labels: topSellingProducts.map(() => ''), // Empty labels
-                    datasets: [{
-                      data: topSellingProducts.map(item => parseFloat(item.totalAmount || 0)),
-                      backgroundColor: chartData.datasets[0].backgroundColor
-                    }]
-                  }}
-                  options={{
-                    indexAxis: 'y',
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: { display: false },
-                      tooltip: {
-                        callbacks: {
-                          title: (items) => {
-                            if (!items.length) return '';
-                            const index = items[0].dataIndex;
-                            return topSellingProducts[index]?.productName || '';
-                          }
-                        }
-                      }
-                    },
-                    scales: {
-                      y: {
-                        ticks: { display: false } // Hide y-axis labels
-                      }
+                  },
+                  scales: {
+                    y: {
+                      ticks: { display: false }
                     }
-                  }}
-                />
-              )}
+                  }
+                }}
+              />
             </div>
-            <div style={{ width: '65%', paddingLeft: '20px' }}> {/* เพิ่มพื้นที่ส่วนข้อมูล */}
+            <div style={{ width: '65%', paddingLeft: '20px' }}>
               {topSellingProducts.map((item, index) => {
                 const amount = parseFloat(item.totalAmount || 0);
                 const percentage = ((amount / totalAmount) * 100).toFixed(2);
@@ -358,7 +322,11 @@ function Dashboard() {
                     key={index}
                     style={{
                       marginBottom: '15px',
-                      borderLeft: `3px solid ${chartData.datasets[0].backgroundColor[index]}`,
+                      borderLeft: `3px solid ${['rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)',][index]}`,
                       paddingLeft: '10px'
                     }}
                   >
@@ -376,7 +344,6 @@ function Dashboard() {
           </div>
         </div>
       ) : (
-
         <div className="alert alert-info text-center">
           <i className="fas fa-question-circle fa-2x mb-2"></i>
           <p>ไม่มีข้อมูลสินค้าขายดี</p>
@@ -386,106 +353,64 @@ function Dashboard() {
       const totalAmount = topSellingCategories.reduce((sum, item) =>
         sum + parseFloat(item.totalAmount || 0), 0);
 
-      const chartData = {
-        labels: topSellingCategories.map(item => ''),
-        datasets: [{
-          data: topSellingCategories.map(item => parseFloat(item.totalAmount || 0)),
-          backgroundColor: [
-            'rgba(255, 99, 132, 0.8)',
-            'rgba(54, 162, 235, 0.8)',
-            'rgba(255, 206, 86, 0.8)',
-            'rgba(75, 192, 192, 0.8)',
-            'rgba(153, 102, 255, 0.8)',
-          ],
-        }]
-      };
-
       return topSellingCategories.length > 0 ? (
         <div style={{ position: 'relative', height: '100%', padding: '10px' }}>
-          <div className="d-flex justify-content-end mb-2">
-            <i
-              className="fas fa-chart-pie mx-2"
-              style={topSellingChartType === 'pie' ? styles.activeIcon : styles.inactiveIcon}
-              onClick={() => setTopSellingChartType('pie')}
-              title="กราฟวงกลม"
-            />
-            <i
-              className="fas fa-chart-bar mx-2"
-              style={topSellingChartType === 'bar' ? styles.activeIcon : styles.inactiveIcon}
-              onClick={() => setTopSellingChartType('bar')}
-              title="กราฟแท่ง"
-            />
-          </div>
           <div style={{ display: 'flex', alignItems: 'start' }}>
-            <div style={{ width: '35%', height: '150px' }}> {/* ปรับขนาดตรงนี้ */}
-              {topSellingChartType === 'pie' ? (
-                <Pie
-                  data={chartData}
-                  options={{
-                    maintainAspectRatio: true,
-                    aspectRatio: 1, // ปรับให้กราฟเป็นวงกลมสมบูรณ์
-                    plugins: {
-                      legend: { display: false },
-                      tooltip: {
-                        enabled: true,
-                        callbacks: {
-                          title: (items) => {
-                            if (!items.length) return '';
-                            const index = items[0].dataIndex;
-                            return topSellingCategories[index]?.category || '';
-                          },
-                          label: (item) => {
-                            const value = parseFloat(item.raw || 0);
-                            return `฿${value.toLocaleString()}`;
-                          }
+            <div style={{ width: '35%', height: '150px' }}>
+              <Bar
+                data={{
+                  labels: topSellingCategories.map(() => ''), // Empty labels
+                  datasets: [{
+                    data: topSellingCategories.map(item => parseFloat(item.totalAmount || 0)),
+                    backgroundColor: [
+                      'rgba(255, 99, 132, 0.8)',
+                      'rgba(54, 162, 235, 0.8)',
+                      'rgba(255, 206, 86, 0.8)',
+                      'rgba(75, 192, 192, 0.8)',
+                      'rgba(153, 102, 255, 0.8)',
+                    ]
+                  }]
+                }}
+                options={{
+                  indexAxis: 'y',
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      callbacks: {
+                        title: (items) => {
+                          if (!items.length) return '';
+                          const index = items[0].dataIndex;
+                          return topSellingCategories[index]?.category || '';
                         }
                       }
                     }
-                  }}
-                />
-              ) : (
-                <Bar
-                  data={{
-                    labels: topSellingCategories.map(() => ''), // Empty labels
-                    datasets: [{
-                      data: topSellingCategories.map(item => parseFloat(item.totalAmount || 0)),
-                      backgroundColor: chartData.datasets[0].backgroundColor
-                    }]
-                  }}
-                  options={{
-                    indexAxis: 'y',
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: { display: false },
-                      tooltip: {
-                        callbacks: {
-                          title: (items) => {
-                            if (!items.length) return '';
-                            const index = items[0].dataIndex;
-                            return topSellingCategories[index]?.category || '';
-                          }
-                        }
-                      }
-                    },
-                    scales: {
-                      y: {
-                        ticks: { display: false } // Hide y-axis labels
-                      }
+                  },
+                  scales: {
+                    y: {
+                      ticks: { display: false }
                     }
-                  }}
-                />
-              )}
+                  }
+                }}
+              />
             </div>
-            <div style={{ width: '65%', paddingLeft: '20px' }}> {/* เพิ่มพื้นที่ส่วนข้อมูล */}
+            <div style={{ width: '65%', paddingLeft: '20px' }}>
               {topSellingCategories.map((item, index) => {
                 const amount = parseFloat(item.totalAmount || 0);
                 const percentage = ((amount / totalAmount) * 100).toFixed(2);
                 return (
-                  <div key={index} style={{
-                    marginBottom: '15px',
-                    borderLeft: `3px solid ${chartData.datasets[0].backgroundColor[index]}`,
-                    paddingLeft: '10px'
-                  }}>
+                  <div
+                    key={index}
+                    style={{
+                      marginBottom: '15px',
+                      borderLeft: `3px solid ${['rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)',][index]}`,
+                      paddingLeft: '10px'
+                    }}
+                  >
                     <div style={{ fontWeight: 'bold' }}>{item.category}</div>
                     <div style={{ color: '#666' }}>
                       ฿{amount.toLocaleString()}
@@ -506,7 +431,6 @@ function Dashboard() {
       );
     }
   };
-
 
   const renderPaymentChart = () => {
     const total = paymentStats.reduce((sum, stat) => sum + parseFloat(stat.total || 0), 0);
@@ -782,64 +706,7 @@ function Dashboard() {
 
               </div>
 
-              <div className="p-4">
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h5 className="mb-0">
-                    <img src={time} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
-                    ยอดขายตามช่วงเวลา
-                  </h5>
-                  <div>
-                    <i
-                      className="fas fa-chart-line mx-2"
-                      style={hourlyChartType === 'line' ? styles.activeIcon : styles.inactiveIcon}
-                      onClick={() => setHourlyChartType('line')}
-                      title="กราฟเส้น"
-                    />
-                    <i
-                      className="fas fa-chart-bar mx-2"
-                      style={hourlyChartType === 'bar' ? styles.activeIcon : styles.inactiveIcon}
-                      onClick={() => setHourlyChartType('bar')}
-                      title="กราฟแท่ง"
-                    />
-                  </div>
-                </div>
-                <div style={{ height: '250px', padding: '20px', background: '#ffffff', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                  {hourlyChartType === 'line' ? (
-                    <Line
-                      options={{
-                        ...chartOptions,
-                        maintainAspectRatio: false
-                      }}
-                      data={{
-                        labels: todaySales.hourlyData.map(h => `${h.hour}:00`),
-                        datasets: [{
-                          label: 'ยอดขาย',
-                          data: todaySales.hourlyData.map(h => h.amount),
-                          borderColor: 'rgb(75, 192, 192)',
-                          backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                          tension: 0.3,
-                          fill: true
-                        }]
-                      }}
-                    />
-                  ) : (
-                    <Bar
-                      options={{
-                        ...chartOptions,
-                        maintainAspectRatio: false
-                      }}
-                      data={{
-                        labels: todaySales.hourlyData.map(h => `${h.hour}:00`),
-                        datasets: [{
-                          label: 'ยอดขาย',
-                          data: todaySales.hourlyData.map(h => h.amount),
-                          backgroundColor: 'rgba(75, 192, 192, 0.6)'
-                        }]
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
+              
             </div>
           </div>
         </div>
@@ -871,23 +738,7 @@ function Dashboard() {
                       <option value="products" style={{ color: 'black' }}> สินค้า</option>
                       <option value="categories" style={{ color: 'black' }}>หมวดหมู่ </option>
                     </select>
-                    <span
-
-                      className="text-black"> ขายดี 5 อันดับ</span>
-                  </div>
-                  <div>
-                    <i
-                      className="fas fa-chart-pie mx-2"
-                      style={topSellingChartType === 'pie' ? styles.activeIcon : styles.inactiveIcon}
-                      onClick={() => setTopSellingChartType('pie')}
-                      title="กราฟวงกลม"
-                    />
-                    <i
-                      className="fas fa-chart-bar mx-2"
-                      style={topSellingChartType === 'bar' ? styles.activeIcon : styles.inactiveIcon}
-                      onClick={() => setTopSellingChartType('bar')}
-                      title="กราฟแท่ง"
-                    />
+                    <span className="text-black"> ขายดี 5 อันดับ</span>
                   </div>
                 </div>
               </div>

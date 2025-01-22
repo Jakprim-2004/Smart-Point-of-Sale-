@@ -204,14 +204,6 @@ function Package() {
                     password: pass,
                     firstName: firstName,
                     lastName: lastName,
-                    address: {
-                        fullAddress: address,
-                        country: 'ไทย',
-                        province: province,
-                        district: district,
-                        subDistrict: subDistrict,
-                        postalCode: postalCode
-                    },
                     status: 'active'
                 };
 
@@ -341,54 +333,7 @@ function Package() {
                         </div>
 
                         {/* Address Section */}
-                        <div className="col-12">
-                            <h5 className="text-secondary mb-3">ที่อยู่</h5>
-                            <div className="row g-3">
-                                <div className="col-12">
-                                    <div className="input-group">
-                                        <span className="input-group-text bg-light"><FaMapMarkerAlt /></span>
-                                        <textarea className="form-control" placeholder="ที่อยู่" value={address} onChange={(e) => setAddress(e.target.value)} required />
-                                    </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <input type="text" className="form-control bg-light" value="ไทย" disabled />
-                                </div>
-                                <div className="col-md-6">
-                                    <select className="form-select" value={province} onChange={handleProvinceChange} required>
-                                        <option value="">เลือกจังหวัด</option>
-                                        {provinces.map((p, index) => (
-                                            <option key={index} value={p}>{p}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="col-md-4">
-                                    <select className="form-select" value={district} onChange={handleDistrictChange} required>
-                                        <option value="">เลือกอำเภอ/เขต</option>
-                                        {districts.map((d, index) => (
-                                            <option key={index} value={d}>{d}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="col-md-4">
-                                    <select className="form-select" value={subDistrict} onChange={handleSubDistrictChange} required>
-                                        <option value="">เลือกตำบล/แขวง</option>
-                                        {subDistricts.map((sd, index) => (
-                                            <option key={index} value={sd}>{sd}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="col-md-4">
-                                    <input type="text" 
-                                        className="form-control" 
-                                        placeholder="รหัสไปรษณีย์" 
-                                        value={postalCode} 
-                                        onChange={handlePostalCodeChange}
-                                        maxLength="5"
-                                        required 
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                       
 
                         <div className="col-12 text-center mt-4">
                             <button type="submit" className="btn btn-primary btn-lg px-5 rounded-pill">

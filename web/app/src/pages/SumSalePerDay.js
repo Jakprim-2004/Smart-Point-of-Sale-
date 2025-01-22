@@ -187,7 +187,7 @@ function SumSalePerDay() {
                                     </button>
                                 </td>
                                 <td className="text-end">{item.id}</td>
-                                <td>{item.createdAt}</td>
+                                <td>{item.createdAt.substring(0, 10)}</td>
                             </tr>
                         ) : null}
                     </tbody>

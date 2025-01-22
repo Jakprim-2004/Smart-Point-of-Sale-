@@ -116,14 +116,7 @@ function Customer() {
                                             onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})}
                                         />
                                     </div>
-                                    <div className="col-md-6 mb-3">
-                                        <label className="form-label">ที่อยู่</label>
-                                        <textarea
-                                            className="form-control"
-                                            value={newCustomer.address}
-                                            onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})}
-                                        />
-                                    </div>
+                                    
                                 </div>
                                 <button type="submit" className="btn btn-success">บันทึกข้อมูล</button>
                             </form>

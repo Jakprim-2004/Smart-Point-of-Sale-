@@ -6,17 +6,22 @@ const Barcode = ({ value, width = 1, height = 10 }) => {
   const barcodeRef = useRef(null);
 
   useEffect(() => {
-    if (barcodeRef.current) {
-      JsBarcode(barcodeRef.current, value, {
-        format: "CODE128",
-        displayValue: true,
-        width: width,
-        height: height,
-      });
+    if (barcodeRef.current && value) {
+      try {
+        JsBarcode(barcodeRef.current, value, {
+          format: "CODE128",
+          displayValue: true,
+          width: width,
+          height: height,
+        });
+      } catch (error) {
+        console.error("Barcode generation error:", error);
+      }
     }
   }, [value, width, height]);
 
-  return <svg ref={barcodeRef}></svg>;
+  // Only render SVG if value exists
+  return value ? <svg ref={barcodeRef}></svg> : null;
 };
 
 export default Barcode;
