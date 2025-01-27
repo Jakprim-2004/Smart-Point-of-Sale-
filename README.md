@@ -1,4 +1,4 @@
-# Retail Point of Sale  
+# Smart Point of Sale  
 
 ## Installation & Setup Instructions (คำแนะนำการติดตั้งและการตั้งค่า)
 
