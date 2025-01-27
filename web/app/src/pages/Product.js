@@ -93,11 +93,28 @@ function Product() {
     }
   };
 
+  // Clean up function for modals and preview
+  const cleanupModalAndPreview = () => {
+    setImagePreview(null);
+    setProductImage({});
+  };
+
+  // Update handleClose to include cleanup
   const handleClose = () => {
-    const btns = document.getElementsByClassName("btnClose");
-    for (let i = 0; i < btns.length; i++) {
-      btns[i].click();
-    }
+    cleanupModalAndPreview();
+    setShowProductModal(false);
+    setShowProductImageModal(false);
+  };
+
+  // Update modal hide handlers
+  const handleProductModalClose = () => {
+    setShowProductModal(false);
+    cleanupModalAndPreview();
+  };
+
+  const handleImageModalClose = () => {
+    setShowProductImageModal(false);
+    cleanupModalAndPreview();
   };
 
   const handleDelete = (item) => {
@@ -149,7 +166,17 @@ function Product() {
     };
   }, [imagePreview]);
 
+  // Update handleUpload to include proper cleanup
   const handleUpload = () => {
+    if (!productImage || !productImage.name) {
+      Swal.fire({
+        title: "Error",
+        text: "กรุณาเลือกไฟล์รูปภาพก่อนอัพโหลด",
+        icon: "error"
+      });
+      return;
+    }
+
     Swal.fire({
       title: "ยืนยันการอัพโหลดภาพสินค้า",
       text: "โปรดทำการยืนยัน เพื่ออัพโหลดภาพสินค้านี้",
@@ -159,31 +186,36 @@ function Product() {
     }).then(async (res) => {
       if (res.isConfirmed) {
         try {
-          const _config = {
-            headers: {
-              Authorization: "Bearer " + localStorage.getItem(config.token_name),
-              "Content-Type": "multipart/form-data",
-            },
-          };
           const formData = new FormData();
           formData.append("productImage", productImage);
-          formData.append("proudctImageName", productImage.name);
+          formData.append("productImageName", productImage.name);
           formData.append("productId", product.id);
 
-          const res = await axios.post(config.api_path + "/productImage/insert", formData, _config);
+          const res = await axios.post(
+            config.api_path + "/productImage/insert", 
+            formData, 
+            {
+              headers: {
+                ...config.headers().headers,
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+
           if (res.data.message === "success") {
+            await fetchDataProductImage({ id: product.id });
+            cleanupModalAndPreview();
             Swal.fire({
               title: "upload ภาพสินค้า",
               text: "upload ภาพสินค้าเรียบร้อยแล้ว",
               icon: "success",
               timer: 2000,
             });
-            fetchDataProductImage({ id: product.id });
           }
         } catch (e) {
           Swal.fire({
             title: "Error",
-            text: e.message,
+            text: e.response?.data?.message || e.message,
             icon: "error",
           });
         }
@@ -467,10 +499,7 @@ function Product() {
         {/* Product Images Modal */}
         <Modal
           show={showProductImageModal}
-          onHide={() => {
-            setShowProductImageModal(false);
-            setImagePreview(null);
-          }}
+          onHide={handleImageModalClose}
           title="ภาพสินค้า"
           modalSize="modal-lg"
         >
@@ -569,7 +598,7 @@ function Product() {
         {/* Product Details Modal */}
         <Modal
           show={showProductModal}
-          onHide={() => setShowProductModal(false)}
+          onHide={handleProductModalClose}
           title="ฟอร์มสินค้า"
         >
           <form onSubmit={(e) => {
