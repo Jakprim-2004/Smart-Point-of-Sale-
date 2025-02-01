@@ -10,8 +10,14 @@ ProductModel.hasMany(StockModel, { foreignKey: 'productId' });
 StockModel.belongsTo(ProductModel, { foreignKey: 'productId' });
 
 // การเชื่อมโยงระหว่าง Product และ BillSaleDetail
-ProductModel.hasMany(BillSaleDetailModel, { foreignKey: 'productId' });
-BillSaleDetailModel.belongsTo(ProductModel, { foreignKey: 'productId' });
+ProductModel.hasMany(BillSaleDetailModel, { 
+    foreignKey: 'productId',
+    sourceKey: 'id'
+});
+BillSaleDetailModel.belongsTo(ProductModel, { 
+    foreignKey: 'productId',
+    targetKey: 'id'
+});
 
 // Add BillSale and BillSaleDetail associations
 BillSaleModel.hasMany(BillSaleDetailModel, { 
@@ -48,4 +54,9 @@ MemberModel.belongsTo(PackageModel, {
 PackageModel.hasMany(MemberModel, { 
     foreignKey: 'packageId'
 });
+
+// Add Customer and BillSale associations
+const CustomerModel = require('./CustomerModel');
+BillSaleModel.belongsTo(CustomerModel, { foreignKey: 'customerId' });
+CustomerModel.hasMany(BillSaleModel, { foreignKey: 'customerId' });
 

@@ -41,9 +41,6 @@ const CustomerModel = conn.define("Customer", {
         type: DataTypes.ENUM('NORMAL','Bronze', 'SILVER', 'GOLD', 'PLATINUM'),
         defaultValue: 'NORMAL',
         allowNull: false
-    },
-    pointsExpireDate: {
-        type: DataTypes.DATE
     }
 });
 

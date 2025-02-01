@@ -1,3 +1,17 @@
-cd api
+@echo off
 
-npx nodemon server.js
+cd api || goto :error
+
+call npm install || goto :error
+
+call npx nodemon server.js || goto :error
+
+goto :EOF
+
+:error
+echo Failed with error #%errorlevel%.
+pause
+exit /b %errorlevel%
+
+
+

@@ -88,7 +88,7 @@ function Login() {
             <div className="card login-card shadow-lg p-4">
                 <div className="row">
                     <div className="col-md-6 d-flex flex-column align-items-center justify-content-center">
-                        <h3 className="login-title">S Point of Sale</h3>
+                        <h3 className="login-title">Smart POS</h3>
                         <p className="login-subtitle">Online inventory management system</p>
                         <div className="w-32 h-32 mx-auto mb-4">
                             <Lottie

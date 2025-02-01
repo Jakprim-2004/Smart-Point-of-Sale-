@@ -20,6 +20,8 @@ import DashboardReport from "./pages/DashboardReport";
 import Customer from "./pages/Customer";
 import Reward from "./pages/Reward";
 import Category from "./pages/Category";
+import LoginCustomer from "./pages/LoginCustomer";
+import DetailCustomer from "./pages/DetailCustomer";
 
 const router = createBrowserRouter([
   {
@@ -83,6 +85,12 @@ const router = createBrowserRouter([
   },{
     path: "/category",
     element: <Category />,
+  },{
+    path: "/login/customer",
+    element: <LoginCustomer />,
+  },{
+    path: "/DetailCustomer",
+    element: <DetailCustomer />,
   }
 ]);
 

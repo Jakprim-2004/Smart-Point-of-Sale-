@@ -3,8 +3,8 @@ import axios from 'axios';
 import config from "../config";
 import Swal from 'sweetalert2';
 import { useNavigate } from "react-router-dom";
-import { FaUser, FaEnvelope, FaPhone, FaLock, FaStore, FaMapMarkerAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { fetchThailandData, getDistricts, getSubDistricts, getPostalCode } from '../utils/Thailand';
+import { FaUser, FaEnvelope, FaPhone, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { fetchThailandData, } from '../utils/Thailand';
 
 function Package() {
     const [packages, setPackages] = useState([]);
@@ -15,14 +15,8 @@ function Package() {
     const [email, setEmail] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
-    const [address, setAddress] = useState('');
-    const [province, setProvince] = useState('');
-    const [district, setDistrict] = useState('');
-    const [subDistrict, setSubDistrict] = useState('');
     const [postalCode, setPostalCode] = useState('');
     const [provinces, setProvinces] = useState([]);
-    const [districts, setDistricts] = useState([]);
-    const [subDistricts, setSubDistricts] = useState([]);
     const [thailandData, setThailandData] = useState([]);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -53,34 +47,7 @@ function Package() {
         setProvinces(data.map(p => p.name_th));
     };
 
-    const handleProvinceChange = (e) => {
-        const selectedProvince = e.target.value;
-        setProvince(selectedProvince);
-        setDistrict('');
-        setSubDistrict('');
-        
-        const districtsList = getDistricts(thailandData, selectedProvince);
-        setDistricts(districtsList.map(d => d.name_th));
-        setSubDistricts([]);
-    };
-
-    const handleDistrictChange = (e) => {
-        const selectedDistrict = e.target.value;
-        setDistrict(selectedDistrict);
-        setSubDistrict('');
-        
-        const subDistrictsList = getSubDistricts(thailandData, province, selectedDistrict);
-        setSubDistricts(subDistrictsList.map(sd => sd.name_th));
-    };
-
-    const handleSubDistrictChange = (e) => {
-        const selectedSubDistrict = e.target.value;
-        setSubDistrict(selectedSubDistrict);
-        
-        // Auto-fill postal code but allow editing
-        const suggestedPostalCode = getPostalCode(thailandData, province, district, selectedSubDistrict);
-        setPostalCode(suggestedPostalCode);
-    };
+    
 
     const validateEmail = (email) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

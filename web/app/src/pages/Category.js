@@ -120,7 +120,7 @@ function Category() {
               className="btn btn-secondary"
               title="เพิ่มรายการสินค้า"
             >
-            <i className="fa fa-plus mr-2"></i>เพิ่มรายการสินค้า
+            <i class=" me-2 fa fa-shopping-cart" aria-hidden="true"></i>เพิ่มรายการสินค้า
             </button>
           </div>
           
