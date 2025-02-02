@@ -3,6 +3,7 @@ import axios from 'axios';
 import config from "../config";
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import mochiGif from '../assets/mochi-young-woman.gif';
 
 function LoginCustomer() {
     const [loginData, setLoginData] = useState({
@@ -67,13 +68,24 @@ function LoginCustomer() {
 
     return (
         <div className="container mt-5">
-            <div className="row justify-content-center">
+            <div className="row justify-content-center align-items-center">
+                <div className="col-md-5 text-center d-none d-md-block">
+                    <img 
+                        src={mochiGif} 
+                        alt="Mochi woman" 
+                        style={{
+                            maxWidth: '80%',
+                            borderRadius: '15px',
+                            boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                        }}
+                    />
+                </div>
                 <div className="col-md-6">
-                    <div className="card">
-                        <div className="card-header">
-                            <h3 className="text-center">เข้าสู่ระบบลูกค้า</h3>
+                    <div className="card shadow-sm">
+                        <div className="card-header bg-white">
+                            <h3 className="text-center mb-0" style={{ color: '#2c3e50' }}>เข้าสู่ระบบลูกค้า</h3>
                         </div>
-                        <div className="card-body">
+                        <div className="card-body p-4">
                             <form onSubmit={handleSubmit}>
                                 <div className="mb-3">
                                     <label className="form-label">อีเมล <span className="text-danger">*</span></label>
