@@ -260,15 +260,26 @@ function Sale() {
         if (result.isConfirmed) {
             try {
                 const vatRate = 7;
-                const vatAmount = calculateVAT(totalPrice, vatRate);
-                const totalWithVAT = totalPrice + vatAmount;
+                const priceAfterDiscount = totalPrice - discountFromPoints;
+                const vatAmount = calculateVAT(priceAfterDiscount, vatRate);
+                const totalWithVAT = priceAfterDiscount + vatAmount;
+
+                // สร้างข้อมูลการใช้แต้ม (ถ้ามี)
+                const pointTransaction = pointsToRedeem > 0 ? {
+                    customerId: selectedCustomer.id,
+                    points: pointsToRedeem,
+                    transactionType: 'DISCOUNT',
+                    description: `ใช้แต้มส่วนลด ${pointsToRedeem} แต้ม สำหรับบิลเลขที่ #${currentBill.id} (ส่วนลด ${discountFromPoints} บาท)`
+                } : null;
 
                 const paymentData = {
                     method: paymentMethod,
                     amount: totalWithVAT,
                     vatAmount: vatAmount,
                     billSaleDetails: currentBill.billSaleDetails,
-                    customerId: selectedCustomer?.id || null
+                    customerId: selectedCustomer?.id || null,
+                    pointTransaction: pointTransaction, // เพิ่มข้อมูล point transaction
+                    discountFromPoints: discountFromPoints // เพิ่มข้อมูลส่วนลด
                 };
 
                 const res = await axios.post(
@@ -1026,23 +1037,17 @@ function Sale() {
           </div>
           <div>
             <input
-              value={totalPrice.toLocaleString("th-TH")}
+              value={(totalPrice - discountFromPoints).toLocaleString("th-TH")}
               disabled
               className="form-control text-end"
             />
-          </div>
-          <div className="mt-3">
-            <label>ช่องทางการชำระเงิน</label>
-          </div>
-          <div>
-            <select
-              value={paymentMethod}
-              onChange={handlePaymentMethodChange}
-              className="form-control"
-            >
-              <option value="Cash">Cash(เงินสด)</option>
-              <option value="PromptPay">PromptPay(พร้อมเพย์)</option>
-            </select>
+            {discountFromPoints > 0 && (
+              <div className="text-muted small mt-1">
+                  <span>ราคาเต็ม: {totalPrice.toLocaleString("th-TH")} บาท</span>
+                  <br/>
+                  <span className="text-success">ส่วนลดจากแต้ม: -{discountFromPoints.toLocaleString()} บาท</span>
+              </div>
+            )}
           </div>
 
           {paymentMethod === "PromptPay" ? (
@@ -1066,7 +1071,7 @@ function Sale() {
               <div className="mt-3">
                 <label>เงินทอน</label>
                 <input
-                  value={(inputMoney - totalPrice).toLocaleString("th-TH")}
+                  value={(inputMoney - (totalPrice - discountFromPoints)).toLocaleString("th-TH")}
                   className="form-control text-end"
                   disabled
                 />
@@ -1216,9 +1221,19 @@ function Sale() {
                 รวมทั้งสิ้น:
               </span>
               <span style={{ flex: "1", textAlign: "right", minWidth: "80px" }}>
-                {sumTotal.toFixed(2)} บาท
+              {selectedBill?.totalAmount?.toFixed(2) || sumTotal.toFixed(2)} บาท 
               </span>
             </div>
+            {discountFromPoints > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ flex: "1", textAlign: "left", minWidth: "80px" }}>
+                        ส่วนลดจากแต้ม:
+                    </span>
+                    <span style={{ flex: "1", textAlign: "right", minWidth: "80px", color: "green" }}>
+                        -{discountFromPoints.toFixed(2)} บาท
+                    </span>
+                </div>
+            )}
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span style={{ flex: "1", textAlign: "left", minWidth: "80px" }}>
                 VAT 7%:
@@ -1242,7 +1257,7 @@ function Sale() {
                 สุทธิ:
               </span>
               <span style={{ flex: "1", textAlign: "right", minWidth: "80px" }}>
-                {sumTotal.toFixed(2)} บาท
+                {(sumTotal - discountFromPoints).toFixed(2)} บาท
               </span>
             </div>
           </div>

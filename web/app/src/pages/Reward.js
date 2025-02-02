@@ -65,11 +65,25 @@ function Reward() {
 
         try {
             setLoading(true);
+            
+            // สร้างข้อความอธิบายการแลกของรางวัลที่ละเอียดขึ้น
+            const detailedDescription = [
+                `แลกของรางวัล: ${reward.name}`,
+                reward.description ? ` ${reward.description}` : '',
+                
+            ].filter(Boolean).join(' | '); // กรองข้อความว่างออก
+
             const response = await axios.post(
                 config.api_path + "/rewards/redeem",
                 {
                     customerId: selectedCustomer.id,
-                    rewardId: reward.id
+                    rewardId: reward.id,
+                    pointTransaction: {
+                        customerId: selectedCustomer.id,
+                        points: reward.pointsCost,
+                        transactionType: 'REDEEM_REWARD',
+                        description: detailedDescription
+                    }
                 },
                 config.headers()
             );

@@ -60,3 +60,8 @@ const CustomerModel = require('./CustomerModel');
 BillSaleModel.belongsTo(CustomerModel, { foreignKey: 'customerId' });
 CustomerModel.hasMany(BillSaleModel, { foreignKey: 'customerId' });
 
+// Add Customer and PointTransaction associations
+const PointTransactionModel = require('./PointTransactionModel');
+CustomerModel.hasMany(PointTransactionModel, { foreignKey: 'customerId' });
+PointTransactionModel.belongsTo(CustomerModel, { foreignKey: 'customerId' });
+

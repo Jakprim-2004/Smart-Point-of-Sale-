@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const RewardModel = require('../models/RewardModel');
 const CustomerModel = require('../models/CustomerModel');
+const PointTransactionModel = require('../models/PointTransactionModel'); // เพิ่มบรรทัดนี้
 const service = require('./Service');
 const fileUpload = require('express-fileupload');
 router.use(fileUpload());
@@ -104,6 +105,9 @@ router.post("/rewards/redeem", service.isLogin, async (req, res) => {
 
         await customer.save();
         await reward.save();
+
+        // บันทึกการใช้แต้มแลกของรางวัล
+        await PointTransactionModel.create(req.body.pointTransaction);
 
         // ดึงข้อมูลของรางวัลทั้งหมดที่อัปเดตแล้ว
         const updatedRewards = await RewardModel.findAll({

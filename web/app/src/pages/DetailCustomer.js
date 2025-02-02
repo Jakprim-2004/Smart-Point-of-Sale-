@@ -10,14 +10,10 @@ function DetailCustomer() {
     const [purchases, setPurchases] = useState([]);
     const [selectedBill, setSelectedBill] = useState(null);
     const [showBillModal, setShowBillModal] = useState(false);
+    const [pointHistory, setPointHistory] = useState([]);
     const navigate = useNavigate();
 
-    // ข้อมูลจำลองประวัติการใช้แต้ม
-    const mockPointHistory = [
-        { id: 1, date: '2024-01-14', points: -50, description: 'แลกส่วนลด 50 บาท', balance: 150 },
-        { id: 2, date: '2024-01-12', points: -100, description: 'แลกของรางวัล: เครื่องดื่ม', balance: 200 },
-        { id: 3, date: '2024-01-08', points: 23, description: 'สะสมแต้มจากการซื้อ', balance: 300 },
-    ];
+    
 
     useEffect(() => {
         const customerData = localStorage.getItem('customerData');
@@ -26,7 +22,7 @@ function DetailCustomer() {
                 title: 'กรุณาเข้าสู่ระบบ',
                 icon: 'warning'
             }).then(() => {
-                navigate('/login-customer');
+                navigate('/login/customer');
             });
             return;
         }
@@ -83,6 +79,56 @@ function DetailCustomer() {
                 return 'เงินสด';
             default:
                 return method || '-';
+        }
+    };
+
+    const handleLogout = () => {
+        Swal.fire({
+            title: 'ยืนยันการออกจากระบบ',
+            text: "คุณต้องการออกจากระบบใช่หรือไม่?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'ใช่, ออกจากระบบ',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                localStorage.removeItem('customerData');
+                Swal.fire({
+                    title: 'ออกจากระบบสำเร็จ',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    navigate('/login/customer');
+                });
+            }
+        });
+    };
+
+    // เพิ่ม useEffect สำหรับโหลดประวัติการใช้แต้ม
+    useEffect(() => {
+        if (customer?.id) {
+            loadPointHistory();
+        }
+    }, [customer]);
+
+    const loadPointHistory = async () => {
+        try {
+            const response = await axios.get(
+                `${config.api_path}/customer/${customer.id}/point-history`
+            );
+            if (response.data.success) {
+                setPointHistory(response.data.result);
+            }
+        } catch (error) {
+            console.error('Error loading point history:', error);
+            Swal.fire({
+                title: 'เกิดข้อผิดพลาด',
+                text: 'ไม่สามารถโหลดประวัติการใช้แต้มได้',
+                icon: 'error'
+            });
         }
     };
 
@@ -191,7 +237,12 @@ function DetailCustomer() {
             {/* ข้อมูลลูกค้า */}
             <div className="card mb-4">
                 <div className="card-header">
-                    <h3>ข้อมูลลูกค้า</h3>
+                    <div className="d-flex justify-content-between align-items-center">
+                        <h3 className="mb-0">ข้อมูลลูกค้า</h3>
+                        <div>
+                            <button className="btn btn-danger ms-auto" onClick={handleLogout}>ออกจากระบบ</button>
+                        </div>
+                    </div>
                 </div>
                 <div className="card-body">
                     <div className="row">
@@ -245,21 +296,48 @@ function DetailCustomer() {
                                     <tr>
                                         <th>วันที่</th>
                                         <th>รายการ</th>
+                                        <th>ประเภท</th>
                                         <th>แต้ม</th>
-                                        <th>คงเหลือ</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {mockPointHistory.map(point => (
-                                        <tr key={point.id}>
-                                            <td>{new Date(point.date).toLocaleDateString()}</td>
-                                            <td>{point.description}</td>
-                                            <td className={point.points < 0 ? 'text-danger' : 'text-success'}>
-                                                {point.points > 0 ? `+${point.points}` : point.points}
+                                    {pointHistory.length > 0 ? (
+                                        pointHistory.map((transaction) => (
+                                            <tr key={transaction.id}>
+                                                <td>
+                                                    {new Date(transaction.transactionDate).toLocaleDateString('th-TH', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
+                                                </td>
+                                                <td>{transaction.description}</td>
+                                                <td>
+                                                    {transaction.transactionType === 'REDEEM_REWARD' ? 
+                                                        'แลกของรางวัล' : 'ส่วนลด'}
+                                                </td>
+                                                <td className={
+                                                    transaction.transactionType === 'REDEEM_REWARD' || 
+                                                    transaction.transactionType === 'DISCOUNT' 
+                                                        ? 'text-danger' 
+                                                        : 'text-success'
+                                                }>
+                                                    {transaction.transactionType === 'REDEEM_REWARD' ||
+                                                     transaction.transactionType === 'DISCOUNT'
+                                                        ? `-${transaction.points}`
+                                                        : `+${transaction.points}`}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="4" className="text-center">
+                                                ไม่พบประวัติการใช้แต้ม
                                             </td>
-                                            <td>{point.balance}</td>
                                         </tr>
-                                    ))}
+                                    )}
                                 </tbody>
                             </table>
                         </div>

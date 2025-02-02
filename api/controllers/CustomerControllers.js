@@ -8,6 +8,7 @@ const CustomerModel = require("../models/CustomerModel");
 const BillSaleModel = require("../models/BillSaleModel");
 const BillSaleDetailModel = require("../models/BillSaleDetailModel");
 const ProductModel = require("../models/ProductModel");
+const PointTransactionModel = require('../models/PointTransactionModel'); // เพิ่มบรรทัดนี้
 
 // ดึงข้อมูลลูกค้าทั้งหมด
 router.get("/customers", async (req, res) => {
@@ -85,27 +86,25 @@ router.post("/customer", service.isLogin, async (req, res) => {
 router.post("/login/customer", async (req, res) => {
     try {
         const { email, phone } = req.body;
-        const whereClause = {};
         
-        if (email) {
-            whereClause.email = email;
-        } else if (phone) {
-            whereClause.phone = phone;
-        } else {
+        if (!email || !phone) {
             return res.status(400).json({ 
                 success: false, 
-                message: "กรุณากรอกอีเมลหรือเบอร์โทรศัพท์" 
+                message: "กรุณากรอกทั้งอีเมลและเบอร์โทรศัพท์" 
             });
         }
 
         const customer = await CustomerModel.findOne({
-            where: whereClause
+            where: { 
+                email: email,
+                phone: phone
+            }
         });
 
         if (!customer) {
             return res.status(404).json({ 
                 success: false, 
-                message: "ไม่พบข้อมูลลูกค้า" 
+                message: "ไม่พบข้อมูลลูกค้าหรือข้อมูลไม่ถูกต้อง" 
             });
         }
 
@@ -214,6 +213,28 @@ router.get("/bill/:id", async (req, res) => {
         res.status(500).json({ 
             success: false, 
             message: "เกิดข้อผิดพลาดในการดึงข้อมูล" 
+        });
+    }
+});
+
+// เพิ่ม API endpoint สำหรับดึงประวัติการใช้แต้ม
+router.get("/customer/:id/point-history", async (req, res) => {
+    try {
+        const pointHistory = await PointTransactionModel.findAll({
+            where: { customerId: req.params.id },
+            order: [['transactionDate', 'DESC']],
+        });
+        
+        res.json({ 
+            success: true, 
+            result: pointHistory 
+        });
+    } catch (error) {
+        console.error('Error loading point history:', error); // เพิ่ม log เพื่อดู error ที่เกิดขึ้น
+        res.status(500).json({
+            success: false,
+            message: "ไม่สามารถดึงข้อมูลประวัติการใช้แต้มได้",
+            error: error.message
         });
     }
 });

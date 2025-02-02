@@ -7,6 +7,7 @@ const PausedBillModel = require("../models/PausedBillModel");
 const BillSaleModel = require("../models/BillSaleModel");
 const BillSaleDetailModel = require("../models/BillSaleDetailModel");
 const CustomerModel = require("../models/CustomerModel"); 
+const PointTransactionModel = require('../models/PointTransactionModel'); // เพิ่มบรรทัดนี้
 
 const getThaiDateTime = () => {
     const now = new Date();
@@ -328,6 +329,11 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
             }, {
                 where: { id: detail.id }
             });
+        }
+
+        // บันทึกการใช้แต้มลดราคา (ถ้ามี)
+        if (req.body.pointTransaction) {
+            await PointTransactionModel.create(req.body.pointTransaction);
         }
 
         res.json({ message: 'success', result: updatedBill });
