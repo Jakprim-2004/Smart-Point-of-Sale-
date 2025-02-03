@@ -66,19 +66,6 @@ function BillSales() {
     setFilteredBills(filtered);
   };
 
-  // เพิ่มฟังก์ชันคำนวณ
-  const calculateSubTotal = (details) => {
-    return details?.reduce((sum, item) => sum + (item.qty * item.price), 0) || 0;
-  };
-
-  const calculateVat = (subTotal) => {
-    return subTotal * 0.07;
-  };
-
-  const calculateGrandTotal = (subTotal) => {
-    return subTotal + calculateVat(subTotal);
-  };
-
   return (
     <>
       <Template>
@@ -244,11 +231,24 @@ function BillSales() {
                 <div className="card-body p-3">
                   <h6 className="mb-2">ยอดรวมทั้งสิ้น (รวม VAT)</h6>
                   <h4 className="mb-0">
-                    ฿{calculateGrandTotal(calculateSubTotal(selectBill?.billSaleDetails)).toLocaleString('th-TH')}
+                    ฿{selectBill?.totalAmount?.toLocaleString('th-TH')}
                   </h4>
                 </div>
               </div>
             </div>
+            {/* เพิ่มส่วนแสดง description */}
+            {selectBill?.description && (
+              <div className="col-12 mt-3">
+                <div className="card bg-light border-0">
+                  <div className="card-body p-3">
+                    <h6 className="text-muted mb-2">ใช้แต้มแลกส่วนลด</h6>
+                    <p className="mb-0">
+                      {selectBill.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Bill Details Table */}

@@ -380,50 +380,7 @@ app.get('/billSale/lastBill', service.isLogin, async (req, res) => {
     }
 });
 
-// API สำหรับบิลของวันนี้
-app.get('/billSale/billToday', service.isLogin, async (req, res) => {
-    try {
-        const BillSaleDetailModel = require('../models/BillSaleDetailModel');
-        const ProductModel = require('../models/ProductModel');
 
-        BillSaleModel.hasMany(BillSaleDetailModel);
-        BillSaleDetailModel.belongsTo(ProductModel);
-
-        const thaiDate = getThaiDateTime();
-        const startDate = new Date(thaiDate);
-        startDate.setHours(0, 0, 0, 0);
-        
-        const endDate = new Date(thaiDate);
-        endDate.setHours(23, 59, 59, 999);
-
-        const { Sequelize } = require('sequelize');
-        const Op = Sequelize.Op;
-
-        const results = await BillSaleModel.findAll({
-            where: {
-                status: 'pay',
-                userId: service.getMemberId(req),
-                createdAt: {
-                    [Op.between]: [startDate, endDate]
-                }
-            },
-            order: [['id', 'DESC']],
-            include: {
-                model: BillSaleDetailModel,
-                attributes: ['qty', 'price'],
-                include: {
-                    model: ProductModel,
-                    attributes: ['barcode', 'name']
-                }
-            }
-        })
-
-        res.send({ message: 'success', results: results });
-    } catch (e) {
-        res.statusCode = 500;
-        res.send({ message: e.message });
-    }
-});
 
 // API สำหรับรายการบิลทั้งหมด
 app.get('/billSale/list', service.isLogin, async (req, res) => {
@@ -435,7 +392,7 @@ app.get('/billSale/list', service.isLogin, async (req, res) => {
 
     try {
         const results = await BillSaleModel.findAll({
-            attributes: ['id', 'createdAt', 'paymentMethod', 'status', 'userId'],
+            attributes: ['id', 'createdAt', 'paymentMethod', 'status', 'userId','totalAmount', 'description'],
             order: [['id', 'DESC']],
             where: {
                 status: 'pay',
