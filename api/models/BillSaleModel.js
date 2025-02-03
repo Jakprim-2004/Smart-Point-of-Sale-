@@ -24,6 +24,10 @@ const BillSaleModel = conn.define("billSale", {
     allowNull: false,
     defaultValue: "", 
   },
+  description: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   customerId: {
     type: DataTypes.BIGINT,
     references: {

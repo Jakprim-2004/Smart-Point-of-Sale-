@@ -6,6 +6,8 @@ call npm install || goto :error
 
 call npx nodemon server.js || goto :error
 
+call code . || goto :error
+
 goto :EOF
 
 :error

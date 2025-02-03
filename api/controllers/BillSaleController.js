@@ -265,7 +265,7 @@ app.post('/billSale/updateQty', service.isLogin, async (req, res) => {
 // API สำหรับจบการขาย
 app.post('/billSale/endSale', service.isLogin, async (req, res) => {
     try {
-        const { method, amount, vatAmount, billSaleDetails, customerId } = req.body;
+        const { method, amount, vatAmount, billSaleDetails, customerId, description } = req.body;
         const currentTime = getThaiDateTime();
         const vatRate = 0.07; // VAT 7%
 
@@ -278,7 +278,8 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
             vatAmount: vatAmount,
             customerId: customerId,
             createdAt: currentTime,
-            updatedAt: currentTime
+            updatedAt: currentTime,
+            description: description // บันทึกข้อมูลการใช้แต้มลงในฐานข้อมูล
         }, {
             where: {
                 status: 'open',

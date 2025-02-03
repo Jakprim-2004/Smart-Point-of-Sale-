@@ -264,6 +264,12 @@ function Sale() {
                 const vatAmount = calculateVAT(priceAfterDiscount, vatRate);
                 const totalWithVAT = priceAfterDiscount + vatAmount;
 
+                // สร้างข้อความอธิบายการใช้แต้ม
+                let description = '';
+                if (pointsToRedeem > 0) {
+                    description = `ใช้แต้มสะสม ${pointsToRedeem} แต้ม เป็นส่วนลด ${discountFromPoints} บาท`;
+                }
+
                 // สร้างข้อมูลการใช้แต้ม (ถ้ามี)
                 const pointTransaction = pointsToRedeem > 0 ? {
                     customerId: selectedCustomer.id,
@@ -279,7 +285,8 @@ function Sale() {
                     billSaleDetails: currentBill.billSaleDetails,
                     customerId: selectedCustomer?.id || null,
                     pointTransaction: pointTransaction, // เพิ่มข้อมูล point transaction
-                    discountFromPoints: discountFromPoints // เพิ่มข้อมูลส่วนลด
+                    discountFromPoints: discountFromPoints, // เพิ่มข้อมูลส่วนลด
+                    description: description // เพิ่ม description เข้าไปในข้อมูลที่ส่ง
                 };
 
                 const res = await axios.post(
@@ -1063,7 +1070,7 @@ function Sale() {
               <div className="mt-3">
                 <label>รับเงิน</label>
                 <input
-                  value={inputMoney}
+                  value={(inputMoney).toLocaleString("th-TH")}
                   onChange={(e) => setInputMoney(e.target.value)}
                   className="form-control text-end"
                 />
@@ -1078,7 +1085,7 @@ function Sale() {
               </div>
               <div className="text-center mt-3">
                 <button
-                  onClick={(e) => setInputMoney(totalPrice)}
+                  onClick={(e) => setInputMoney(totalPrice - discountFromPoints)}
                   className="btn btn-primary me-2"
                 >
                   <i className="fa fa-check me-2"></i>
@@ -1200,9 +1207,9 @@ function Sale() {
                   <td style={{ textAlign: "right" }}>
                     {parseFloat(item.price).toLocaleString("th-TH")}
                   </td>
-                  <td style={{ textAlign: "right" }}>
+                  <td style={{ textAlign: "right" }}></td>
                     {(item.qty * item.price).toLocaleString("th-TH")}
-                  </td>
+                  
                 </tr>
               ))}
             </tbody>
