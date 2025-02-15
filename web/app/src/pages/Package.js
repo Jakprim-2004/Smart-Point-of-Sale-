@@ -4,7 +4,7 @@ import config from "../config";
 import Swal from 'sweetalert2';
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaEnvelope, FaPhone, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { fetchThailandData, } from '../utils/Thailand';
+
 
 function Package() {
     const [packages, setPackages] = useState([]);
@@ -26,7 +26,7 @@ function Package() {
 
     useEffect(() => {
         fetchData();
-        loadThailandData();
+       
     }, []);
 
     const fetchData = useCallback(async () => {
@@ -41,11 +41,7 @@ function Package() {
         }
     }, []);
 
-    const loadThailandData = async () => {
-        const data = await fetchThailandData();
-        setThailandData(data);
-        setProvinces(data.map(p => p.name_th));
-    };
+   
 
     
 
@@ -55,7 +51,7 @@ function Package() {
     };
 
     const handlePhoneChange = (e) => {
-        const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+        const value = e.target.value.replace(/\D/g, ''); 
         if (value.length <= 10) {
             setPhone(value);
         }
@@ -97,12 +93,7 @@ function Package() {
         setShowConfirmPassword(!showConfirmPassword);
     };
 
-    const handlePostalCodeChange = (e) => {
-        const value = e.target.value.replace(/\D/g, ''); // Only allow digits
-        if (value.length <= 5) { // Thai postal code is 5 digits
-            setPostalCode(value);
-        }
-    };
+   
 
     const handleRegister = async (e) => {
         e.preventDefault();

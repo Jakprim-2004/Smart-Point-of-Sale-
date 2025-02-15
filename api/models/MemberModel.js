@@ -25,25 +25,7 @@ const MemberModel = conn.define('member', {
     pass: {
         type: DataTypes.STRING(255)
     },
-    address: {
-        type: DataTypes.TEXT
-    },
-    province: {
-        type: DataTypes.STRING(255)
-    },
-    district: {
-        type: DataTypes.STRING(255)
-    },
-    subDistrict: {
-        type: DataTypes.STRING(255)
-    },
-    postalCode: {
-        type: DataTypes.STRING(10)
-    },
-    status: {
-        type: DataTypes.STRING(20),
-        defaultValue: 'active'
-    }
+    
 })
 
 MemberModel.sync({alter: true});

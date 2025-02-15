@@ -24,7 +24,6 @@ function Login() {
             if (loginType === 'member') {
                 payload = { 
                     phone: phone || '', 
-                    email: email || '', 
                     password: pass 
                 };
                 endpoint = '/member/signin';
@@ -36,7 +35,7 @@ function Login() {
                 endpoint = '/user/signin';
             }
 
-            if (loginType === 'member' && !phone && !email) {
+            if (loginType === 'member' && !phone) {
                 Swal.fire({
                     title: 'Sign In',
                     text: 'กรุณากรอกเบอร์โทรศัพท์',
@@ -75,7 +74,7 @@ function Login() {
             Swal.fire({
                 title: 'Sign In',
                 text: loginType === 'member' ? 
-                    'อีเมลหรือเบอร์โทร หรือรหัสผ่านไม่ถูกต้อง' : 
+                    'เบอร์โทร หรือรหัสผ่านไม่ถูกต้อง' : 
                     'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
                 icon: 'error',
                 timer: 2000

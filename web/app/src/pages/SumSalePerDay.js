@@ -122,14 +122,24 @@ function SumSalePerDay() {
                         <table className="table table-bordered table-striped mt-3">
                             <thead>
                                 <tr>
-                                    <th width="180px"></th>
+                                    
                                     <th width="100px" className="text-end">วันที่</th>
                                     <th className="text-end">ยอดขาย</th>
+                                    <th width="180px"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {billSales.map((item, index) =>
                                     <tr key={index}>
+                                        
+                                        <td className="text-end">
+                                            {new Date(item.date).toLocaleDateString('th-TH', {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric'
+                                            })}
+                                        </td>
+                                        <td className="text-end">{item.sum.toLocaleString('th-TH')}</td>
                                         <td className="text-center">
                                             <button
                                                 onClick={() => {
@@ -143,14 +153,6 @@ function SumSalePerDay() {
                                                 แสดงรายการ
                                             </button>
                                         </td>
-                                        <td className="text-end">
-                                            {new Date(item.date).toLocaleDateString('th-TH', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric'
-                                            })}
-                                        </td>
-                                        <td className="text-end">{item.sum.toLocaleString('th-TH')}</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -167,14 +169,18 @@ function SumSalePerDay() {
                 <table className="table table-bordered table-striped">
                     <thead>
                         <tr>
-                            <th width="180px"></th>
+                            
                             <th className="text-end">เลขบิล</th>
                             <th>วันที่</th>
+                            <th width="180px"></th>
                         </tr>
                     </thead>
                     <tbody>
                         {currentBillSale.length > 0 ? currentBillSale.map(item =>
                             <tr key={item.id}>
+                               
+                                <td className="text-end">{item.id}</td>
+                                <td>{item.createdAt.substring(0, 10)}</td>
                                 <td className="text-center">
                                     <button
                                         onClick={() => {
@@ -186,8 +192,6 @@ function SumSalePerDay() {
                                         แสดงรายการ
                                     </button>
                                 </td>
-                                <td className="text-end">{item.id}</td>
-                                <td>{item.createdAt.substring(0, 10)}</td>
                             </tr>
                         ) : null}
                     </tbody>

@@ -598,6 +598,56 @@ function Sale() {
     setDiscountFromPoints(validPoints * 10);
   };
 
+  const handleClearCart = async () => {
+    if (!currentBill?.billSaleDetails?.length) {
+      Swal.fire({
+        title: "ไม่มีสินค้าในตะกร้า",
+        text: "ไม่มีรายการสินค้าที่จะล้าง",
+        icon: "warning"
+      });
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: "ยืนยันการล้างตะกร้า",
+      text: "คุณต้องการลบสินค้าทั้งหมดในตะกร้าใช่หรือไม่?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "ใช่, ล้างตะกร้า",
+      cancelButtonText: "ยกเลิก"
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await axios.delete(
+          config.api_path + "/billSale/clearCart/" + currentBill.id,
+          config.headers()
+        );
+
+        if (response.data.message === "success") {
+          Swal.fire({
+            title: "ล้างตะกร้าสำเร็จ",
+            text: "ลบสินค้าทั้งหมดในตะกร้าเรียบร้อยแล้ว",
+            icon: "success",
+            timer: 1000
+          });
+          
+          // รีเฟรชข้อมูล
+          fetchBillSaleDetail();
+          fetchData();
+          setTotalPrice(0);
+          setInputMoney(0);
+        }
+      } catch (error) {
+        Swal.fire({
+          title: "เกิดข้อผิดพลาด",
+          text: error.response?.data?.message || error.message,
+          icon: "error"
+        });
+      }
+    }
+  };
+
   return (
     <>
       <Template ref={saleRef}>
@@ -611,6 +661,15 @@ function Sale() {
                 ขายสินค้า
               </h5>
               <div className="button-group">
+              
+                <button
+                  onClick={handleClearCart}
+                  className="btn btn-danger me-2"
+                  style={{ fontSize: "1rem", padding: "10px 15px" }}
+                  title="ล้างตะกร้า"
+                >
+                  <i className="fa fa-trash me-1"></i>เคลียร์ตะกร้า
+                </button>
                 <button
                   onClick={() => handlePauseBill(currentBill)}
                   className="btn btn-success me-2"
@@ -619,6 +678,7 @@ function Sale() {
                 >
                   <i className="fa fa-shopping-basket me-2"></i>พักบิล
                 </button>
+                
                 {/** ปุ่มสำหรับดูบิลที่พักไว้ */}
                 <button
                   onClick={() => setShowHeldBillsModal(true)}
@@ -727,10 +787,15 @@ function Sale() {
                 <div className="position-sticky" style={{ top: "1rem" }}>
                   <div className="cart-container">
                     <div className="cart-header">
-                      <div className="cart-total">
-                        {totalPrice.toLocaleString("th-TH")} ฿
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                          <div className="cart-total">
+                            {totalPrice.toLocaleString("th-TH")} ฿
+                          </div>
+                          <div className="cart-label">รวม VAT 7%</div>
+                        </div>
+                      
                       </div>
-                      <div className="cart-label">รวม VAT 7%</div>
                     </div>
 
                     <div
@@ -1057,6 +1122,21 @@ function Sale() {
             )}
           </div>
 
+
+         <div className="mt-3">
+            <label>ช่องทางการชำระเงิน</label>
+          </div>
+          <div>
+            <select
+              value={paymentMethod}
+              onChange={handlePaymentMethodChange}
+              className="form-control"
+            >
+              <option value="Cash">Cash(เงินสด)</option>
+              <option value="PromptPay">PromptPay(พร้อมเพย์)</option>
+            </select>
+          </div>
+          <div>
           {paymentMethod === "PromptPay" ? (
             <div className="text-center mt-4">
               <QRCodeSVG value={generateQRCode()} size={256} level="L" />
@@ -1101,7 +1181,9 @@ function Sale() {
                 </button>
               </div>
             </>
+            
           )}
+          </div>
         </div>
       </Modal>
 

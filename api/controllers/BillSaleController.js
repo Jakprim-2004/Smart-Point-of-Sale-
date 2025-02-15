@@ -7,7 +7,7 @@ const PausedBillModel = require("../models/PausedBillModel");
 const BillSaleModel = require("../models/BillSaleModel");
 const BillSaleDetailModel = require("../models/BillSaleDetailModel");
 const CustomerModel = require("../models/CustomerModel"); 
-const PointTransactionModel = require('../models/PointTransactionModel'); // เพิ่มบรรทัดนี้
+const PointTransactionModel = require('../models/PointTransactionModel'); 
 
 const getThaiDateTime = () => {
     const now = new Date();
@@ -241,6 +241,40 @@ app.delete('/billSale/deleteItem/:id', service.isLogin, async (req, res) => {
     } catch (e) {
         res.statusCode = 500;
         res.send({ message: 'success' });
+    }
+});
+
+// API สำหรับล้างตะกร้า
+app.delete('/billSale/clearCart/:id', service.isLogin, async (req, res) => {
+    try {
+        // ตรวจสอบว่ามีบิลนี้อยู่จริงหรือไม่
+        const bill = await BillSaleModel.findOne({
+            where: {
+                id: req.params.id,
+                status: 'open',
+                userId: service.getMemberId(req)
+            }
+        });
+
+        if (!bill) {
+            return res.status(404).send({
+                message: 'ไม่พบบิลที่ต้องการล้างตะกร้า'
+            });
+        }
+
+        // ลบรายการสินค้าทั้งหมดในบิล
+        await BillSaleDetailModel.destroy({
+            where: {
+                billSaleId: req.params.id
+            }
+        });
+
+        res.send({ message: 'success' });
+    } catch (e) {
+        res.status(500).send({ 
+            message: 'เกิดข้อผิดพลาด',
+            error: e.message 
+        });
     }
 });
 

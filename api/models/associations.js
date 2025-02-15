@@ -3,7 +3,6 @@ const StockModel = require('./StockModel');
 const BillSaleDetailModel = require('./BillSaleDetailModel'); 
 const BillSaleModel = require('./BillSaleModel');
 const UserModel = require('./UserModel');
-const Report = require('./Report');
 
 // การเชื่อมโยงระหว่าง Product และ Stock
 ProductModel.hasMany(StockModel, { foreignKey: 'productId' });

@@ -56,12 +56,6 @@ app.post("/member/register", async (req, res) => {
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       pass: encryptedPassword, // Store encrypted password
-      address: req.body.address.fullAddress,
-      province: req.body.address.province,
-      district: req.body.address.district,
-      subDistrict: req.body.address.subDistrict,
-      postalCode: req.body.address.postalCode,
-      status: req.body.status
     };
 
     const member = await MemberModel.create(payload);
@@ -84,12 +78,6 @@ app.get("/member/info", service.isLogin, async (req, res, next) => {
         "firstName",
         "lastName",
         "phone",
-        "address",
-        "province",
-        "district",
-        "subDistrict",
-        "postalCode",
-        "status"
       ],
       include: [
         {
@@ -121,7 +109,6 @@ app.get("/member/list", service.isLogin, async (req, res) => {
         "lastName", 
         "email",
         "phone", 
-        "status",
         "createdAt"
       ],
       include: {

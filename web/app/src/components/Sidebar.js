@@ -429,12 +429,12 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                   {isOwner ? "เจ้าของร้าน" : "พนักงาน"}
                 </span>
               </div>
-              <div className="text-white-50 mb-3">Package: {packageName}</div>
+            <div className="text-white-50 mb-3">Package: {packageName}</div>
               {isOwner && (
                 <button
                   onClick={() => {
                     fetchPackages();
-                    setShowPackageModal(true);  // Add this state
+                    setShowPackageModal(true); 
                   }}
                   className="btn"
                   style={styles.upgradeButton}
@@ -837,7 +837,6 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                 {banks.length > 0
                   ? banks.map((item) => (
                     <tr key={item.bankCode}>
-                      <td>{item.bankType}</td>
                       <td>{item.bankCode}</td>
                       <td>{item.bankName}</td>
                       <td>{item.bankBranch}</td>

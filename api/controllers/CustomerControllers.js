@@ -8,12 +8,18 @@ const CustomerModel = require("../models/CustomerModel");
 const BillSaleModel = require("../models/BillSaleModel");
 const BillSaleDetailModel = require("../models/BillSaleDetailModel");
 const ProductModel = require("../models/ProductModel");
-const PointTransactionModel = require('../models/PointTransactionModel'); // เพิ่มบรรทัดนี้
+const PointTransactionModel = require('../models/PointTransactionModel'); 
 
-// ดึงข้อมูลลูกค้าทั้งหมด
-router.get("/customers", async (req, res) => {
+// แก้ไข route ดึงข้อมูลลูกค้าทั้งหมด
+router.get("/customers", service.isLogin, async (req, res) => {
     try {
+        const userId = service.getAdminId(req);
+        if (!userId) {
+            return res.status(401).json({ error: "กรุณาเข้าสู่ระบบใหม่" });
+        }
+
         const customers = await CustomerModel.findAll({
+            where: { userId: userId },
             order: [['id', 'DESC']]
         });
         res.json({ result: customers });
@@ -22,23 +28,58 @@ router.get("/customers", async (req, res) => {
     }
 });
 
-// ดึงข้อมูลลูกค้าตาม ID
-router.get("/customer/:id", async (req, res) => {
+// แก้ไข route ดึงข้อมูลลูกค้าตาม ID
+router.get("/customer/:id", service.isLogin, async (req, res) => {
     try {
-        const customer = await CustomerModel.findByPk(req.params.id);
+        const userId = service.getAdminId(req);
+        if (!userId) {
+            return res.status(401).json({ error: "กรุณาเข้าสู่ระบบใหม่" });
+        }
+
+        const customer = await CustomerModel.findOne({
+            where: { 
+                id: req.params.id,
+                userId: userId 
+            }
+        });
+
+        if (!customer) {
+            return res.status(404).json({ error: "ไม่พบข้อมูลลูกค้า" });
+        }
+
         res.json({ result: customer });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// อัพเดทข้อมูลลูกค้า
-router.put("/customer/:id", async (req, res) => {
+// แก้ไข route อัพเดทข้อมูลลูกค้า
+router.put("/customer/:id", service.isLogin, async (req, res) => {
     try {
-        const customer = await CustomerModel.update(req.body, {
-            where: { id: req.params.id }
+        const userId = service.getAdminId(req);
+        if (!userId) {
+            return res.status(401).json({ error: "กรุณาเข้าสู่ระบบใหม่" });
+        }
+
+        const customer = await CustomerModel.findOne({
+            where: { 
+                id: req.params.id,
+                userId: userId 
+            }
         });
-        res.json({ result: customer });
+
+        if (!customer) {
+            return res.status(404).json({ error: "ไม่พบข้อมูลลูกค้า" });
+        }
+
+        await CustomerModel.update(req.body, {
+            where: { 
+                id: req.params.id,
+                userId: userId 
+            }
+        });
+
+        res.json({ message: "success" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -122,7 +163,7 @@ router.post("/login/customer", async (req, res) => {
     }
 });
 
-// เพิ่ม route สำหรับดึงประวัติการซื้อของลูกค้า
+// แก้ไข route ดึงประวัติการซื้อของลูกค้า
 router.get("/customer/:id/purchases", async (req, res) => {
     try {
         const bills = await BillSaleModel.findAll({

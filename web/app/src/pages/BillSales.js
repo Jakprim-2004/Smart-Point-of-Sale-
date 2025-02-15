@@ -116,9 +116,10 @@ function BillSales() {
                 <table className="table table-hover border">
                   <thead className="bg-light">
                     <tr>
-                      <th width="200px" className="border-0">รายละเอียด</th>
+                      
                       <th width="100px" className="border-0">เลขบิล</th>
                       <th className="border-0">วันที่</th>
+                      <th width="200px" className="border-0">รายละเอียด</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -126,7 +127,18 @@ function BillSales() {
                       filteredBills.map((item, index) =>
                         item ? (
                           <tr key={index}>
-                            <td className="text-center">
+                           
+                            <td className="fw-bold text-primary">{item.id}</td>
+                            <td>
+                              {new Date(item.createdAt).toLocaleDateString('th-TH', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </td>
+                            <td className="#">
                               <button
                                 onClick={() => {
                                   setSelectBill(item);
@@ -137,16 +149,6 @@ function BillSales() {
                                 <i className="fa fa-file-alt me-2"></i>
                                 รายการบิลขาย
                               </button>
-                            </td>
-                            <td className="fw-bold text-primary">{item.id}</td>
-                            <td>
-                              {new Date(item.createdAt).toLocaleDateString('th-TH', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
                             </td>
                           </tr>
                         ) : null

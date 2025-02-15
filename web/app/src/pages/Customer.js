@@ -22,11 +22,20 @@ function Customer() {
 
     const loadCustomers = async () => {
         try {
-            const response = await axios.get(config.api_path + "/customers");
-            setCustomers(response.data.result);
+            const response = await axios.get(
+                config.api_path + "/customers", 
+                config.headers()
+            ); // เพิ่ม config.headers()
+            if (response.data.result) {
+                setCustomers(response.data.result);
+            }
         } catch (error) {
             console.error("Error loading customers:", error);
-            Swal.fire("Error", "Failed to load customers", "error");
+            Swal.fire({
+                title: "Error",
+                text: error.response?.data?.error || "Failed to load customers",
+                icon: "error"
+            });
         }
     };
 

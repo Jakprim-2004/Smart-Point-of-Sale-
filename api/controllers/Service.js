@@ -45,7 +45,7 @@ const ownerOnly = (req, res, next) => {
 const allowedEmployeeRoutes = [
   '/sale',
   '/product',
-  '/ReportUse',
+ 
   
 ];
 

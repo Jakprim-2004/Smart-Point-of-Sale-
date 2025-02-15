@@ -3,7 +3,6 @@ const app = express()
 const PackageModel = require('../models/PackageModel');
 const MemberModel = require('../models/MemberModel');
 const Service = require('./Service');
-const ChangePackageModel = require('../models/ChangePackageModel');
 
 
 app.get('/package/list', async (req, res) => {
@@ -51,20 +50,6 @@ app.get('/package/countBill', Service.isLogin, async (req, res) => {
     }
 })
 
-app.get('/package/changePackage/:id', Service.isLogin, async (req, res) => {
-    try {
-        const payload = {
-            userId: Service.getMemberId(req),
-            packageId: req.params.id
-        }
 
-        await ChangePackageModel.create(payload);
-
-        res.send({ message: 'success' });
-    } catch (e) {
-        res.statusCode = 500;
-        res.send({ message: e.message });
-    }
-})
 
 module.exports = app;
