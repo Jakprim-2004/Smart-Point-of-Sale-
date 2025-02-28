@@ -1,4 +1,4 @@
-// นำเข้าโมดูลสำหรับตั้งค่าการแสดงผลภาษาไทย
+ 
 
 const express = require('express');
 const cors = require('cors');
@@ -31,7 +31,7 @@ app.use( require('./controllers/CategoryController'));
 
 const init = async () => {
   try {
-    console.log('เริ่มต้นการเชื่อมต่อฐานข้อมูล...');
+    console.log('Starting database connection...');
     
     // นำเข้าโมเดลทั้งหมด
     const BillSaleModel = require('./models/BillSaleModel');
@@ -44,43 +44,43 @@ const init = async () => {
     // นำเข้าความสัมพันธ์ระหว่างโมเดล
     require('./models/associations');
     
-    console.log('กำลังซิงค์ตารางฐานข้อมูลตามลำดับ...');
+    console.log('Syncing database tables in sequence...');
     
     try {
       // ซิงค์ตามลำดับ - ตารางหลักก่อน
       await CustomerModel.sync({ alter: true });
-      console.log('ซิงค์ CustomerModel สำเร็จ');
+      console.log('SyncCustomerModel Complete');
       
       await ProductModel.sync({ alter: true });
-      console.log('ซิงค์ ProductModel สำเร็จ');
+      console.log('Sync ProductModel Complete');
       
       await BillSaleModel.sync({ alter: true });
-      console.log('ซิงค์ BillSaleModel สำเร็จ');
+      console.log('Sync BillSaleModel Complete');
       
       // จากนั้นตารางที่พึ่งพาตารางอื่น
       await PointTransactionModel.sync({ alter: true });
-      console.log('ซิงค์ PointTransactionModel สำเร็จ');
+      console.log('Sync PointTransactionModel Complete');
       
       await RewardModel.sync({ alter: true });
-      console.log('ซิงค์ RewardModel สำเร็จ');
+      console.log('Sync RewardModel Complete');
       
       await BillSaleDetailModel.sync({ alter: true });
-      console.log('ซิงค์ BillSaleDetailModel สำเร็จ');
+      console.log('Sync BillSaleDetailModel Complete');
       
-      console.log('ซิงค์ทุกตารางเสร็จสมบูรณ์');
+      console.log('Sync all tables completed successfully');
     } catch (syncError) {
-      console.error('เกิดข้อผิดพลาดในการซิงค์ตาราง:', syncError);
+      console.error('Error syncing tables:', syncError);
       throw syncError;
     }
 
     app.listen(port, () => {
       // ใช้สัญลักษณ์เส้นคั่นให้ชัดเจนขึ้น
       console.log('===================================');
-      console.log(`✓ แอพเริ่มทำงานที่พอร์ต ${port} สำเร็จ`);
+      console.log(`✓ App running successfully on port ${port}`);
       console.log('===================================');
     });
   } catch (error) {
-    console.error('เกิดข้อผิดพลาดในการเริ่มต้นฐานข้อมูล:', error);
+    console.error('Database initialization error:', error);
     process.exit(1);
   }
 };
