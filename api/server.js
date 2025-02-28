@@ -47,42 +47,47 @@ const init = async () => {
     console.log('Syncing database tables in sequence...');
     
     try {
-      // ซิงค์ตามลำดับ - ตารางหลักก่อน
+      // === Primary Tables Synchronization === //
+      console.log('\n=== Starting Primary Tables Sync ===');
+      
       await CustomerModel.sync({ alter: true });
-      console.log('SyncCustomerModel Complete');
+      console.log('✓ Customer Model: Synchronized');
       
       await ProductModel.sync({ alter: true });
-      console.log('Sync ProductModel Complete');
+      console.log('✓ Product Model: Synchronized');
       
       await BillSaleModel.sync({ alter: true });
-      console.log('Sync BillSaleModel Complete');
+      console.log('✓ Bill Sale Model: Synchronized');
+
+      // === Dependent Tables Synchronization === //
+      console.log('\n=== Starting Dependent Tables Sync ===');
       
-      // จากนั้นตารางที่พึ่งพาตารางอื่น
       await PointTransactionModel.sync({ alter: true });
-      console.log('Sync PointTransactionModel Complete');
+      console.log('✓ Point Transaction Model: Synchronized');
       
       await RewardModel.sync({ alter: true });
-      console.log('Sync RewardModel Complete');
+      console.log('✓ Reward Model: Synchronized');
       
       await BillSaleDetailModel.sync({ alter: true });
-      console.log('Sync BillSaleDetailModel Complete');
+      console.log('✓ Bill Sale Detail Model: Synchronized');
+
+      console.log('\n✨ All database tables synchronized successfully!\n');
       
-      console.log('Sync all tables completed successfully');
     } catch (syncError) {
-      console.error('Error syncing tables:', syncError);
+      console.error('\n❌ Error syncing tables:', syncError);
       throw syncError;
     }
 
     app.listen(port, () => {
-      
-      console.log('===================================');
-      console.log(`✓ App running successfully on port ${port}`);
-      console.log('===================================');
+      console.log('\n===========================================');
+      console.log(`🚀 Server running successfully on port ${port}`);
+      console.log('===========================================\n');
     });
-  } catch (error) {
-    console.error('Database initialization error:', error);
-    process.exit(1);
-  }
-};
 
-init();
+    } catch (error) {
+      console.error('\n❌ Database initialization error:', error);
+      process.exit(1);
+    }
+    };
+
+    init();
