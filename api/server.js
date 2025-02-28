@@ -74,7 +74,7 @@ const init = async () => {
     }
 
     app.listen(port, () => {
-      // ใช้สัญลักษณ์เส้นคั่นให้ชัดเจนขึ้น
+      
       console.log('===================================');
       console.log(`✓ App running successfully on port ${port}`);
       console.log('===================================');
