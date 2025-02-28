@@ -3,9 +3,9 @@ const { DataTypes } = require("sequelize");
 
 const CustomerModel = conn.define("Customer", {
     id: {
-        type: DataTypes.BIGINT,
-        autoIncrement: true,
+        type: DataTypes.INTEGER,
         primaryKey: true,
+        autoIncrement: true
     },
     name: {
         type: DataTypes.STRING,
@@ -13,38 +13,22 @@ const CustomerModel = conn.define("Customer", {
     },
     phone: {
         type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
+        allowNull: true
     },
     email: {
         type: DataTypes.STRING,
+        allowNull: true
     },
-    address: {
-        type: DataTypes.STRING,
-    },
-    userId: {
-        type: DataTypes.BIGINT,
-    },
-    
     points: {
         type: DataTypes.INTEGER,
-        defaultValue: 0,
-        allowNull: false
-    },
-    totalSpent: {
-        type: DataTypes.DECIMAL(10, 2),
-        defaultValue: 0,
-        allowNull: false
-    },
-    
-    membershipTier: {
-        type: DataTypes.ENUM('NORMAL','Bronze', 'SILVER', 'GOLD', 'PLATINUM'),
-        defaultValue: 'NORMAL',
-        allowNull: false
+        defaultValue: 0
     }
+}, {
+    // ใช้ชื่อตารางที่ถูกต้องตามที่ถูกอ้างถึง
+    tableName: 'Customers',
+    freezeTableName: true
 });
 
-// คำนวณแต้มอัตโนมัติ
 CustomerModel.prototype.calculatePoints = function(purchaseAmount) {
     // ทุก 100 บาท = 1 แต้ม
     return Math.floor(purchaseAmount / 100);
@@ -58,6 +42,8 @@ CustomerModel.prototype.updateMembershipTier = function() {
     else this.membershipTier = 'NORMAL';
 };
 
+// ลบฟังก์ชันนี้ออกเพื่อป้องกันการซิงค์ซ้ำซ้อน
+/*
 async function initModel() {
     try {
         await CustomerModel.sync({ alter: true });
@@ -68,5 +54,6 @@ async function initModel() {
 }
 
 initModel();
+*/
 
 module.exports = CustomerModel;

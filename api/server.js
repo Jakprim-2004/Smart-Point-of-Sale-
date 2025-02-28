@@ -1,3 +1,5 @@
+// นำเข้าโมดูลสำหรับตั้งค่าการแสดงผลภาษาไทย
+
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -5,6 +7,7 @@ const port = 3000;
 const bodyParser = require('body-parser');
 const events = require('events'); 
 const bcrypt = require('bcrypt');
+const conn = require('./connect');
 
 app.use(cors());
 
@@ -26,29 +29,58 @@ app.use( require('./controllers/CustomerControllers'));
 app.use( require('./controllers/RewardController'));
 app.use( require('./controllers/CategoryController'));
 
-
 const init = async () => {
   try {
-    // Import all models that need to be synced
+    console.log('เริ่มต้นการเชื่อมต่อฐานข้อมูล...');
+    
+    // นำเข้าโมเดลทั้งหมด
     const BillSaleModel = require('./models/BillSaleModel');
     const BillSaleDetailModel = require('./models/BillSaleDetailModel');
     const RewardModel = require('./models/RewardModel');
+    const CustomerModel = require('./models/CustomerModel');
+    const PointTransactionModel = require('./models/PointTransactionModel');
+    const ProductModel = require('./models/ProductModel');
     
-    
-    // Require associations after models are loaded
+    // นำเข้าความสัมพันธ์ระหว่างโมเดล
     require('./models/associations');
-
-    // Sync models in correct order
-    await RewardModel.sync({ alter: true });
     
-    await BillSaleModel.sync({ alter: true });
-    await BillSaleDetailModel.sync({ alter: true });
+    console.log('กำลังซิงค์ตารางฐานข้อมูลตามลำดับ...');
+    
+    try {
+      // ซิงค์ตามลำดับ - ตารางหลักก่อน
+      await CustomerModel.sync({ alter: true });
+      console.log('ซิงค์ CustomerModel สำเร็จ');
+      
+      await ProductModel.sync({ alter: true });
+      console.log('ซิงค์ ProductModel สำเร็จ');
+      
+      await BillSaleModel.sync({ alter: true });
+      console.log('ซิงค์ BillSaleModel สำเร็จ');
+      
+      // จากนั้นตารางที่พึ่งพาตารางอื่น
+      await PointTransactionModel.sync({ alter: true });
+      console.log('ซิงค์ PointTransactionModel สำเร็จ');
+      
+      await RewardModel.sync({ alter: true });
+      console.log('ซิงค์ RewardModel สำเร็จ');
+      
+      await BillSaleDetailModel.sync({ alter: true });
+      console.log('ซิงค์ BillSaleDetailModel สำเร็จ');
+      
+      console.log('ซิงค์ทุกตารางเสร็จสมบูรณ์');
+    } catch (syncError) {
+      console.error('เกิดข้อผิดพลาดในการซิงค์ตาราง:', syncError);
+      throw syncError;
+    }
 
     app.listen(port, () => {
-      console.log(`Example app listening on port `, port);
+      // ใช้สัญลักษณ์เส้นคั่นให้ชัดเจนขึ้น
+      console.log('===================================');
+      console.log(`✓ แอพเริ่มทำงานที่พอร์ต ${port} สำเร็จ`);
+      console.log('===================================');
     });
   } catch (error) {
-    console.error('Database initialization error:', error);
+    console.error('เกิดข้อผิดพลาดในการเริ่มต้นฐานข้อมูล:', error);
     process.exit(1);
   }
 };

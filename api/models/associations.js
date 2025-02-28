@@ -3,6 +3,8 @@ const StockModel = require('./StockModel');
 const BillSaleDetailModel = require('./BillSaleDetailModel'); 
 const BillSaleModel = require('./BillSaleModel');
 const UserModel = require('./UserModel');
+const CustomerModel = require('./CustomerModel');
+const PointTransactionModel = require('./PointTransactionModel');
 
 // การเชื่อมโยงระหว่าง Product และ Stock
 ProductModel.hasMany(StockModel, { foreignKey: 'productId' });
@@ -32,13 +34,13 @@ BillSaleDetailModel.belongsTo(BillSaleModel, {
 const MemberModel = require('./MemberModel');
 UserModel.belongsTo(MemberModel, { 
     foreignKey: 'userId',
-    targetKey: 'id', // Add this
+    targetKey: 'id', 
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
 });
 MemberModel.hasMany(UserModel, { 
     foreignKey: 'userId',
-    sourceKey: 'id', // Add this
+    sourceKey: 'id',
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
 });
@@ -55,12 +57,10 @@ PackageModel.hasMany(MemberModel, {
 });
 
 // Add Customer and BillSale associations
-const CustomerModel = require('./CustomerModel');
 BillSaleModel.belongsTo(CustomerModel, { foreignKey: 'customerId' });
 CustomerModel.hasMany(BillSaleModel, { foreignKey: 'customerId' });
 
 // Add Customer and PointTransaction associations
-const PointTransactionModel = require('./PointTransactionModel');
 CustomerModel.hasMany(PointTransactionModel, { foreignKey: 'customerId' });
 PointTransactionModel.belongsTo(CustomerModel, { foreignKey: 'customerId' });
 

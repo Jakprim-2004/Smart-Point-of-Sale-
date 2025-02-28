@@ -190,32 +190,11 @@ const Sidebar = forwardRef((props, sidebarRef) => {
 
   const handleChoosePackage = (item) => {
     setChoosePackage(item);
-    setShowBankModal(true); // Add this line
-    fetchDataBank();
+    setShowBankModal(true); 
+    
   };
 
-  const fetchDataBank = async () => {
-    if (banks.length == 0) {
-      try {
-        await axios
-          .get(config.api_path + "/bank/list", config.headers())
-          .then((res) => {
-            if (res.data.message === "success") {
-              setBanks(res.data.results);
-            }
-          })
-          .catch((err) => {
-            throw err.response.data;
-          });
-      } catch (e) {
-        Swal.fire({
-          title: "error",
-          text: e.message,
-          icon: "error",
-        });
-      }
-    }
-  };
+
 
   const handleChangePackage = async () => {
     if (isPackageSubscribed) {

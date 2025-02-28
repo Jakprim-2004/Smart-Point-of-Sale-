@@ -1,5 +1,6 @@
 const conn = require('../connect');
 const { DataTypes } = require('sequelize');
+const CustomerModel = require('./CustomerModel');
 
 const PointTransactionModel = conn.define('PointTransaction', {
     id: {
@@ -29,6 +30,12 @@ const PointTransactionModel = conn.define('PointTransaction', {
     }
 });
 
-PointTransactionModel.sync({alter: true});
+// กำหนดความสัมพันธ์กับ Customer model
+PointTransactionModel.belongsTo(CustomerModel, {
+    foreignKey: 'customerId'
+});
+
+// ลบการเรียกใช้ sync ที่นี่เพื่อป้องกันการซิงค์ซ้ำซ้อน
+// PointTransactionModel.sync({alter: true});
 
 module.exports = PointTransactionModel;

@@ -1,53 +1,67 @@
-# Smart Point of Sale  
+## คำแนะนำการติดตั้งและการตั้งค่า
 
-## Installation & Setup Instructions (คำแนะนำการติดตั้งและการตั้งค่า)
+### วิธีที่ 1: ใช้ไฟล์ Batch Script (แนะนำ)
 
+1. รันไฟล์ `Command_Run_Server.bat` เพื่อเริ่มต้นเซิร์ฟเวอร์
 
-1. Change the current directory to the `api` directory:
+2. รันไฟล์ `Command_Run_Web.bat` เพื่อเริ่มต้นแอปพลิเคชันเว็บ
+
+### วิธีที่ 2: ติดตั้งด้วยตนเอง
+
+1. เปลี่ยนไดเรกทอรีปัจจุบันไปที่โฟลเดอร์ `api`:
     ```sh
     cd api
     ```
 
-2. Install the dependencies listed in the `package.json` file in the `api` directory:
+2. ติดตั้งแพ็คเกจที่จำเป็นตามที่ระบุในไฟล์ `package.json` ในโฟลเดอร์ `api`:
     ```sh
     npm i
     ```
 
-3. Start the server using nodemon, which will automatically restart the server when file changes are detected:
+3. เริ่มต้นเซิร์ฟเวอร์โดยใช้ nodemon ซึ่งจะรีสตาร์ทเซิร์ฟเวอร์โดยอัตโนมัติเมื่อมีการเปลี่ยนแปลงไฟล์:
     ```sh
     npx nodemon server.js
     ```
 
-4. Change the current directory to the `web/app` directory:
+4. เปลี่ยนไดเรกทอรีปัจจุบันไปที่โฟลเดอร์ `web/app`:
     ```sh
     cd web/app
     ```
 
-5. Install the dependencies listed in the `package.json` file in the `web/app` directory:
+5. ติดตั้งแพ็คเกจที่จำเป็นตามที่ระบุในไฟล์ `package.json` ในโฟลเดอร์ `web/app`:
     ```sh
     npm i
     ```
 
-6. Start the web application:
+6. เริ่มต้นแอปพลิเคชันเว็บ:
     ```sh
     npm start
     ```
 
-7. Change the current directory to the `backoffice/app` directory:
+7. เปลี่ยนไดเรกทอรีปัจจุบันไปที่โฟลเดอร์ `backoffice/app`:
     ```sh
     cd backoffice/app
     ```
 
-8. Install the dependencies listed in the `package.json` file in the `backoffice/app` directory:
+8. ติดตั้งแพ็คเกจที่จำเป็นตามที่ระบุในไฟล์ `package.json` ในโฟลเดอร์ `backoffice/app`:
     ```sh
     npm i
     ```
 
-9. Start the backoffice application:
+9. เริ่มต้นแอปพลิเคชันส่วนหลังบ้าน:
     ```sh
     npm start
     ```
 
-This explanation provides a step-by-step guide to set up and run the different parts of your project. (คำอธิบายนี้ให้คำแนะนำทีละขั้นตอนในการตั้งค่าและเรียกใช้ส่วนต่างๆ ของโครงการ)
-"# Smart Point of Sale " 
+คำอธิบายข้างต้นให้คำแนะนำทีละขั้นตอนในการตั้งค่าและเรียกใช้ส่วนต่างๆ ของโครงการ
 
+## การแก้ไขปัญหา
+
+หากพบปัญหาในการใช้งาน ให้ทำตามขั้นตอนดังนี้:
+
+1. แก้ไขไฟล์ตามคำแนะนำในการติดตั้งให้ครบทุกขั้นตอน
+
+2. หากยังมีปัญหา สามารถรีเซ็ตฐานข้อมูลใหม่ทั้งหมดได้โดยรันสคริปต์:
+    ```sh
+    cd/api node setup-db-th.js
+    ```

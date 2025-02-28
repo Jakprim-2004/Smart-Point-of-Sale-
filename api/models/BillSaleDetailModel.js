@@ -10,10 +10,6 @@ const BillSaleDetailModel = conn.define("billSaleDetail", {
   },
   billSaleId: {
     type: DataTypes.BIGINT,
-    references: {
-      model: 'billSale',
-      key: 'id'
-    }
   },
   productId: {
     type: DataTypes.BIGINT,
@@ -25,27 +21,22 @@ const BillSaleDetailModel = conn.define("billSaleDetail", {
     type: DataTypes.BIGINT,
   },
   userId: {
-    type: DataTypes.BIGINT
+    type: DataTypes.BIGINT,
   },
   totalprice: {
     type: DataTypes.DECIMAL(10, 2),
-    allowNull: true,
-    
   },
   customerId: {
     type: DataTypes.BIGINT,
-    references: {
-      model: CustomerModel,
-      key: 'id'
-    }
+    allowNull: true,
   },
   pointsEarned: {
     type: DataTypes.INTEGER,
-    defaultValue: 0
-  }
+    defaultValue: 0,
+  },
 }, {
   tableName: 'billSaleDetail',
-  freezeTableName: true
+  freezeTableName: true,
 });
 
 // hook สำหรับคำนวณแต้มอัตโนมัติ

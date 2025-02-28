@@ -3,7 +3,6 @@ const app = express();
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const service = require("./Service");
-const PausedBillModel = require("../models/PausedBillModel");
 const BillSaleModel = require("../models/BillSaleModel");
 const BillSaleDetailModel = require("../models/BillSaleDetailModel");
 const CustomerModel = require("../models/CustomerModel"); 

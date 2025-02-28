@@ -8,16 +8,12 @@ import { FaUser, FaEnvelope, FaPhone, FaLock, FaEye, FaEyeSlash } from 'react-ic
 
 function Package() {
     const [packages, setPackages] = useState([]);
-    const [yourPackage, setYourPackage] = useState({});
     const [phone, setPhone] = useState('');
     const [pass, setPass] = useState('');
     const [confirmPass, setConfirmPass] = useState('');
     const [email, setEmail] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
-    const [postalCode, setPostalCode] = useState('');
-    const [provinces, setProvinces] = useState([]);
-    const [thailandData, setThailandData] = useState([]);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordMatch, setPasswordMatch] = useState(true);

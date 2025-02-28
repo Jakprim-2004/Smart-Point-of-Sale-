@@ -1,54 +1,37 @@
 const conn = require("../connect");
 const { DataTypes } = require("sequelize");
-const CustomerModel = require("./CustomerModel");
 
-const BillSaleModel = conn.define("billSale", {
-  id: {
-    type: DataTypes.BIGINT,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  payDate: {
-    type: DataTypes.DATE,
-  },
-  status: {
-    type: DataTypes.STRING,
-    defaultValue: "open",
-    allowNull: false,
-  },
-  userId: {
-    type: DataTypes.BIGINT
-  },
-  paymentMethod: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    defaultValue: "", 
-  },
-  description: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  customerId: {
-    type: DataTypes.BIGINT,
-    references: {
-      model: CustomerModel,
-      key: 'id'
+const BillSaleModel = conn.define("BillSale", {
+    id: {
+        type: DataTypes.BIGINT,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    billNo: {
+        type: DataTypes.STRING
+    },
+    totalPrice: {
+        type: DataTypes.DECIMAL(10, 2)
+    },
+    userId: {
+        type: DataTypes.BIGINT
+    },
+    customerId: {
+        type: DataTypes.BIGINT,
+        allowNull: true
+    },
+    pointsEarned: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     }
-  },
-  totalAmount: {
-    type: DataTypes.DECIMAL(10, 2)
-  },
-  vatAmount: {
-    type: DataTypes.DECIMAL(10, 2)
-  }
 }, {
-  tableName: 'billSale',
-  freezeTableName: true
+    // ตรวจสอบให้แน่ใจว่าใช้ชื่อตารางตรงกับที่ BillSaleDetailModel อ้างถึง
+    tableName: 'billSale',
+    // เพิ่ม freezeTableName เพื่อป้องกันการแปลงชื่อตาราง
+    freezeTableName: true
 });
 
-// เพิ่มความสัมพันธ์
-BillSaleModel.belongsTo(CustomerModel, {
-  foreignKey: 'customerId'
-});
+// ลบการเรียก sync ออกจากไฟล์นี้ เพื่อให้จัดการในไฟล์ server.js หรือ setup-db-th.js เท่านั้น
+// BillSaleModel.sync({ alter: true });
 
 module.exports = BillSaleModel;
