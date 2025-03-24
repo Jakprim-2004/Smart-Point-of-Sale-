@@ -51,11 +51,94 @@ function Sale() {
     fetchBillSaleDetail();
     fetchBillLimitInfo();
     loadCustomers();
+    
+    // โหลดรายการบิลที่พักไว้จาก localStorage
+    const savedHeldBills = localStorage.getItem('heldBills');
+    if (savedHeldBills) {
+      try {
+        setHeldBills(JSON.parse(savedHeldBills));
+      } catch (error) {
+        console.error("Error parsing held bills from localStorage:", error);
+        localStorage.removeItem('heldBills');
+      }
+    }
 
     if (searchInputRef.current) {
       searchInputRef.current.focus();
     }
   }, []);
+
+  // เพิ่มฟังก์ชัน fetchData ที่ขาดหายไป
+  const fetchData = async () => {
+    try {
+      const productResponse = await axios.get(
+        config.api_path + "/product/listForSale",
+        config.headers()
+      );
+      if (productResponse.data.message === "success") {
+        const products = productResponse.data.results;
+
+        const stockResponse = await axios.get(
+          config.api_path + "/reportStock",
+          config.headers()
+        );
+        if (stockResponse.data.message === "success") {
+          const stockData = stockResponse.data.results;
+
+          const updatedProducts = products.map((product) => {
+            const stockItem = stockData.find(
+              (stock) => stock.productId === product.id
+            );
+            return {
+              ...product,
+              remainingQty: stockItem ? stockItem.totalQty : 0,
+            };
+          });
+
+          setProducts(updatedProducts);
+        }
+      }
+    } catch (e) {
+      Swal.fire({
+        title: "error",
+        text: e.message,
+        icon: "error",
+      });
+    }
+  };
+
+  // เพิ่มฟังก์ชัน handleDelete ที่ขาดหายไป
+  const handleDelete = (item) => {
+    Swal.fire({
+      title: "ยืนยันการลบ",
+      text: "คุณต้องการลบรายการนี้ใช่หรือไม่",
+      icon: "question",
+      showCancelButton: true,
+      showConfirmButton: true,
+    }).then(async (res) => {
+      if (res.isConfirmed) {
+        try {
+          await axios
+            .delete(
+              config.api_path + "/billSale/deleteItem/" + item.id,
+              config.headers()
+            )
+            .then((res) => {
+              if (res.data.message === "success") {
+                fetchBillSaleDetail();
+                fetchData();
+              }
+            });
+        } catch (e) {
+          Swal.fire({
+            title: "error",
+            text: e.message,
+            icon: "error",
+          });
+        }
+      }
+    });
+  };
 
   const fetchBillSaleDetail = async () => {
     try {
@@ -127,39 +210,40 @@ function Sale() {
     }
 
     try {
-      const res = await axios.post(
-        config.api_path + "/billSale/pauseBill",
-        { id: bill.id, billSaleDetails: bill.billSaleDetails },
+      // ลบสินค้าในตะกร้าก่อนพักบิล
+      await axios.delete(
+        config.api_path + "/billSale/clearCart/" + bill.id,
         config.headers()
       );
 
-      if (res.data.message === "success") {
-        Swal.fire({
-          title: "พักบิล",
-          text: "พักบิลสำเร็จแล้ว",
-          icon: "success",
-          timer: 1000,
-        });
-        const updatedHeldBills = [...heldBills, bill];
-        setHeldBills(updatedHeldBills);
-        localStorage.setItem("heldBills", JSON.stringify(updatedHeldBills));
-        setCurrentBill({});
-        setTotalPrice(0);
-        setInputMoney(0);
-        setMemberInfo({});
-        setLastBill({});
-        setSumTotal(0);
+      Swal.fire({
+        title: "พักบิล",
+        text: "พักบิลสำเร็จแล้ว",
+        icon: "success",
+        timer: 1000,
+      });
+      
+      const updatedHeldBills = [...heldBills, bill];
+      setHeldBills(updatedHeldBills);
+      localStorage.setItem("heldBills", JSON.stringify(updatedHeldBills));
+      
+      setCurrentBill({});
+      setTotalPrice(0);
+      setInputMoney(0);
+      setMemberInfo({});
+      setLastBill({});
+      setSumTotal(0);
 
-        // เปิดบิลใหม่
-        openBill();
-        fetchBillSaleDetail();
+      // เปิดบิลใหม่
+      openBill();
+      fetchBillSaleDetail();
+      fetchData();
 
-        let btns = document.getElementsByClassName("btnClose");
-        for (let i = 0; i < btns.length; i++) btns[i].click();
+      let btns = document.getElementsByClassName("btnClose");
+      for (let i = 0; i < btns.length; i++) btns[i].click();
 
-        if (saleRef.current) {
-          saleRef.current.refreshCountBill();
-        }
+      if (saleRef.current) {
+        saleRef.current.refreshCountBill();
       }
     } catch (e) {
       Swal.fire({
@@ -168,76 +252,6 @@ function Sale() {
         icon: "error",
       });
     }
-  };
-
-  const fetchData = async () => {
-    try {
-      const productResponse = await axios.get(
-        config.api_path + "/product/listForSale",
-        config.headers()
-      );
-      if (productResponse.data.message === "success") {
-        const products = productResponse.data.results;
-
-        const stockResponse = await axios.get(
-          config.api_path + "/reportStock",
-          config.headers()
-        );
-        if (stockResponse.data.message === "success") {
-          const stockData = stockResponse.data.results;
-
-          const updatedProducts = products.map((product) => {
-            const stockItem = stockData.find(
-              (stock) => stock.productId === product.id
-            );
-            return {
-              ...product,
-              remainingQty: stockItem ? stockItem.totalQty : 0,
-            };
-          });
-
-          setProducts(updatedProducts);
-        }
-      }
-    } catch (e) {
-      Swal.fire({
-        title: "error",
-        text: e.message,
-        icon: "error",
-      });
-    }
-  };
-
-  const handleDelete = (item) => {
-    Swal.fire({
-      title: "ยืนยันการลบ",
-      text: "คุณต้องการลบรายการนี้ใช่หรือไม่",
-      icon: "question",
-      showCancelButton: true,
-      showConfirmButton: true,
-    }).then(async (res) => {
-      if (res.isConfirmed) {
-        try {
-          await axios
-            .delete(
-              config.api_path + "/billSale/deleteItem/" + item.id,
-              config.headers()
-            )
-            .then((res) => {
-              if (res.data.message === "success") {
-                fetchBillSaleDetail();
-                fetchData();
-              }
-            });
-        } catch (e) {
-          Swal.fire({
-            title: "error",
-            text: e.message,
-            icon: "error",
-          });
-        }
-      }
-    });
   };
 
   const handleEndSale = () => {
@@ -342,27 +356,6 @@ function Sale() {
     });
 };
 
-  const handleBillToday = async () => {
-    try {
-      await axios
-        .get(config.api_path + "/billSale/billToday", config.headers())
-        .then((res) => {
-          if (res.data.message === "success") {
-            setBillToday(res.data.results);
-          }
-        })
-        .catch((err) => {
-          throw err.response.data;
-        });
-    } catch (e) {
-      Swal.fire({
-        title: "error",
-        text: e.message,
-        icon: "error",
-      });
-    }
-  };
-
   const handlePrint = async () => {
     try {
       const [memberRes, billRes] = await Promise.all([
@@ -452,7 +445,6 @@ function Sale() {
     }
 
     setItem({ ...product, qty: 1 });
-    // เปลี่ยนจากการใช้ ID button เป็นการควบคุม Modal โดยตรง
     setShowQtyModal(true);
   };
 
@@ -498,24 +490,18 @@ function Sale() {
 
   const handleRetrieveBill = async (bill) => {
     try {
-      const res = await axios.post(
-        config.api_path + "/billSale/retrieveBill",
-        { id: bill.id },
-        config.headers()
-      );
+      setCurrentBill(bill);
+      sumTotalPrice(bill.billSaleDetails);
+      const updatedHeldBills = heldBills.filter((b) => b.id !== bill.id);
+      setHeldBills(updatedHeldBills);
+      localStorage.setItem("heldBills", JSON.stringify(updatedHeldBills));
 
-      if (res.data.message === "success") {
-        setCurrentBill(bill);
-        sumTotalPrice(bill.billSaleDetails);
-        setHeldBills(heldBills.filter((b) => b.id !== bill.id));
-
-        Swal.fire({
-          title: "เรียกคืนบิล",
-          text: "เรียกคืนบิลสำเร็จแล้ว",
-          icon: "success",
-          timer: 1000,
-        });
-      }
+      Swal.fire({
+        title: "เรียกคืนบิล",
+        text: "เรียกคืนบิลสำเร็จแล้ว",
+        icon: "success",
+        timer: 1000,
+      });
     } catch (e) {
       Swal.fire({
         title: "เกิดข้อผิดพลาด",

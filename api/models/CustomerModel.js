@@ -8,20 +8,40 @@ const CustomerModel = conn.define("Customer", {
         autoIncrement: true
     },
     name: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(100),
         allowNull: false
     },
     phone: {
-        type: DataTypes.STRING,
-        allowNull: true
+        type: DataTypes.STRING(20),
+        allowNull: false
     },
     email: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(100),
+        allowNull: true
+    },
+    address: {
+        type: DataTypes.TEXT,
         allowNull: true
     },
     points: {
         type: DataTypes.INTEGER,
         defaultValue: 0
+    },
+    membershipTier: {
+        type: DataTypes.STRING(20),
+        defaultValue: 'NORMAL'
+    },
+    pointsExpireDate: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
+    totalSpent: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0
+    },
+    user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true
     }
 }, {
     // ใช้ชื่อตารางที่ถูกต้องตามที่ถูกอ้างถึง
@@ -42,18 +62,6 @@ CustomerModel.prototype.updateMembershipTier = function() {
     else this.membershipTier = 'NORMAL';
 };
 
-// ลบฟังก์ชันนี้ออกเพื่อป้องกันการซิงค์ซ้ำซ้อน
-/*
-async function initModel() {
-    try {
-        await CustomerModel.sync({ alter: true });
-        console.log("CustomerModel synchronized successfully");
-    } catch (error) {
-        console.error("CustomerModel sync error:", error);
-    }
-}
 
-initModel();
-*/
 
 module.exports = CustomerModel;

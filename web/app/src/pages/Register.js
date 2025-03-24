@@ -89,54 +89,86 @@ function Package() {
         setShowConfirmPassword(!showConfirmPassword);
     };
 
-   
+    const checkDuplicate = async (type, value) => {
+        try {
+            const response = await axios.post(config.api_path + '/member/check-duplicate', 
+                type === 'email' ? { email: value } : { phone: value }
+            );
+            return response.data;
+        } catch (error) {
+            throw error.response?.data?.message || 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล';
+        }
+    };
 
     const handleRegister = async (e) => {
         e.preventDefault();
 
-        if (!validateEmail(email)) {
-            Swal.fire({
-                title: 'Error',
-                text: 'กรุณากรอกอีเมลให้ถูกต้อง',
-                icon: 'error'
-            });
-            return;
-        }
-
-        if (phone.length !== 10) {
-            Swal.fire({
-                title: 'Error',
-                text: 'กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก',
-                icon: 'error'
-            });
-            return;
-        }
-
-        const passwordValidation = validatePassword(pass);
-        if (!passwordValidation.isValid) {
-            Swal.fire({
-                title: 'Error',
-                text: passwordValidation.message,
-                icon: 'error'
-            });
-            return;
-        }
-
-        if (pass !== confirmPass) {
-            Swal.fire({
-                title: 'Error',
-                text: 'กรุณากรอกรหัสผ่านให้ตรงกัน',
-                icon: 'error'
-            });
-            return;
-        }
-
         try {
+            // Check email duplicate
+            const emailCheck = await checkDuplicate('email', email);
+            if (emailCheck.isDuplicate) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'อีเมลนี้มีผู้ใช้งานแล้ว',
+                    icon: 'error'
+                });
+                return;
+            }
+
+            // Check phone duplicate
+            const phoneCheck = await checkDuplicate('phone', phone);
+            if (phoneCheck.isDuplicate) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'เบอร์โทรศัพท์นี้มีผู้ใช้งานแล้ว',
+                    icon: 'error'
+                });
+                return;
+            }
+
+            // Continue with existing validation
+            if (!validateEmail(email)) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'กรุณากรอกอีเมลให้ถูกต้อง',
+                    icon: 'error'
+                });
+                return;
+            }
+
+            if (phone.length !== 10) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก',
+                    icon: 'error'
+                });
+                return;
+            }
+
+            const passwordValidation = validatePassword(pass);
+            if (!passwordValidation.isValid) {
+                Swal.fire({
+                    title: 'Error',
+                    text: passwordValidation.message,
+                    icon: 'error'
+                });
+                return;
+            }
+
+            if (pass !== confirmPass) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'กรุณากรอกรหัสผ่านให้ตรงกัน',
+                    icon: 'error'
+                });
+                return;
+            }
+
             handleConfirmation.call(this);
-        } catch (e) {
+        } catch (error) {
             Swal.fire({
                 title: 'Error',
-                text: e.message,
+                text: error.message || 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล',
                 icon: 'error'
             });
         }

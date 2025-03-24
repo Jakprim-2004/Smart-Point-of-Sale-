@@ -10,7 +10,7 @@ const BillSaleDetailModel = require("../models/BillSaleDetailModel");
 const ProductModel = require("../models/ProductModel");
 const PointTransactionModel = require('../models/PointTransactionModel'); 
 
-// แก้ไข route ดึงข้อมูลลูกค้าทั้งหมด
+// เพิ่ม route ดึงข้อมูลลูกค้าทั้งหมด 
 router.get("/customers", service.isLogin, async (req, res) => {
     try {
         const userId = service.getAdminId(req);
@@ -19,16 +19,18 @@ router.get("/customers", service.isLogin, async (req, res) => {
         }
 
         const customers = await CustomerModel.findAll({
-            where: { userId: userId },
+            where: { user_id: userId }, // กรองตาม user_id
             order: [['id', 'DESC']]
         });
+        
         res.json({ result: customers });
     } catch (error) {
+        console.error('Error fetching customers:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// แก้ไข route ดึงข้อมูลลูกค้าตาม ID
+// route ดึงข้อมูลลูกค้าตาม ID
 router.get("/customer/:id", service.isLogin, async (req, res) => {
     try {
         const userId = service.getAdminId(req);
@@ -39,7 +41,7 @@ router.get("/customer/:id", service.isLogin, async (req, res) => {
         const customer = await CustomerModel.findOne({
             where: { 
                 id: req.params.id,
-                userId: userId 
+                user_id: userId 
             }
         });
 
@@ -53,30 +55,17 @@ router.get("/customer/:id", service.isLogin, async (req, res) => {
     }
 });
 
-// แก้ไข route อัพเดทข้อมูลลูกค้า
+// route อัพเดทข้อมูลลูกค้า
 router.put("/customer/:id", service.isLogin, async (req, res) => {
     try {
-        const userId = service.getAdminId(req);
-        if (!userId) {
-            return res.status(401).json({ error: "กรุณาเข้าสู่ระบบใหม่" });
-        }
-
-        const customer = await CustomerModel.findOne({
-            where: { 
-                id: req.params.id,
-                userId: userId 
-            }
-        });
+        const customer = await CustomerModel.findByPk(req.params.id);
 
         if (!customer) {
             return res.status(404).json({ error: "ไม่พบข้อมูลลูกค้า" });
         }
 
         await CustomerModel.update(req.body, {
-            where: { 
-                id: req.params.id,
-                userId: userId 
-            }
+            where: { id: req.params.id }
         });
 
         res.json({ message: "success" });
@@ -104,7 +93,7 @@ router.post("/customer", service.isLogin, async (req, res) => {
 
         const customerData = {
             ...req.body,
-            userId: userId,
+            user_id: userId,
             points: 0,
             membershipTier: 'NORMAL',
             pointsExpireDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1))
@@ -123,7 +112,7 @@ router.post("/customer", service.isLogin, async (req, res) => {
     }
 });
 
-// เพิ่ม route สำหรับ login ลูกค้า
+// route สำหรับ login ลูกค้า
 router.post("/login/customer", async (req, res) => {
     try {
         const { email, phone } = req.body;
@@ -163,7 +152,7 @@ router.post("/login/customer", async (req, res) => {
     }
 });
 
-// แก้ไข route ดึงประวัติการซื้อของลูกค้า
+// route ดึงประวัติการซื้อของลูกค้า
 router.get("/customer/:id/purchases", async (req, res) => {
     try {
         const bills = await BillSaleModel.findAll({
@@ -258,7 +247,7 @@ router.get("/bill/:id", async (req, res) => {
     }
 });
 
-// เพิ่ม API endpoint สำหรับดึงประวัติการใช้แต้ม
+// ดึงประวัติการใช้แต้ม
 router.get("/customer/:id/point-history", async (req, res) => {
     try {
         const pointHistory = await PointTransactionModel.findAll({
@@ -271,7 +260,7 @@ router.get("/customer/:id/point-history", async (req, res) => {
             result: pointHistory 
         });
     } catch (error) {
-        console.error('Error loading point history:', error); // เพิ่ม log เพื่อดู error ที่เกิดขึ้น
+        console.error('Error loading point history:', error); // ดู error ที่เกิดขึ้น
         res.status(500).json({
             success: false,
             message: "ไม่สามารถดึงข้อมูลประวัติการใช้แต้มได้",

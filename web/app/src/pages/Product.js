@@ -66,6 +66,54 @@ function Product() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+
+    // Validate required fields
+    if (!product.barcode) {
+      Swal.fire({
+        title: "กรุณากรอกข้อมูล",
+        text: "กรุณากรอกบาร์โค้ด",
+        icon: "warning"
+      });
+      return;
+    }
+
+    if (!product.name) {
+      Swal.fire({
+        title: "กรุณากรอกข้อมูล",
+        text: "กรุณากรอกชื่อสินค้า",
+        icon: "warning"
+      });
+      return;
+    }
+
+    if (!product.cost) {
+      Swal.fire({
+        title: "กรุณากรอกข้อมูล",
+        text: "กรุณากรอกราคาทุน",
+        icon: "warning"
+      });
+      return;
+    }
+
+    if (!product.price) {
+      Swal.fire({
+        title: "กรุณากรอกข้อมูล",
+        text: "กรุณากรอกราคาจำหน่าย",
+        icon: "warning"
+      });
+      return;
+    }
+
+    if (!product.category) {
+      Swal.fire({
+        title: "กรุณากรอกข้อมูล",
+        text: "กรุณาเลือกประเภทสินค้า",
+        icon: "warning"
+      });
+      return;
+    }
+
+    // Continue with existing save logic
     let url = config.api_path + "/product/insert";
 
     if (product.id !== undefined) {
@@ -92,6 +140,8 @@ function Product() {
       });
     }
   };
+
+  
 
   // Clean up function for modals and preview
   const cleanupModalAndPreview = () => {
@@ -601,37 +651,48 @@ function Product() {
           onHide={handleProductModalClose}
           title="ฟอร์มสินค้า"
         >
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            handleSave(e);
-            setShowProductModal(false);
-          }}>
+          <form onSubmit={handleSave}>
             <div className="row">
               <div className="form-group col-md-6">
-                <label>ชื่อสินค้า</label>
+                <label>บาร์โค้ด <span className="text-danger">*</span></label>
                 <input
-                  value={product.name}
+                  value={product.barcode || ''}
+                  onChange={(e) => setProduct({ ...product, barcode: e.target.value })}
+                  type="text"
+                  className="form-control shadow-sm"
+                  required
+                />
+              </div>
+              <div className="form-group col-md-6">
+                <label>ชื่อสินค้า <span className="text-danger">*</span></label>
+                <input
+                  value={product.name || ''}
                   onChange={(e) => setProduct({ ...product, name: e.target.value })}
                   type="text"
                   className="form-control shadow-sm"
+                  required
                 />
               </div>
               <div className="form-group col-md-6">
-                <label>ราคาทุน</label>
+                <label>ราคาทุน <span className="text-danger">*</span></label>
                 <input
-                  value={product.cost}
+                  value={product.cost || ''}
                   onChange={(e) => setProduct({ ...product, cost: e.target.value })}
                   type="number"
                   className="form-control shadow-sm"
+                  required
+                  min="0"
                 />
               </div>
               <div className="form-group col-md-6">
-                <label>ราคาจำหน่าย</label>
+                <label>ราคาจำหน่าย <span className="text-danger">*</span></label>
                 <input
-                  value={product.price}
+                  value={product.price || ''}
                   onChange={(e) => setProduct({ ...product, price: e.target.value })}
                   type="number"
                   className="form-control shadow-sm"
+                  required
+                  min="0"
                 />
               </div>
               <div className="form-group col-md-6">
@@ -642,25 +703,16 @@ function Product() {
                   type="date"
                   className="form-control shadow-sm"
                   min={new Date().toISOString().split('T')[0]}
-                  placeholder="เลือกวันหมดอายุ"
                 />
               </div>
               <div className="form-group col-md-6">
-                <label>Barcode</label>
-                <input
-                  value={product.barcode}
-                  onChange={(e) => setProduct({ ...product, barcode: e.target.value })}
-                  type="number"
-                  className="form-control shadow-sm"
-                />
-              </div>
-              <div className="form-group col-md-6">
-                <label>ประเภทสินค้า</label>
+                <label>ประเภทสินค้า <span className="text-danger">*</span></label>
                 <div className="input-group">
                   <select
                     className="form-control shadow-sm"
                     value={product.category || ""}
                     onChange={(e) => setProduct({ ...product, category: e.target.value })}
+                    required
                   >
                     <option value="">เลือกประเภทสินค้า</option>
                     {categories.map(cat => (
@@ -681,6 +733,10 @@ function Product() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="text-muted mb-3">
+              <small>หมายเหตุ: ช่องที่มีเครื่องหมาย <span className="text-danger">*</span> จำเป็นต้องกรอก</small>
             </div>
 
             <button type="submit" className="btn btn-success shadow-sm">

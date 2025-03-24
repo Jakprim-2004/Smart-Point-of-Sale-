@@ -45,18 +45,46 @@ function Customer() {
 
     const handleSave = async () => {
         try {
-            await axios.put(config.api_path + "/customer/" + editCustomer.id, editCustomer);
-            setEditCustomer(null);
-            loadCustomers();
-            Swal.fire("Success", "Customer updated successfully", "success");
+            const response = await axios.put(
+                config.api_path + "/customer/" + editCustomer.id, 
+                editCustomer,
+                config.headers()  
+            );
+            
+            if (response.data.message === 'success') {
+                setEditCustomer(null);
+                loadCustomers();
+                Swal.fire("สำเร็จ", "อัปเดตข้อมูลลูกค้าเรียบร้อย", "success");
+            }
         } catch (error) {
             console.error("Error updating customer:", error);
-            Swal.fire("Error", "Failed to update customer", "error");
+            if (error.response?.data?.error === "กรุณาเข้าสู่ระบบใหม่") {
+                Swal.fire({
+                    title: "เซสชันหมดอายุ",
+                    text: "กรุณาเข้าสู่ระบบใหม่",
+                    icon: "warning",
+                    confirmButtonText: "เข้าสู่ระบบ"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Redirect to login page or handle re-authentication
+                        window.location.href = "/login";
+                    }
+                });
+            } else {
+                Swal.fire("Error", error.response?.data?.error || "ไม่สามารถอัปเดตข้อมูลลูกค้าได้", "error");
+            }
         }
     };
 
     const handleCreateCustomer = async (e) => {
         e.preventDefault();
+        
+        // Validate phone number
+        if (!/^\d{10}$/.test(newCustomer.phone)) {
+            Swal.fire('Error', 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (10 หลัก)', 'error');
+            return;
+        }
+
         try {
             const response = await axios.post(
                 `${config.api_path}/customer`,
@@ -113,16 +141,19 @@ function Customer() {
                                             className="form-control"
                                             value={newCustomer.phone}
                                             onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})}
+                                            pattern="[0-9]{10}"
+                                            title="กรุณากรอกเบอร์โทรศัพท์ 10 หลัก"
                                             required
                                         />
                                     </div>
                                     <div className="col-md-6 mb-3">
-                                        <label className="form-label">อีเมล</label>
+                                        <label className="form-label">อีเมล *</label>
                                         <input
                                             type="email"
                                             className="form-control"
                                             value={newCustomer.email}
                                             onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})}
+                                            required
                                         />
                                     </div>
                                     

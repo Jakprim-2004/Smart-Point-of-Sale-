@@ -187,7 +187,7 @@ function Login() {
 
                             {loginType === 'member' && (
                                 <div className="text-center">
-                                    <p className="mb-0">ยังไม่มีบัญชี? <a href="/package" className="text-primary text-decoration-none">สมัครสมาชิก</a></p>
+                                    <p className="mb-0">ยังไม่มีบัญชี? <a href="/Register" className="text-primary text-decoration-none">สมัครสมาชิก</a></p>
                                 </div>
                             )}
                         </div>

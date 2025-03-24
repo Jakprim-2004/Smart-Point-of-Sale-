@@ -8,6 +8,32 @@ const service = require("./Service");
 const PackageModel = require("../models/PackageModel");
 const { encryptPassword, comparePassword } = require('../utils/encryption');
 
+app.post("/member/check-duplicate", async (req, res) => {
+  try {
+    const { email, phone } = req.body;
+    let whereClause = {};
+    
+    if (email) {
+      whereClause.email = email;
+    }
+    if (phone) {
+      whereClause.phone = phone;
+    }
+
+    const existingMember = await MemberModel.findOne({
+      where: whereClause
+    });
+
+    res.send({
+      isDuplicate: !!existingMember,
+      message: existingMember ? 
+        `${email ? 'อีเมล' : 'เบอร์โทรศัพท์'}นี้มีผู้ใช้งานแล้ว` : 
+        'สามารถใช้งานได้'
+    });
+  } catch (e) {
+    res.status(500).send({ message: e.message });
+  }
+});
 
 app.post("/member/signin", async (req, res) => {
   try {
@@ -93,8 +119,6 @@ app.get("/member/info", service.isLogin, async (req, res, next) => {
     return res.send({ message: e.message });
   }
 });
-
-
 
 app.get("/member/list", service.isLogin, async (req, res) => {
   try {

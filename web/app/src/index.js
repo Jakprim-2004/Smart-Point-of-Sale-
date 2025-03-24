@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import reportWebVitals from "./reportWebVitals";
-import Package from "./pages/Package"; 
+import Register from "./pages/Register"; 
 
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -29,8 +29,8 @@ const router = createBrowserRouter([
     element: <Login />,
   },
  {
-    path: "/package",
-    element: <Package />,
+    path: "/Register",
+    element: <Register />,
  },
   {
     path: "/home",
