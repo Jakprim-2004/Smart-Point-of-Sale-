@@ -132,46 +132,90 @@ router.get('/reportTopSellingProducts', async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const topSellingProducts = await BillSaleDetailModel.findAll({
-      attributes: [
-        'productId',
-        [sequelize.fn('SUM', sequelize.col('qty')), 'totalQty'],
-        [sequelize.col('product.name'), 'productName'],
-        [sequelize.fn('SUM', 
-          sequelize.literal('qty * totalprice') // Changed to use totalprice
-        ), 'totalAmount']
-      ],
-      group: ['productId', 'product.name', 'product.price'], 
-      having: sequelize.literal('SUM(qty) > 0'), 
-      order: [[sequelize.fn('SUM', 
-        sequelize.literal('qty * totalprice') // Changed to use totalprice
-      ), 'DESC']],
-      limit: 5,
-      include: [{ 
-        model: ProductModel, 
-        as: 'product',  
-        attributes: [] 
-      }],
-      where: { 
+    console.log("Fetching top selling products for userId:", userId);
+    console.log("Date range:", today, tomorrow);
+
+    // Get product info first
+    const products = await ProductModel.findAll({
+      attributes: ['id', 'name', 'price'],
+      where: { userId: userId },
+      raw: true
+    });
+
+    // Create a map for quick product lookup
+    const productMap = new Map();
+    products.forEach(product => {
+      productMap.set(product.id, {
+        name: product.name,
+        price: product.price
+      });
+    });
+
+    // Get all paid billSales for today
+    const paidBills = await BillSaleModel.findAll({
+      attributes: ['id'],
+      where: {
         userId: userId,
+        status: 'pay',
         createdAt: {
           [sequelize.Op.gte]: today,
           [sequelize.Op.lt]: tomorrow
         }
-      } 
+      },
+      raw: true
     });
 
-    const results = topSellingProducts.map(product => {
-      const data = product.get({ plain: true });
+    if (paidBills.length === 0) {
+      console.log("No paid bills found for today");
+      return res.send({ message: 'success', results: [] });
+    }
+
+    const paidBillIds = paidBills.map(bill => bill.id);
+    console.log("Paid bill IDs:", paidBillIds);
+
+    // Get product quantities from billSaleDetails
+    const salesDetails = await BillSaleDetailModel.findAll({
+      attributes: [
+        'productId',
+        [sequelize.fn('SUM', sequelize.col('qty')), 'totalQty']
+      ],
+      group: ['productId'],
+      where: { 
+        userId: userId,
+        billSaleId: {
+          [sequelize.Op.in]: paidBillIds
+        }
+      },
+      raw: true
+    });
+
+    console.log("Sales details found:", salesDetails);
+
+    // Process results and manually calculate total amount if needed
+    const results = salesDetails.map(item => {
+      const product = productMap.get(item.productId);
+      const totalQty = parseInt(item.totalQty || 0);
+      const price = product ? parseFloat(product.price || 0) : 0;
+      const totalAmount = totalQty * price;
+      
       return {
-        ...data,
-        totalAmount: parseFloat(data.totalAmount) || 0,
-        totalQty: parseInt(data.totalQty) || 0
+        productId: item.productId,
+        productName: product ? product.name : 'Unknown Product',
+        totalQty: totalQty,
+        totalAmount: totalAmount // Calculate even if not directly available
       };
     });
 
-    res.send({ message: 'success', results });
+    // Sort by totalAmount if calculated
+    results.sort((a, b) => b.totalAmount - a.totalAmount);
+    
+    // Take top 5
+    const topResults = results.slice(0, 5);
+    console.log("Final processed results:", topResults);
+    
+    res.send({ message: 'success', results: topResults });
   } catch (error) {
+    console.error('Error in reportTopSellingProducts:', error);
     res.status(500).send({ message: error.message });
   }
 });
@@ -200,6 +244,12 @@ router.get('/reportTopSellingCategories', async (req, res) => {
         model: ProductModel, 
         as: 'product',
         attributes: [] 
+      },
+      {
+        model: BillSaleModel,
+        as: 'billSale',
+        attributes: [],
+        where: { status: 'pay' } // เพิ่มเงื่อนไขกรองสถานะ pay
       }],
       where: { 
         userId: userId,
@@ -316,7 +366,7 @@ router.get('/todaySalesReport', async (req, res) => {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    // Get today's sales with payment method filter
+    // Get today's sales with correct filter for completed bills
     const todaySales = await BillSaleModel.findAll({
       where: {
         userId: userId,
@@ -324,21 +374,11 @@ router.get('/todaySalesReport', async (req, res) => {
           [sequelize.Op.gte]: today,
           [sequelize.Op.lt]: tomorrow
         },
-        paymentMethod: {
-          [sequelize.Op.in]: ['Cash', 'PromptPay']
-        }
-      },
-      include: [{
-        model: BillSaleDetailModel,
-        as: 'details',
-        include: [{
-          model: ProductModel,
-          as: 'product'
-        }]
-      }]
+        status: 'pay' // Changed to only count paid bills
+      }
     });
 
-    // Get yesterday's sales with payment method filter
+    // Get yesterday's sales with correct filter
     const yesterdaySales = await BillSaleModel.findAll({
       where: {
         userId: userId,
@@ -346,36 +386,14 @@ router.get('/todaySalesReport', async (req, res) => {
           [sequelize.Op.gte]: yesterday,
           [sequelize.Op.lt]: today
         },
-        paymentMethod: {
-          [sequelize.Op.in]: ['Cash', 'PromptPay']
-        }
-      },
-      include: [{
-        model: BillSaleDetailModel,
-        as: 'details',
-        include: [{
-          model: ProductModel,
-          as: 'product'
-        }]
-      }]
+        status: 'pay' // Changed to only count paid bills
+      }
     });
 
-    // Calculate totals and growth
-    // แก้ไขฟังก์ชัน calculateDailyTotals ให้คำนวณ qty * totalprice
-    const calculateDailyTotals = (sales) => {
-      let total = 0;
-      sales.forEach(bill => {
-        if (bill.details && bill.details.length > 0) {
-          bill.details.forEach(detail => {
-            total += parseFloat(detail.qty || 0) * parseFloat(detail.totalprice || 0);
-          });
-        }
-      });
-      return total;
-    };
-
-    const todayTotal = calculateDailyTotals(todaySales);
-    const yesterdayTotal = calculateDailyTotals(yesterdaySales);
+    // Use the direct bill totalAmount instead of recalculating from details
+    const todayTotal = todaySales.reduce((sum, bill) => sum + parseFloat(bill.totalAmount || 0), 0);
+    const yesterdayTotal = yesterdaySales.reduce((sum, bill) => sum + parseFloat(bill.totalAmount || 0), 0);
+    
     const todayBillCount = todaySales.length;
     const yesterdayBillCount = yesterdaySales.length;
     const todayAveragePerBill = todayBillCount > 0 ? todayTotal / todayBillCount : 0;
@@ -392,14 +410,15 @@ router.get('/todaySalesReport', async (req, res) => {
       amount: 0
     }));
 
-    // Calculate hourly totals
+    // Calculate hourly totals directly from bill totalAmount
     todaySales.forEach(bill => {
       const hour = new Date(bill.createdAt).getHours();
-      const billAmount = bill.details?.reduce((sum, detail) => {
-        return sum + (parseFloat(detail.qty || 0) * parseFloat(detail.totalprice || 0));
-      }, 0) || 0;
-      hourlyData[hour].amount += billAmount;
+      hourlyData[hour].amount += parseFloat(bill.totalAmount || 0);
     });
+
+    // Log values for debugging
+    console.log(`Today's total: ${todayTotal}, Yesterday's total: ${yesterdayTotal}`);
+    console.log(`Growth rate: ${growthRate}%`);
 
     const response = {
       message: 'success',
@@ -412,7 +431,7 @@ router.get('/todaySalesReport', async (req, res) => {
         averagePerBill: todayAveragePerBill,
         yesterdayAveragePerBill: yesterdayAveragePerBill,
         averageGrowth: parseFloat(averageGrowth.toFixed(2)),
-        hourlyData: hourlyData, // Add the hourlyData here
+        hourlyData: hourlyData,
         growthRate: parseFloat(growthRate.toFixed(2)),
         yesterdayTotal
       }
@@ -421,6 +440,7 @@ router.get('/todaySalesReport', async (req, res) => {
     res.send(response);
 
   } catch (error) {
+    console.error('Error in todaySalesReport:', error);
     res.status(500).send({ 
       message: 'เกิดข้อผิดพลาดในการดึงข้อมูลรายงาน',
       error: error.message 
@@ -440,40 +460,28 @@ router.get('/paymentMethodStats', async (req, res) => {
       attributes: [
         'paymentMethod',
         [sequelize.fn('COUNT', sequelize.col('billSale.id')), 'count'],
-        [sequelize.fn('SUM', 
-          sequelize.literal('"details"."qty" * "details"."totalprice"') // Changed to use totalprice
-        ), 'total']
+        [sequelize.fn('SUM', sequelize.col('totalAmount')), 'total']
       ],
-      include: [{
-        model: BillSaleDetailModel,
-        as: 'details',
-        attributes: [],
-        required: true,
-        include: [{
-          model: ProductModel,
-          as: 'product',
-          attributes: [],
-          required: true
-        }]
-      }],
       where: {
         userId: userId,
         createdAt: {
           [sequelize.Op.gte]: today,
           [sequelize.Op.lt]: tomorrow
         },
-        paymentMethod: {
-          [sequelize.Op.in]: ['Cash', 'PromptPay']  // Add this filter
-        }
+        status: 'pay' // Only include paid bills
       },
       group: ['paymentMethod'],
       raw: true
     });
 
+    // Log the payment stats for debugging
+    console.log("Payment stats:", paymentStats);
+
     res.send({ 
       message: 'success', 
       results: paymentStats.map(stat => ({
         ...stat,
+        paymentMethod: stat.paymentMethod || 'ไม่ระบุ', // Set default for null payment methods
         total: parseFloat(stat.total) || 0,
         label: '' // Add empty label for chart display
       }))
@@ -834,5 +842,7 @@ router.post('/stock/combinedReport', async (req, res) => {
     res.status(500).send({ message: error.message });
   }
 });
+
+
 
 module.exports = router;

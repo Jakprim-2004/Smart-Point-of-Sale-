@@ -20,7 +20,7 @@ BillSaleDetailModel.belongsTo(ProductModel, {
     targetKey: 'id'
 });
 
-// Add BillSale and BillSaleDetail associations
+// Add BillSale and BillSaleDetail associations 
 BillSaleModel.hasMany(BillSaleDetailModel, { 
   foreignKey: 'billSaleId',
   as: 'details'

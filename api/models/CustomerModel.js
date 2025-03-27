@@ -19,10 +19,6 @@ const CustomerModel = conn.define("Customer", {
         type: DataTypes.STRING(100),
         allowNull: true
     },
-    address: {
-        type: DataTypes.TEXT,
-        allowNull: true
-    },
     points: {
         type: DataTypes.INTEGER,
         defaultValue: 0

@@ -22,6 +22,7 @@ import Reward from "./pages/Reward";
 import Category from "./pages/Category";
 import LoginCustomer from "./pages/LoginCustomer";
 import DetailCustomer from "./pages/DetailCustomer";
+import PointHistory from "./pages/PointHistory";
 
 const router = createBrowserRouter([
   {
@@ -91,6 +92,9 @@ const router = createBrowserRouter([
   },{
     path: "/DetailCustomer",
     element: <DetailCustomer />,
+  },{
+    path: "/PointHistory",
+    element: <PointHistory />,
   }
 ]);
 

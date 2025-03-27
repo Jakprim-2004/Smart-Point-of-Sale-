@@ -167,32 +167,9 @@ const Sidebar = forwardRef((props, sidebarRef) => {
     }
   };
 
-  const renderButton = (item) => {
-    if (packageName === item.name) {
-      return (
-        <button className="btn btn-primary btn-lg disabled" disabled>
-          <i className="fa fa-check me-2"></i>
-          เลือกแพคเกจ
-        </button>
-      );
-    } else {
-      return (
-        <button
-          onClick={() => handleChoosePackage(item)}
-          className="btn btn-primary btn-lg"
-        >
-          <i className="fa fa-check me-2"></i>
-          เลือกแพคเกจ
-        </button>
-      );
-    }
-  };
+  
 
-  const handleChoosePackage = (item) => {
-    setChoosePackage(item);
-    setShowBankModal(true); 
-    
-  };
+  
 
 
 
@@ -408,49 +385,13 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                   {isOwner ? "เจ้าของร้าน" : "พนักงาน"}
                 </span>
               </div>
-            <div className="text-white-50 mb-3">Package: {packageName}</div>
-              {isOwner && (
-                <button
-                  onClick={() => {
-                    fetchPackages();
-                    setShowPackageModal(true); 
-                  }}
-                  className="btn"
-                  style={styles.upgradeButton}
-                >
-                  <i className="fa-solid fa-arrow-up-wide-short"></i>
-                  Upgrade Package
-                </button>
-              )}
+           
+             
             </div>
           </div>
 
-          <div style={styles.billCard}>
-            <div className="d-flex justify-content-between align-items-center">
-              <div className="text-white-50">จำนวนบิลที่ขายได้</div>
-              <div>
-                <span className="badge bg-success px-3 py-2">
-                  {totalBill} / {billAmount.toLocaleString("th-TH")}
-                </span>
-              </div>
-            </div>
-          </div>
+        
 
-          {totalBill >= billAmount && (
-            <div className="mx-3">
-              <div
-                className="alert alert-danger"
-                style={{
-                  background: "rgba(220,53,69,0.2)",
-                  border: "1px solid rgba(220,53,69,0.3)",
-                  borderRadius: "8px",
-                }}
-              >
-                <i className="fas fa-exclamation-circle me-2"></i>
-                ถึงขีดจำกัดการขายแล้ว
-              </div>
-            </div>
-          )}
 
           <nav className="mt-3">
             <ul
@@ -473,105 +414,116 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                 </Link>
               </li>
 
-              {/* Reports menu - visible only to owner */}
-              {isOwner && (
-                <li
-                  className={`nav-item ${dropdownStates.reports ? "menu-open" : ""
-                    }`}
-                >
-                  <a
-                    href="#"
-                    className="nav-link"
-                    style={styles.navLink}
-                    onClick={() => handleDropdownClick("reports")}
-                  >
-                    <span style={styles.navIcon}>
-                      <img
-                        src={report}
-                        alt="report"
-                        style={{ height: "50px", marginRight: "100px" }}
-                      />
-                    </span>
-                    <span className="ml-3" style={styles.navText}>
-                      รายงาน
-                      <i className="right fas fa-angle-left ms-2"></i>
-                    </span>
-                  </a>
-                  <ul
-                    className="nav nav-treeview"
-                    style={{
-                      ...styles.subMenu,
-                      display: dropdownStates.reports ? "block" : "none",
-                    }}
-                  >
-                    <li className="nav-item">
-                      <a
+                      {isOwner && (
+                      <li
+                        className={`nav-item ${dropdownStates.reports ? "menu-open" : ""
+                        }`}
+                      >
+                        <a
                         href="#"
                         className="nav-link"
                         style={styles.navLink}
-                        onClick={() => handleNavigation("/dashboard")}
-                      >
+                        onClick={() => handleDropdownClick("reports")}
+                        >
                         <span style={styles.navIcon}>
-                          <i className="nav-icon fas fa-tachometer-alt"></i>
+                          <img
+                          src={report}
+                          alt="report"
+                          style={{ height: "50px", marginRight: "100px" }}
+                          />
                         </span>
-                        <span style={styles.navText}>แดชบอร์ด</span>
-                      </a>
-                    </li>
-                    <li className="nav-item">
-                      <a
-                        href="#"
-                        className="nav-link"
-                        style={styles.navLink}
-                        onClick={() => handleNavigation("/dashboardreport")}
-                      >
-                        <span style={styles.navIcon}>
-                          <i className="fa-solid fa-file-contract"></i>
+                        <span className="ml-3" style={styles.navText}>
+                          รายงาน
+                          <i className="right fas fa-angle-left ms-2"></i>
                         </span>
-                        <span style={styles.navText}>รายงาน</span>
-                      </a>
-                    </li>
-                    <li className="nav-item" style={styles.navItem}>
-                      <Link
-                        to="/sumSalePerDay"
-                        className="nav-link"
-                        style={styles.navLink}
-                      >
-                        <span style={styles.navIcon}>
-                          <i className="nav-icon fas fa-file-alt"></i>
-                        </span>
-                        <span style={styles.navText}>สรุปยอดขายรายวัน</span>
-                      </Link>
-                    </li>
-                    <li className="nav-item" style={styles.navItem}>
-                      <Link
-                        to="/billSales"
-                        className="nav-link"
-                        style={styles.navLink}
-                      >
-                        <span style={styles.navIcon}>
-                          <i className="nav-icon fas fa-list-alt"></i>
-                        </span>
-                        <span style={styles.navText}>รายงานบิลขาย</span>
-                      </Link>
-                    </li>
+                        </a>
+                        <ul
+                        className="nav nav-treeview"
+                        style={{
+                          ...styles.subMenu,
+                          display: dropdownStates.reports ? "block" : "none",
+                        }}
+                        >
+                        <li className="nav-item">
+                          <a
+                          href="#"
+                          className="nav-link"
+                          style={styles.navLink}
+                          onClick={() => handleNavigation("/dashboard")}
+                          >
+                          <span style={styles.navIcon}>
+                            <i className="nav-icon fas fa-chart-line"></i>
+                          </span>
+                          <span style={styles.navText}>แดชบอร์ด</span>
+                          </a>
+                        </li>
+                        <li className="nav-item">
+                          <a
+                          href="#"
+                          className="nav-link"
+                          style={styles.navLink}
+                          onClick={() => handleNavigation("/dashboardreport")}
+                          >
+                          <span style={styles.navIcon}>
+                            <i className="fas fa-chart-bar"></i>
+                          </span>
+                          <span style={styles.navText}>รายงาน</span>
+                          </a>
+                        </li>
+                        <li className="nav-item" style={styles.navItem}>
+                          <Link
+                          to="/sumSalePerDay"
+                          className="nav-link"
+                          style={styles.navLink}
+                          >
+                          <span style={styles.navIcon}>
+                            <i className="nav-icon fas fa-calendar-day"></i>
+                          </span>
+                          <span style={styles.navText}>สรุปยอดขายรายวัน</span>
+                          </Link>
+                        </li>
+                        <li className="nav-item" style={styles.navItem}>
+                          <Link
+                          to="/billSales"
+                          className="nav-link"
+                          style={styles.navLink}
+                          >
+                          <span style={styles.navIcon}>
+                            <i className="nav-icon fas fa-receipt"></i>
+                          </span>
+                          <span style={styles.navText}>รายงานบิลขาย</span>
+                          </Link>
+                        </li>
 
-                    <li className="nav-item" style={styles.navItem}>
-                      <Link
-                        to="/reportStock"
-                        className="nav-link"
-                        style={styles.navLink}
-                      >
-                        <span style={styles.navIcon}>
-                          <i className="nav-icon fas fa-file"></i>
-                        </span>
-                        <span style={styles.navText}>รายงาน Stock</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-              )}
+                        <li className="nav-item" style={styles.navItem}>
+                          <Link
+                          to="/reportStock"
+                          className="nav-link"
+                          style={styles.navLink}
+                          >
+                          <span style={styles.navIcon}>
+                            <i className="nav-icon fas fa-boxes"></i>
+                          </span>
+                          <span style={styles.navText}>รายงาน Stock</span>
+                          </Link>
+                        </li>
+                        <li className="nav-item" style={styles.navItem}>
+                          <Link
+                          to="/PointHistory"
+                          className="nav-link"
+                          style={styles.navLink}
+                          >
+                          <span style={styles.navIcon}>
+                            <i className="nav-icon fas fa-star"></i>
+                          </span>
+                          <span style={styles.navText}>ประวัติการใช้แต้มสะสม</span>
+                          </Link>
+                        </li>
+                        </ul>
+                      </li>
+                      )}
 
-              {/* Products menu - visible to all */}
+                      {/* Products menu - visible to all */}
               <li
                 className={`nav-item ${dropdownStates.documents ? "menu-open" : ""
                   }`}
@@ -759,24 +711,10 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                             <span className="ms-2">/ เดือน</span>
                           </div>
 
-                          <div className="mt-3">
-                            จำนวนบิล{" "}
-                            <span className="text-danger ms-2 me-2">
-                              <strong>
-                                {isNaN(item.bill_amount)
-                                  ? item.bill_amount
-                                  : parseInt(item.bill_amount).toLocaleString(
-                                    "th-TH"
-                                  )}
-                              </strong>
-                            </span>
-                            ต่อเดือน
-                          </div>
+                     
                         </div>
 
-                        <div className="mt-3 text-center">
-                          {renderButton(item)}
-                        </div>
+                       
                       </div>
                     </div>
                   </div>

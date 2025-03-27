@@ -34,8 +34,63 @@ function User() {
         }
     }
 
+    const validateForm = () => {
+        if (!user.name || user.name.trim() === '') {
+            Swal.fire({
+                title: 'กรุณากรอกข้อมูล',
+                text: 'โปรดกรอกชื่อผู้ใช้งาน',
+                icon: 'warning'
+            });
+            return false;
+        }
+        
+        if (!user.usr || user.usr.trim() === '') {
+            Swal.fire({
+                title: 'กรุณากรอกข้อมูล',
+                text: 'โปรดกรอก Username',
+                icon: 'warning'
+            });
+            return false;
+        }
+        
+        // ตรวจสอบรหัสผ่านเฉพาะกรณีเพิ่มผู้ใช้ใหม่หรือมีการแก้ไขรหัสผ่าน
+        if (user.id === undefined && (!password || password.trim() === '')) {
+            Swal.fire({
+                title: 'กรุณากรอกข้อมูล',
+                text: 'โปรดกรอกรหัสผ่าน',
+                icon: 'warning'
+            });
+            return false;
+        }
+        
+        if ((password || passwordConfirm) && password !== passwordConfirm) {
+            Swal.fire({
+                title: 'รหัสผ่านไม่ตรงกัน',
+                text: 'โปรดกรอกรหัสผ่านให้ตรงกัน',
+                icon: 'warning'
+            });
+            return false;
+        }
+        
+        if (!user.level) {
+            Swal.fire({
+                title: 'กรุณากรอกข้อมูล',
+                text: 'โปรดเลือกระดับผู้ใช้งาน',
+                icon: 'warning'
+            });
+            return false;
+        }
+        
+        return true;
+    }
+
     const handleSave = async () => {
         try {
+            // ตรวจสอบข้อมูลก่อนบันทึก
+            if (!validateForm()) {
+                return;
+            }
+            
             let url = '/user/insert';
 
             if (user.id !== undefined) {
@@ -205,11 +260,11 @@ function User() {
                     <input value={user.name} onChange={e => setUser({ ...user, name: e.target.value })} className="form-control" />
                 </div>
                 <div className="mt-3">
-                    <label>username</label>
+                    <label>Username</label>
                     <input value={user.usr} onChange={e => setUser({ ...user, usr: e.target.value })} className="form-control" />
                 </div>
                 <div className="mt-3">
-                    <label>password</label>
+                    <label>Password</label>
                     <input
                         value={password}
                         onChange={e => setPassword(e.target.value)}
@@ -218,7 +273,7 @@ function User() {
                         className="form-control" />
                 </div>
                 <div className="mt-3">
-                    <label>ยืนยัน password</label>
+                    <label>ยืนยัน Password</label>
                     <input
                         value={passwordConfirm}
                         onChange={e => setPasswordConfirm(e.target.value)}

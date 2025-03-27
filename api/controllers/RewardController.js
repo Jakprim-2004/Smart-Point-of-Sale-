@@ -22,6 +22,35 @@ router.get("/rewards", service.isLogin, async (req, res) => {
     }
 });
 
+// ดึงประวัติการใช้แต้มสะสม (เฉพาะรายการแลกของรางวัลและส่วนลด)
+router.get("/point-redemption-history", service.isLogin, async (req, res) => {
+    try {
+        // ดึงรายการ point transactions ที่เป็นประเภท REDEEM_REWARD หรือ DISCOUNT
+        const redemptionTransactions = await PointTransactionModel.findAll({
+            where: {
+                transactionType: ['REDEEM_REWARD', 'DISCOUNT'] 
+            },
+            include: [
+                { model: CustomerModel, as: 'Customer' }
+            ],
+            order: [['transactionDate', 'DESC']]
+        });
+
+        // คำนวณรวมแต้มที่ใช้ทั้งหมด
+        const totalPointsUsed = redemptionTransactions.reduce(
+            (sum, transaction) => sum + transaction.points, 0
+        );
+
+        res.json({
+            message: 'success',
+            results: redemptionTransactions,
+            totalPointsUsed: totalPointsUsed
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ดึงของรางวัลตาม ID
 router.get("/rewards/:id", service.isLogin, async (req, res) => {
     try {

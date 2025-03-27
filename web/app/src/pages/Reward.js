@@ -24,7 +24,7 @@ function Reward() {
         pointsCost: '',
         stock: ''
     });
-  
+
     const [editingReward, setEditingReward] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
 
@@ -32,6 +32,37 @@ function Reward() {
         loadRewards();
         loadCustomers();
     }, []);
+
+
+    // ฟังก์ชันตรวจสอบสถานะการแลก
+    const getRedeemButtonStatus = (reward) => {
+        if (!selectedCustomer) {
+            return {
+                disabled: true,
+                className: "btn btn-secondary", // สีเทา
+                text: "กรุณาเลือกลูกค้า"
+            };
+        }
+        if (reward.stock <= 0) {
+            return {
+                disabled: true,
+                className: "btn btn-secondary",
+                text: "สินค้าหมด"
+            };
+        }
+        if (selectedCustomer.points < reward.pointsCost) {
+            return {
+                disabled: true,
+                className: "btn btn-secondary",
+                text: "แต้มไม่พอ"
+            };
+        }
+        return {
+            disabled: false,
+            className: "btn btn-primary", // สีฟ้า
+            text: "แลกของรางวัล"
+        };
+    };
 
     const loadRewards = async () => {
         try {
@@ -65,12 +96,12 @@ function Reward() {
 
         try {
             setLoading(true);
-            
+
             // สร้างข้อความอธิบายการแลกของรางวัลที่ละเอียดขึ้น
             const detailedDescription = [
                 `แลกของรางวัล: ${reward.name}`,
                 reward.description ? ` ${reward.description}` : '',
-                
+
             ].filter(Boolean).join(' | '); // กรองข้อความว่างออก
 
             const response = await axios.post(
@@ -91,24 +122,24 @@ function Reward() {
             if (response.data.message === "success") {
                 // อัพเดทข้อมูลของรางวัลในหน้าจอทันที
                 setRewards(response.data.result.updatedRewards);
-                
+
                 // อัพเดทข้อมูลลูกค้าที่เลือกไว้
                 setSelectedCustomer(response.data.result.customer);
-                
+
                 // อัพเดทข้อมูลในรายการลูกค้าทั้งหมด
-                setCustomers(prevCustomers => 
-                    prevCustomers.map(customer => 
-                        customer.id === response.data.result.customer.id 
-                            ? response.data.result.customer 
+                setCustomers(prevCustomers =>
+                    prevCustomers.map(customer =>
+                        customer.id === response.data.result.customer.id
+                            ? response.data.result.customer
                             : customer
                     )
                 );
 
                 // ปรับปรุงรายการลูกค้าที่กรองไว้
-                setFilteredCustomers(prevFiltered => 
-                    prevFiltered.map(customer => 
-                        customer.id === response.data.result.customer.id 
-                            ? response.data.result.customer 
+                setFilteredCustomers(prevFiltered =>
+                    prevFiltered.map(customer =>
+                        customer.id === response.data.result.customer.id
+                            ? response.data.result.customer
                             : customer
                     )
                 );
@@ -134,19 +165,19 @@ function Reward() {
             return;
         }
 
-        const filtered = customers.filter(customer => 
+        const filtered = customers.filter(customer =>
             customer.name.toLowerCase().includes(query.toLowerCase()) ||
             customer.phone.includes(query)
         );
         setFilteredCustomers(filtered);
     };
 
-    
+
 
     // Add new handler for reward creation
     const handleCreateReward = async (e) => {
         e.preventDefault();
-        
+
         try {
             const response = await axios.post(
                 `${config.api_path}/rewards`,
@@ -164,7 +195,7 @@ function Reward() {
             console.error('Error:', error);
             if (error.response?.data?.error === "กรุณาเข้าสู่ระบบใหม่") {
                 Swal.fire('Error', 'กรุณาเข้าสู่ระบบใหม่', 'error');
-                
+
             } else {
                 Swal.fire('Error', 'ไม่สามารถเพิ่มของรางวัลได้', 'error');
             }
@@ -238,8 +269,8 @@ function Reward() {
                                 onFocus={() => setShowCustomerSearch(true)}
                             />
                             {showCustomerSearch && searchQuery && (
-                                <div className="position-absolute w-100 mt-1 shadow bg-white rounded border" 
-                                     style={{ maxHeight: '200px', overflowY: 'auto', zIndex: 1000 }}>
+                                <div className="position-absolute w-100 mt-1 shadow bg-white rounded border"
+                                    style={{ maxHeight: '200px', overflowY: 'auto', zIndex: 1000 }}>
                                     {filteredCustomers.length > 0 ? (
                                         filteredCustomers.map(customer => (
                                             <div
@@ -268,7 +299,7 @@ function Reward() {
                                 </div>
                             )}
                         </div>
-                        <button 
+                        <button
                             className="btn btn-primary"
                             onClick={() => setUploadModalOpen(true)}
                         >
@@ -305,26 +336,33 @@ function Reward() {
                                         </small>
                                     </p>
                                     <div className="d-flex gap-2">
-                                        <button 
-                                            className="btn btn-primary"
-                                            onClick={() => handleRedeem(reward)}
-                                            disabled={loading || !selectedCustomer || selectedCustomer.points < reward.pointsCost || reward.stock <= 0}
-                                        >
-                                            แลกของรางวัล
-                                        </button>
-                                        <button 
-                                            className="btn btn-warning"
-                                            onClick={() => handleEditClick(reward)}
-                                        >
-                                            <i className="fas fa-edit"></i>
-                                        </button>
-                                        <button 
-                                            className="btn btn-danger"
-                                            onClick={() => handleDeleteReward(reward)}
-                                        >
-                                            <i className="fas fa-trash"></i>
-                                        </button>
-                                    </div>
+    {/* แทนที่ปุ่มเดิม */}
+    {(() => {
+        const buttonStatus = getRedeemButtonStatus(reward);
+        return (
+            <button 
+                className={buttonStatus.className}
+                onClick={() => handleRedeem(reward)}
+                disabled={buttonStatus.disabled || loading}
+                title={buttonStatus.text}
+            >
+                {buttonStatus.text}
+            </button>
+        );
+    })()}
+    <button 
+        className="btn btn-warning"
+        onClick={() => handleEditClick(reward)}
+    >
+        <i className="fas fa-edit"></i>
+    </button>
+    <button 
+        className="btn btn-danger"
+        onClick={() => handleDeleteReward(reward)}
+    >
+        <i className="fas fa-trash"></i>
+    </button>
+</div>
                                 </div>
                             </div>
                         </div>
@@ -332,8 +370,8 @@ function Reward() {
                 </div>
             </div>
 
-            <Modal 
-                show={uploadModalOpen} 
+            <Modal
+                show={uploadModalOpen}
                 onHide={() => setUploadModalOpen(false)}
                 title="เพิ่มของรางวัลใหม่"
             >
@@ -345,7 +383,7 @@ function Reward() {
                                 type="text"
                                 className="form-control"
                                 value={newReward.name}
-                                onChange={(e) => setNewReward({...newReward, name: e.target.value})}
+                                onChange={(e) => setNewReward({ ...newReward, name: e.target.value })}
                                 required
                             />
                         </div>
@@ -354,7 +392,7 @@ function Reward() {
                             <textarea
                                 className="form-control"
                                 value={newReward.description}
-                                onChange={(e) => setNewReward({...newReward, description: e.target.value})}
+                                onChange={(e) => setNewReward({ ...newReward, description: e.target.value })}
                                 rows="3"
                             />
                         </div>
@@ -364,7 +402,7 @@ function Reward() {
                                 type="number"
                                 className="form-control"
                                 value={newReward.pointsCost}
-                                onChange={(e) => setNewReward({...newReward, pointsCost: e.target.value})}
+                                onChange={(e) => setNewReward({ ...newReward, pointsCost: e.target.value })}
                                 required
                                 min="1"
                             />
@@ -375,7 +413,7 @@ function Reward() {
                                 type="number"
                                 className="form-control"
                                 value={newReward.stock}
-                                onChange={(e) => setNewReward({...newReward, stock: e.target.value})}
+                                onChange={(e) => setNewReward({ ...newReward, stock: e.target.value })}
                                 required
                                 min="0"
                             />
@@ -392,8 +430,8 @@ function Reward() {
                 </form>
             </Modal>
 
-            <Modal 
-                show={showEditModal} 
+            <Modal
+                show={showEditModal}
                 onHide={() => setShowEditModal(false)}
                 title="แก้ไขของรางวัล"
             >
@@ -405,7 +443,7 @@ function Reward() {
                                 type="text"
                                 className="form-control"
                                 value={editingReward?.name || ''}
-                                onChange={(e) => setEditingReward({...editingReward, name: e.target.value})}
+                                onChange={(e) => setEditingReward({ ...editingReward, name: e.target.value })}
                                 required
                             />
                         </div>
@@ -414,7 +452,7 @@ function Reward() {
                             <textarea
                                 className="form-control"
                                 value={editingReward?.description || ''}
-                                onChange={(e) => setEditingReward({...editingReward, description: e.target.value})}
+                                onChange={(e) => setEditingReward({ ...editingReward, description: e.target.value })}
                                 rows="3"
                             />
                         </div>
@@ -424,7 +462,7 @@ function Reward() {
                                 type="number"
                                 className="form-control"
                                 value={editingReward?.pointsCost || ''}
-                                onChange={(e) => setEditingReward({...editingReward, pointsCost: e.target.value})}
+                                onChange={(e) => setEditingReward({ ...editingReward, pointsCost: e.target.value })}
                                 required
                                 min="1"
                             />
@@ -435,7 +473,7 @@ function Reward() {
                                 type="number"
                                 className="form-control"
                                 value={editingReward?.stock || ''}
-                                onChange={(e) => setEditingReward({...editingReward, stock: e.target.value})}
+                                onChange={(e) => setEditingReward({ ...editingReward, stock: e.target.value })}
                                 required
                                 min="0"
                             />

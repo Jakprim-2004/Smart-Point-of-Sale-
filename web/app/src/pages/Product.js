@@ -7,8 +7,7 @@ import { useNavigate } from "react-router-dom";
 import Modal from "../components/Modal";
 import Barcode from "../components/Barcode";
 
-
-
+// การประกาศตัวแปร state สำหรับเก็บข้อมูลสินค้า
 function Product() {
   const [product, setProduct] = useState({});
   const [products, setProducts] = useState([]);
@@ -21,16 +20,34 @@ function Product() {
   const [imagePreview, setImagePreview] = useState(null);
   const navigate = useNavigate();
 
+  // เรียกข้อมูลเมื่อคอมโพเนนต์ถูกโหลด
   useEffect(() => {
     fetchData();
     fetchCategories();
   }, []);
 
+  // แก้ไขฟังก์ชันดึงข้อมูลสินค้า
   const fetchData = async () => {
     try {
-      const res = await axios.get(config.api_path + "/product/list", config.headers());
+      const res = await axios.get(
+        config.api_path + "/product/list",
+        config.headers()
+      );
       if (res.data.message === "success") {
-        setProducts(res.data.results);
+        // เพิ่มการเช็คว่ามีรูปภาพหรือไม่
+        const productsWithImageStatus = await Promise.all(
+          res.data.results.map(async (product) => {
+            const imageRes = await axios.get(
+              config.api_path + "/productImage/list/" + product.id,
+              config.headers()
+            );
+            return {
+              ...product,
+              hasImage: imageRes.data.results.length > 0,
+            };
+          })
+        );
+        setProducts(productsWithImageStatus);
       }
     } catch (e) {
       Swal.fire({
@@ -43,7 +60,10 @@ function Product() {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get(config.api_path + "/category/list", config.headers());
+      const res = await axios.get(
+        config.api_path + "/category/list",
+        config.headers()
+      );
       if (res.data.message === "success") {
         setCategories(res.data.results);
       }
@@ -67,12 +87,12 @@ function Product() {
   const handleSave = async (e) => {
     e.preventDefault();
 
-    // Validate required fields
+    // ตรวจสอบข้อมูลที่จำเป็น
     if (!product.barcode) {
       Swal.fire({
         title: "กรุณากรอกข้อมูล",
         text: "กรุณากรอกบาร์โค้ด",
-        icon: "warning"
+        icon: "warning",
       });
       return;
     }
@@ -81,7 +101,7 @@ function Product() {
       Swal.fire({
         title: "กรุณากรอกข้อมูล",
         text: "กรุณากรอกชื่อสินค้า",
-        icon: "warning"
+        icon: "warning",
       });
       return;
     }
@@ -90,7 +110,7 @@ function Product() {
       Swal.fire({
         title: "กรุณากรอกข้อมูล",
         text: "กรุณากรอกราคาทุน",
-        icon: "warning"
+        icon: "warning",
       });
       return;
     }
@@ -99,7 +119,7 @@ function Product() {
       Swal.fire({
         title: "กรุณากรอกข้อมูล",
         text: "กรุณากรอกราคาจำหน่าย",
-        icon: "warning"
+        icon: "warning",
       });
       return;
     }
@@ -108,12 +128,12 @@ function Product() {
       Swal.fire({
         title: "กรุณากรอกข้อมูล",
         text: "กรุณาเลือกประเภทสินค้า",
-        icon: "warning"
+        icon: "warning",
       });
       return;
     }
 
-    // Continue with existing save logic
+    // ดำเนินการบันทึกข้อมูล
     let url = config.api_path + "/product/insert";
 
     if (product.id !== undefined) {
@@ -141,22 +161,20 @@ function Product() {
     }
   };
 
-  
-
-  // Clean up function for modals and preview
+  // ฟังก์ชันล้างข้อมูลโมดัลและรูปภาพตัวอย่าง
   const cleanupModalAndPreview = () => {
     setImagePreview(null);
     setProductImage({});
   };
 
-  // Update handleClose to include cleanup
+  // อัปเดตฟังก์ชันปิดโมดัลให้มีการล้างข้อมูล
   const handleClose = () => {
     cleanupModalAndPreview();
     setShowProductModal(false);
     setShowProductImageModal(false);
   };
 
-  // Update modal hide handlers
+  // ฟังก์ชันจัดการปิดโมดัลแต่ละประเภท
   const handleProductModalClose = () => {
     setShowProductModal(false);
     cleanupModalAndPreview();
@@ -177,7 +195,10 @@ function Product() {
     }).then(async (res) => {
       if (res.isConfirmed) {
         try {
-          const res = await axios.delete(config.api_path + "/product/delete/" + item.id, config.headers());
+          const res = await axios.delete(
+            config.api_path + "/product/delete/" + item.id,
+            config.headers()
+          );
           if (res.data.message === "success") {
             fetchData();
             Swal.fire({
@@ -201,13 +222,13 @@ function Product() {
   const handleChangeFile = (files) => {
     if (files && files[0]) {
       setProductImage(files[0]);
-      // Create preview URL
+      // สร้าง URL สำหรับแสดงตัวอย่างรูปภาพ
       const previewUrl = URL.createObjectURL(files[0]);
       setImagePreview(previewUrl);
     }
   };
 
-  // Cleanup preview URL when component unmounts or new image is selected
+  // ล้าง URL ของรูปภาพตัวอย่างเมื่อคอมโพเนนต์ถูกยกเลิกหรือเมื่อเลือกภาพใหม่
   useEffect(() => {
     return () => {
       if (imagePreview) {
@@ -216,13 +237,13 @@ function Product() {
     };
   }, [imagePreview]);
 
-  // Update handleUpload to include proper cleanup
+  // อัปเดตฟังก์ชันอัพโหลดให้มีการจัดการทรัพยากรที่เหมาะสม
   const handleUpload = () => {
     if (!productImage || !productImage.name) {
       Swal.fire({
         title: "Error",
         text: "กรุณาเลือกไฟล์รูปภาพก่อนอัพโหลด",
-        icon: "error"
+        icon: "error",
       });
       return;
     }
@@ -242,8 +263,8 @@ function Product() {
           formData.append("productId", product.id);
 
           const res = await axios.post(
-            config.api_path + "/productImage/insert", 
-            formData, 
+            config.api_path + "/productImage/insert",
+            formData,
             {
               headers: {
                 ...config.headers().headers,
@@ -275,7 +296,10 @@ function Product() {
 
   const fetchDataProductImage = async (item) => {
     try {
-      const res = await axios.get(config.api_path + "/productImage/list/" + item.id, config.headers());
+      const res = await axios.get(
+        config.api_path + "/productImage/list/" + item.id,
+        config.headers()
+      );
       if (res.data.message === "success") {
         setProductImages(res.data.results);
       }
@@ -302,7 +326,12 @@ function Product() {
       showConfirmButton: true,
     }).then(async (res) => {
       try {
-        const url = config.api_path + "/productImage/chooseMainImage/" + item.id + "/" + item.productId;
+        const url =
+          config.api_path +
+          "/productImage/chooseMainImage/" +
+          item.id +
+          "/" +
+          item.productId;
         const res = await axios.get(url, config.headers());
         if (res.data.message === "success") {
           fetchDataProductImage({ id: item.productId });
@@ -333,7 +362,10 @@ function Product() {
     }).then(async (res) => {
       if (res.isConfirmed) {
         try {
-          const res = await axios.delete(config.api_path + "/productImage/delete/" + item.id, config.headers());
+          const res = await axios.delete(
+            config.api_path + "/productImage/delete/" + item.id,
+            config.headers()
+          );
           if (res.data.message === "success") {
             fetchDataProductImage({ id: item.productId });
             Swal.fire({
@@ -358,49 +390,48 @@ function Product() {
     setSearchTerm(e.target.value);
   };
 
+  // เพิ่มฟังก์ชันตรวจสอบบาร์โค้ด
+  const handleBarcodeChange = (e) => {
+    const value = e.target.value;
+    // อนุญาตให้กรอกได้เฉพาะตัวเลขและความยาวไม่เกิน 13 หลัก
+    if (/^\d{0,13}$/.test(value)) {
+      setProduct({ ...product, barcode: value });
+    }
+  };
 
   const handlePrintBarcode = (barcodeValue) => {
-    // 
+    // เปิดหน้าต่างใหม่สำหรับพิมพ์บาร์โค้ด
     const printWindow = window.open("", "_blank", "width=600,height=400");
-    
+
     printWindow.document.write(`
-      <html>
-        <head>
-          <title>Print Barcode</title>
-          <style>
-            body { text-align: center; margin-top: 50px; font-family: Arial, sans-serif; }
-            .barcode-container { display: inline-block; }
-          </style>
-        </head>
-        <body>
-          <div class="barcode-container">
-            <svg id="barcode"></svg>
-          </div>
-          <script>
-            function renderBarcode() {
-              JsBarcode("#barcode", "${barcodeValue}", {
-                width: 2, 
-                height: 57, 
-                displayValue: true
-              });
-              window.print();
-              window.close();
-            }
-          </script>
-        </body>
-      </html>
+      <html>\n      <head>\n        
+      <title>Print Barcode</title>\n       
+       <style>\n         
+       body { text-align: center; margin-top: 50px; font-family: Arial, sans-serif; }\n        
+         .barcode-container { display: inline-block; }\n    
+             </style>\n    
+                 <script src=\"https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js\"></script>\n  
+                     </head>\n      <body>\n        <div class=\"barcode-container\">\n  
+                             <svg id=\"barcode\"></svg>\n        </div>\n        <script>\n   
+                                    window.onload = function() {\n       
+                                         JsBarcode(\"#barcode\", \"${barcodeValue}\", {\n        
+                                               width: 2, \n              height: 57, \n          
+                                                   displayValue: true\n            });\n     
+                                                          setTimeout(() => window.print(), 500);\n     
+                                                               }\n        </script>\n      </body>\n 
+                                                                  </html>\n
     `);
-    
-   
-    printWindow.document.write(`<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>`);
+
+    printWindow.document.write(
+      `<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>`
+    );
     printWindow.document.write("<script>renderBarcode();</script>");
     printWindow.document.close();
   };
 
   const handleCategoryManagement = () => {
-    navigate('/category');
+    navigate("/category");
   };
-
 
   return (
     <>
@@ -441,19 +472,26 @@ function Product() {
             </div>
 
             <div className="table-responsive">
-              <table className="table table-hover table-bordered shadow-sm bg-white" 
-                     style={{ borderRadius: "8px", overflow: "hidden" }}>
+              <table
+                className="table table-hover table-bordered shadow-sm bg-white"
+                style={{ borderRadius: "8px", overflow: "hidden" }}
+              >
                 <thead className="thead-light">
                   <tr style={{ background: "#f8f9fa" }}>
                     <th className="py-3">Barcode</th>
                     <th className="py-3">ชื่อสินค้า</th>
+                    <th className="py-3 text-center">รูปภาพ</th>{" "}
+                    {/* เพิ่มคอลัมน์นี้ */}
                     <th className="py-3 text-right">ราคาทุน</th>
                     <th className="py-3 text-right">ราคาจำหน่าย</th>
                     <th className="py-3 text-right">วันหมดอายุ</th>
                     <th className="py-3">ประเภทสินค้า</th>
-                    <th className="py-3" width="200px">จัดการ</th>
+                    <th className="py-3" width="200px">
+                      จัดการ
+                    </th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {products.length > 0 ? (
                     products
@@ -465,13 +503,40 @@ function Product() {
                       )
                       .map((item) => (
                         <tr key={item.id} className="align-middle">
-                          <td className="py-2"><Barcode value={item.barcode} width={1} height={40} /></td>
-                          <td className="py-2 font-weight-bold">{item.name}</td>
-                          <td className="py-2 text-right">{parseInt(item.cost).toLocaleString("th-TH")} ฿</td>
-                          <td className="py-2 text-right">{parseInt(item.price).toLocaleString("th-TH")} ฿</td>
-                          <td className="py-2 text-right">{item.expirationdate?.substring(0, 10)}</td>
                           <td className="py-2">
-                            <span className="badge badge-info px-3 py-2">{item.category}</span>
+                            <Barcode
+                              value={item.barcode}
+                              width={1}
+                              height={40}
+                            />
+                          </td>
+                          <td className="py-2 font-weight-bold">{item.name}</td>
+                          <td className="py-2 text-center">
+                            {item.hasImage ? (
+                              <span className="badge badge-success">
+                                <i className="fa fa-check-circle mr-1"></i>{" "}
+                                มีรูปภาพ
+                              </span>
+                            ) : (
+                              <span className="badge badge-warning">
+                                <i className="fa fa-exclamation-circle mr-1"></i>{" "}
+                                ไม่มีรูปภาพ
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2 text-right">
+                            {parseInt(item.cost).toLocaleString("th-TH")} ฿
+                          </td>
+                          <td className="py-2 text-right">
+                            {parseInt(item.price).toLocaleString("th-TH")} ฿
+                          </td>
+                          <td className="py-2 text-right">
+                            {item.expirationdate?.substring(0, 10)}
+                          </td>
+                          <td className="py-2">
+                            <span className="badge badge-info px-3 py-2">
+                              {item.category}
+                            </span>
                           </td>
                           <td className="text-center py-2">
                             <div className="btn-group">
@@ -527,7 +592,7 @@ function Product() {
           </div>
         </div>
 
-        {/* Add some custom CSS */}
+        {/* เพิ่ม CSS แบบกำหนดเอง */}
         <style jsx>{`
           .hover-scale:hover {
             transform: scale(1.02);
@@ -546,7 +611,7 @@ function Product() {
           }
         `}</style>
 
-        {/* Product Images Modal */}
+        {/* โมดัลรูปภาพสินค้า */}
         <Modal
           show={showProductImageModal}
           onHide={handleImageModalClose}
@@ -556,11 +621,19 @@ function Product() {
           <div className="row">
             <div className="col-4">
               <div>Barcode</div>
-              <input value={product.barcode} disabled className="form-control shadow-sm" />
+              <input
+                value={product.barcode}
+                disabled
+                className="form-control shadow-sm"
+              />
             </div>
             <div className="col-8">
               <div>ชื่อสินค้า</div>
-              <input value={product.name} disabled className="form-control shadow-sm" />
+              <input
+                value={product.name}
+                disabled
+                className="form-control shadow-sm"
+              />
             </div>
             <div className="col-12 mt-3">
               <div className="form-group">
@@ -573,12 +646,15 @@ function Product() {
                     accept="image/*"
                     onChange={(e) => handleChangeFile(e.target.files)}
                   />
-                  <label className="custom-file-label" htmlFor="productImageInput">
-                    {productImage.name || 'เลือกไฟล์รูปภาพ...'}
+                  <label
+                    className="custom-file-label"
+                    htmlFor="productImageInput"
+                  >
+                    {productImage.name || "เลือกไฟล์รูปภาพ..."}
                   </label>
                 </div>
               </div>
-              
+
               {imagePreview && (
                 <div className="mt-3">
                   <label>ตัวอย่างรูปภาพ</label>
@@ -587,7 +663,7 @@ function Product() {
                       src={imagePreview}
                       alt="Preview"
                       className="img-fluid"
-                      style={{ maxHeight: '200px', objectFit: 'contain' }}
+                      style={{ maxHeight: "200px", objectFit: "contain" }}
                     />
                   </div>
                 </div>
@@ -597,8 +673,8 @@ function Product() {
 
           <div className="mt-3">
             {productImage.name !== undefined && (
-              <button 
-                onClick={handleUpload} 
+              <button
+                onClick={handleUpload}
                 className="btn btn-primary shadow-sm"
                 disabled={!imagePreview}
               >
@@ -609,19 +685,22 @@ function Product() {
 
           <div className="mt-3">ภาพสินค้า</div>
           <div className="row mt-2">
-            {productImages.length > 0
-              ? productImages.map((item) => (
+            {productImages.length > 0 ? (
+              productImages.map((item) => (
                 <div className="col-3" key={item.id}>
                   <div className="card shadow-sm border-0">
                     <img
                       className="card-img-top"
-                      src={config.api_path + "/uploads/" + item.imageName}ช
+                      src={config.api_path + "/uploads/" + item.imageName}
+                      ช
                       width="100%"
                       alt=""
                     />
                     <div className="card-body text-center">
                       {item.isMain ? (
-                        <button className="btn btn-info btn-sm mr-2 shadow-sm">ภาพหลัก</button>
+                        <button className="btn btn-info btn-sm mr-2 shadow-sm">
+                          ภาพหลัก
+                        </button>
                       ) : (
                         <button
                           onClick={() => handleChooseMainImage(item)}
@@ -641,11 +720,15 @@ function Product() {
                   </div>
                 </div>
               ))
-              : <div className="col-12 text-center text-muted">ไม่มีภาพสินค้า</div>}
+            ) : (
+              <div className="col-12 text-center text-muted">
+                ไม่มีภาพสินค้า
+              </div>
+            )}
           </div>
         </Modal>
 
-        {/* Product Details Modal */}
+        {/* โมดัลข้อมูลสินค้า */}
         <Modal
           show={showProductModal}
           onHide={handleProductModalClose}
@@ -653,31 +736,49 @@ function Product() {
         >
           <form onSubmit={handleSave}>
             <div className="row">
-              <div className="form-group col-md-6">
-                <label>บาร์โค้ด <span className="text-danger">*</span></label>
+              <div className="form-group col-md-12">
+                <label>
+                  ชื่อสินค้า <span className="text-danger">*</span>
+                </label>
                 <input
-                  value={product.barcode || ''}
-                  onChange={(e) => setProduct({ ...product, barcode: e.target.value })}
+                  value={product.name || ""}
+                  onChange={(e) =>
+                    setProduct({ ...product, name: e.target.value })
+                  }
                   type="text"
                   className="form-control shadow-sm"
                   required
                 />
               </div>
               <div className="form-group col-md-6">
-                <label>ชื่อสินค้า <span className="text-danger">*</span></label>
+                <label>
+                  บาร์โค้ด <span className="text-danger">*</span>
+                </label>
                 <input
-                  value={product.name || ''}
-                  onChange={(e) => setProduct({ ...product, name: e.target.value })}
+                  value={product.barcode || ""}
+                  onChange={handleBarcodeChange}
                   type="text"
                   className="form-control shadow-sm"
                   required
+                  maxLength="13"
+                  pattern="\d{13}"
+                  title="กรุณากรอกบาร์โค้ด 13 หลัก"
+                  placeholder="กรอกบาร์โค้ด 13 หลัก"
                 />
+                <small className="text-muted">
+                  บาร์โค้ดต้องเป็นตัวเลข 13 หลัก (
+                  {(product.barcode || "").length}/13)
+                </small>
               </div>
               <div className="form-group col-md-6">
-                <label>ราคาทุน <span className="text-danger">*</span></label>
+                <label>
+                  ราคาทุน <span className="text-danger">*</span>
+                </label>
                 <input
-                  value={product.cost || ''}
-                  onChange={(e) => setProduct({ ...product, cost: e.target.value })}
+                  value={product.cost || ""}
+                  onChange={(e) =>
+                    setProduct({ ...product, cost: e.target.value })
+                  }
                   type="number"
                   className="form-control shadow-sm"
                   required
@@ -685,10 +786,14 @@ function Product() {
                 />
               </div>
               <div className="form-group col-md-6">
-                <label>ราคาจำหน่าย <span className="text-danger">*</span></label>
+                <label>
+                  ราคาจำหน่าย <span className="text-danger">*</span>
+                </label>
                 <input
-                  value={product.price || ''}
-                  onChange={(e) => setProduct({ ...product, price: e.target.value })}
+                  value={product.price || ""}
+                  onChange={(e) =>
+                    setProduct({ ...product, price: e.target.value })
+                  }
                   type="number"
                   className="form-control shadow-sm"
                   required
@@ -698,31 +803,41 @@ function Product() {
               <div className="form-group col-md-6">
                 <label>วันหมดอายุ</label>
                 <input
-                  value={product.expirationdate ? product.expirationdate.substring(0, 10) : ''}
-                  onChange={(e) => setProduct({ ...product, expirationdate: e.target.value })}
+                  value={
+                    product.expirationdate
+                      ? product.expirationdate.substring(0, 10)
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setProduct({ ...product, expirationdate: e.target.value })
+                  }
                   type="date"
                   className="form-control shadow-sm"
-                  min={new Date().toISOString().split('T')[0]}
+                  min={new Date().toISOString().split("T")[0]}
                 />
               </div>
               <div className="form-group col-md-6">
-                <label>ประเภทสินค้า <span className="text-danger">*</span></label>
+                <label>
+                  ประเภทสินค้า <span className="text-danger">*</span>
+                </label>
                 <div className="input-group">
                   <select
                     className="form-control shadow-sm"
                     value={product.category || ""}
-                    onChange={(e) => setProduct({ ...product, category: e.target.value })}
+                    onChange={(e) =>
+                      setProduct({ ...product, category: e.target.value })
+                    }
                     required
                   >
                     <option value="">เลือกประเภทสินค้า</option>
-                    {categories.map(cat => (
+                    {categories.map((cat) => (
                       <option key={cat.id} value={cat.name}>
                         {cat.name}
                       </option>
                     ))}
                   </select>
                   <div className="input-group-append">
-                    <button 
+                    <button
                       type="button"
                       className="btn btn-outline-secondary"
                       onClick={handleCategoryManagement}
@@ -736,7 +851,10 @@ function Product() {
             </div>
 
             <div className="text-muted mb-3">
-              <small>หมายเหตุ: ช่องที่มีเครื่องหมาย <span className="text-danger">*</span> จำเป็นต้องกรอก</small>
+              <small>
+                หมายเหตุ: ช่องที่มีเครื่องหมาย{" "}
+                <span className="text-danger">*</span> จำเป็นต้องกรอก
+              </small>
             </div>
 
             <button type="submit" className="btn btn-success shadow-sm">

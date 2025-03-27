@@ -8,7 +8,6 @@ import banknotes from '../assets/banknotes.png';
 import growth from '../assets/growth.svg';
 import product from '../assets/product.png';
 import star from '../assets/star.png';
-import time from '../assets/time.svg';
 import calendar from '../assets/calendar.svg';
 
 import {
@@ -54,6 +53,7 @@ function Dashboard() {
   const [lowStockItems, setLowStockItems] = useState([]);
   const [topSellingProducts, setTopSellingProducts] = useState([]);
   const [topSellingCategories, setTopSellingCategories] = useState([]);
+  const [pointTransactions, setPointTransactions] = useState([]);
   const [todaySales, setTodaySales] = useState({
     date: new Date(),
     totalAmount: 0,
@@ -112,7 +112,6 @@ function Dashboard() {
   }, []);
 
   useEffect(() => {
-
     reportStock();
     reportTopSellingProducts();
     reportTopSellingCategories();
@@ -124,6 +123,8 @@ function Dashboard() {
   useEffect(() => {
     calculateLowStockCount(); // Add this
   }, [stockData]);
+
+
 
   const reportStock = async () => {
     try {
@@ -154,12 +155,16 @@ function Dashboard() {
     try {
       const url = config.api_path + "/reportTopSellingProducts";
       const res = await axios.get(url, config.headers());
+      console.log("Top selling products API response:", res.data); // Debug logging
+      
       if (res.data.message === "success") {
-        const results = res.data.results;
-        const filteredResults = results.slice(0, 5);
+        // Remove the filtering as the API endpoint should already filter for 'pay' status
+        const filteredResults = res.data.results.slice(0, 5);
+        console.log("Filtered top selling products:", filteredResults); // Debug logging
         setTopSellingProducts(filteredResults);
       }
     } catch (e) {
+      console.error("Error fetching top selling products:", e);
       Swal.fire({
         title: "error",
         text: e.message,
@@ -173,13 +178,14 @@ function Dashboard() {
       const url = config.api_path + "/reportTopSellingCategories";
       const res = await axios.get(url, config.headers());
       if (res.data.message === "success") {
-        const results = res.data.results;
-        const filteredResults = results.slice(0, 5);
+        // กรองเฉพาะรายการที่มีสถานะเป็น 'pay' เท่านั้น
+        const paidResults = res.data.results.filter(item => item.billSale?.status === 'pay');
+        const filteredResults = paidResults.slice(0, 5);
         setTopSellingCategories(filteredResults);
       }
     } catch (e) {
       Swal.fire({
-        title: "error",
+        title: "error", 
         text: e.message,
         icon: "error",
       });
@@ -267,171 +273,186 @@ function Dashboard() {
     navigate('/reportStock');
   };
 
-  const renderTopSellingContent = () => {
-    if (topSellingViewType === 'products') {
-      const totalAmount = topSellingProducts.reduce((sum, item) =>
-        sum + parseFloat(item.totalAmount || 0), 0);
+  // ปรับฟังก์ชัน renderTopSellingContent() ส่วนที่แสดงผลสินค้าขายดี
+const renderTopSellingContent = () => {
+  if (topSellingViewType === 'products') {
+    const totalAmount = topSellingProducts.reduce((sum, item) =>
+      sum + parseFloat(item.totalAmount || 0), 0);
 
-      return topSellingProducts.length > 0 ? (
-        <div style={{ position: 'relative', height: '100%', padding: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'start' }}>
-            <div style={{ width: '35%', height: '150px' }}>
-              <Bar
-                data={{
-                  labels: topSellingProducts.map(() => ''), // Empty labels
-                  datasets: [{
-                    data: topSellingProducts.map(item => parseFloat(item.totalAmount || 0)),
-                    backgroundColor: [
-                      'rgba(255, 99, 132, 0.8)',
+    return topSellingProducts.length > 0 ? (
+      <div style={{ position: 'relative', height: '100%', padding: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'start' }}>
+          <div style={{ width: '35%', height: '150px' }}>
+            <Bar
+              data={{
+                labels: topSellingProducts.map(() => ''), // Empty labels
+                datasets: [{
+                  data: topSellingProducts.map(item => parseFloat(item.totalAmount || 0)),
+                  backgroundColor: [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)',
+                  ]
+                }]
+              }}
+              options={{
+                indexAxis: 'y',
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      title: (items) => {
+                        if (!items.length) return '';
+                        const index = items[0].dataIndex;
+                        return topSellingProducts[index]?.productName || '';
+                      }
+                    }
+                  }
+                },
+                scales: {
+                  y: {
+                    ticks: { display: false }
+                  }
+                }
+              }}
+            />
+          </div>
+          <div style={{ width: '65%', paddingLeft: '20px' }}>
+            {topSellingProducts.map((item, index) => {
+              const amount = parseFloat(item.totalAmount || 0);
+              const percentage = totalAmount > 0 ? ((amount / totalAmount) * 100).toFixed(2) : "0.00";
+              const actualQty = parseInt(item.totalQty || 0);
+              
+              return (
+                <div
+                  key={index}
+                  style={{
+                    marginBottom: '15px',
+                    borderLeft: `3px solid ${['rgba(255, 99, 132, 0.8)',
                       'rgba(54, 162, 235, 0.8)',
                       'rgba(255, 206, 86, 0.8)',
                       'rgba(75, 192, 192, 0.8)',
-                      'rgba(153, 102, 255, 0.8)',
-                    ]
-                  }]
-                }}
-                options={{
-                  indexAxis: 'y',
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                      callbacks: {
-                        title: (items) => {
-                          if (!items.length) return '';
-                          const index = items[0].dataIndex;
-                          return topSellingProducts[index]?.productName || '';
-                        }
-                      }
-                    }
-                  },
-                  scales: {
-                    y: {
-                      ticks: { display: false }
-                    }
-                  }
-                }}
-              />
-            </div>
-            <div style={{ width: '65%', paddingLeft: '20px' }}>
-              {topSellingProducts.map((item, index) => {
-                const amount = parseFloat(item.totalAmount || 0);
-                const percentage = ((amount / totalAmount) * 100).toFixed(2);
-                return (
-                  <div
-                    key={index}
-                    style={{
-                      marginBottom: '15px',
-                      borderLeft: `3px solid ${['rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(255, 206, 86, 0.8)',
-                        'rgba(75, 192, 192, 0.8)',
-                        'rgba(153, 102, 255, 0.8)',][index]}`,
-                      paddingLeft: '10px'
-                    }}
-                  >
-                    <div style={{ fontWeight: 'bold' }}>{item.productName}</div>
-                    <div style={{ color: '#666' }}>
-                      ฿{amount.toLocaleString()}
-                    </div>
-                    <div style={{ color: '#888', fontSize: '0.9em' }}>
-                      ({percentage}%)
-                    </div>
+                      'rgba(153, 102, 255, 0.8)',][index]}`,
+                    paddingLeft: '10px'
+                  }}
+                >
+                  <div style={{ fontWeight: 'bold' }}>{item.productName}</div>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    color: '#666',
+                    marginTop: '3px' 
+                  }}>
+                    <span>฿{amount.toLocaleString()}</span>
+                    <span><i className="fas fa-box me-1"></i>{actualQty} ชิ้น</span>
                   </div>
-                );
-              })}
-            </div>
+                  <div style={{ color: '#888', fontSize: '0.9em' }}>
+                    ({percentage}%)
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      ) : (
-        <div className="alert alert-info text-center">
-          <i className="fas fa-question-circle fa-2x mb-2"></i>
-          <p>ไม่มีข้อมูลสินค้าขายดี</p>
-        </div>
-      );
-    } else {
-      const totalAmount = topSellingCategories.reduce((sum, item) =>
-        sum + parseFloat(item.totalAmount || 0), 0);
+      </div>
+    ) : (
+      <div className="alert alert-info text-center">
+        <i className="fas fa-question-circle fa-2x mb-2"></i>
+        <p>ไม่มีข้อมูลสินค้าขายดี</p>
+      </div>
+    );
+  } else {
+    const totalAmount = topSellingCategories.reduce((sum, item) =>
+      sum + parseFloat(item.totalAmount || 0), 0);
 
-      return topSellingCategories.length > 0 ? (
-        <div style={{ position: 'relative', height: '100%', padding: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'start' }}>
-            <div style={{ width: '35%', height: '150px' }}>
-              <Bar
-                data={{
-                  labels: topSellingCategories.map(() => ''), // Empty labels
-                  datasets: [{
-                    data: topSellingCategories.map(item => parseFloat(item.totalAmount || 0)),
-                    backgroundColor: [
-                      'rgba(255, 99, 132, 0.8)',
+    return topSellingCategories.length > 0 ? (
+      <div style={{ position: 'relative', height: '100%', padding: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'start' }}>
+          <div style={{ width: '35%', height: '150px' }}>
+            <Bar
+              data={{
+                labels: topSellingCategories.map(() => ''), // Empty labels
+                datasets: [{
+                  data: topSellingCategories.map(item => parseFloat(item.totalAmount || 0)),
+                  backgroundColor: [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)',
+                  ]
+                }]
+              }}
+              options={{
+                indexAxis: 'y',
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      title: (items) => {
+                        if (!items.length) return '';
+                        const index = items[0].dataIndex;
+                        return topSellingCategories[index]?.category || '';
+                      }
+                    }
+                  }
+                },
+                scales: {
+                  y: {
+                    ticks: { display: false }
+                  }
+                }
+              }}
+            />
+          </div>
+          <div style={{ width: '65%', paddingLeft: '20px' }}>
+            {topSellingCategories.map((item, index) => {
+              const amount = parseFloat(item.totalAmount || 0);
+              const percentage = ((amount / totalAmount) * 100).toFixed(2);
+              
+              return (
+                <div
+                  key={index}
+                  style={{
+                    marginBottom: '15px',
+                    borderLeft: `3px solid ${['rgba(255, 99, 132, 0.8)',
                       'rgba(54, 162, 235, 0.8)',
                       'rgba(255, 206, 86, 0.8)',
                       'rgba(75, 192, 192, 0.8)',
-                      'rgba(153, 102, 255, 0.8)',
-                    ]
-                  }]
-                }}
-                options={{
-                  indexAxis: 'y',
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                      callbacks: {
-                        title: (items) => {
-                          if (!items.length) return '';
-                          const index = items[0].dataIndex;
-                          return topSellingCategories[index]?.category || '';
-                        }
-                      }
-                    }
-                  },
-                  scales: {
-                    y: {
-                      ticks: { display: false }
-                    }
-                  }
-                }}
-              />
-            </div>
-            <div style={{ width: '65%', paddingLeft: '20px' }}>
-              {topSellingCategories.map((item, index) => {
-                const amount = parseFloat(item.totalAmount || 0);
-                const percentage = ((amount / totalAmount) * 100).toFixed(2);
-                return (
-                  <div
-                    key={index}
-                    style={{
-                      marginBottom: '15px',
-                      borderLeft: `3px solid ${['rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(255, 206, 86, 0.8)',
-                        'rgba(75, 192, 192, 0.8)',
-                        'rgba(153, 102, 255, 0.8)',][index]}`,
-                      paddingLeft: '10px'
-                    }}
-                  >
-                    <div style={{ fontWeight: 'bold' }}>{item.category}</div>
-                    <div style={{ color: '#666' }}>
-                      ฿{amount.toLocaleString()}
-                    </div>
-                    <div style={{ color: '#888', fontSize: '0.9em' }}>
-                      ({percentage}%)
-                    </div>
+                      'rgba(153, 102, 255, 0.8)',][index]}`,
+                    paddingLeft: '10px'
+                  }}
+                >
+                  <div style={{ fontWeight: 'bold' }}>{item.category}</div>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    color: '#666',
+                    marginTop: '3px' 
+                  }}>
+                    <span>฿{amount.toLocaleString()}</span>
+                    <span><i className="fas fa-box me-1"></i>30 ชิ้น</span>
                   </div>
-                );
-              })}
-            </div>
+                  <div style={{ color: '#888', fontSize: '0.9em' }}>
+                    ({percentage}%)
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      ) : (
-        <div className="alert alert-info text-center">
-          ไม่มีข้อมูลหมวดหมู่ขายดี
-        </div>
-      );
-    }
-  };
-
+      </div>
+    ) : (
+      <div className="alert alert-info text-center">
+        ไม่มีข้อมูลหมวดหมู่ขายดี
+      </div>
+    );
+  }
+};
   const renderPaymentChart = () => {
     const total = paymentStats.reduce((sum, stat) => sum + parseFloat(stat.total || 0), 0);
 
@@ -626,7 +647,6 @@ function Dashboard() {
                   <div style={styles.statCard} className="text-center">
                     <div className="d-flex align-items-center justify-content-between mb-2">
                       <h5 className="mb-0">ยอดรวม</h5>
-                      <i className="fas fa-wallet text-primary fa-lg"></i>
                     </div>
                     <h3 className="text-primary mb-0">฿ {todaySales.totalAmount.toLocaleString()}</h3>
 
@@ -637,7 +657,6 @@ function Dashboard() {
                   <div style={styles.statCard} className="text-center">
                     <div className="d-flex align-items-center justify-content-between mb-2">
                       <h5 className="mb-0">การเติบโต</h5>
-                      <i className={`fas fa-trending-${todaySales.growthRate >= 0 ? 'up text-success' : 'down text-danger'} fa-lg`}></i>
                     </div>
                     <h3 style={{ color: todaySales.growthRate < 0 ? '#dc3545' : '#198754' }}>
                       {todaySales.growthRate >= 0 ? "+" : ""}{todaySales.growthRate}%
@@ -652,7 +671,6 @@ function Dashboard() {
                   <div style={styles.statCard} className="text-center">
                     <div className="d-flex align-items-center justify-content-between mb-2">
                       <h5 className="mb-0">จำนวนบิล</h5>
-                      <i className="fas fa-receipt text-info fa-lg"></i>
                     </div>
                     <h3
                       className="text-info mb-0"
@@ -679,7 +697,6 @@ function Dashboard() {
                   <div style={styles.statCard} className="text-center">
                     <div className="d-flex align-items-center justify-content-between mb-2">
                       <h5 className="mb-0">เฉลี่ย/บิล</h5>
-                      <i className="fas fa-calculator text-info fa-lg"></i>
                     </div>
                     <h3
                       className="text-info mb-0"
@@ -701,12 +718,7 @@ function Dashboard() {
                     </small>
                   </div>
                 </div>
-
-
-
               </div>
-
-              
             </div>
           </div>
         </div>
@@ -889,6 +901,7 @@ function Dashboard() {
               </div>
             </div>
           </div>
+          
           <div className="col-md-4">
             <div className="card h-100" style={styles.summaryCard}>
               <div className="card-header text-center bg-muted text-white">
@@ -952,6 +965,7 @@ function Dashboard() {
               </div>
             </div>
           </div>
+          
         </div>
       </div>
     </Template>
