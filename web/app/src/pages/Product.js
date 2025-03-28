@@ -6,6 +6,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Modal from "../components/Modal";
 import Barcode from "../components/Barcode";
+import Select from 'react-select';
+
 
 // การประกาศตัวแปร state สำหรับเก็บข้อมูลสินค้า
 function Product() {
@@ -80,6 +82,7 @@ function Product() {
       cost: "",
       barcode: "",
       category: "",
+      originalBarcode: "", 
     });
     setShowProductModal(true);
   };
@@ -95,6 +98,38 @@ function Product() {
         icon: "warning",
       });
       return;
+    }
+    
+    // ตรวจสอบความยาวบาร์โค้ด
+    if (product.barcode.length !== 13) {
+      Swal.fire({
+        title: "บาร์โค้ดไม่ถูกต้อง",
+        text: "บาร์โค้ดต้องมีความยาว 13 หลัก",
+        icon: "warning",
+      });
+      return;
+    }
+    
+    // ตรวจสอบความซ้ำซ้อนของบาร์โค้ด (กรณีมีการแก้ไขบาร์โค้ด)
+    if (product.barcode !== product.originalBarcode) {
+      try {
+        const res = await axios.get(
+          config.api_path + "/product/checkBarcode/" + product.barcode,
+          config.headers()
+        );
+        
+        if (res.data.exists) {
+          Swal.fire({
+            title: "บาร์โค้ดซ้ำ",
+            text: "บาร์โค้ดนี้มีอยู่ในระบบแล้ว กรุณาใช้บาร์โค้ดอื่น",
+            icon: "warning",
+          });
+          return;
+        }
+      } catch (error) {
+        console.error("Error checking barcode:", error);
+        
+      }
     }
 
     if (!product.name) {
@@ -313,7 +348,10 @@ function Product() {
   };
 
   const handleChooseProduct = (item) => {
-    setProduct(item);
+    setProduct({
+      ...item,
+      originalBarcode: item.barcode // เก็บค่าบาร์โค้ดเดิมไว้
+    });
     fetchDataProductImage(item);
   };
 
@@ -391,12 +429,84 @@ function Product() {
   };
 
   // เพิ่มฟังก์ชันตรวจสอบบาร์โค้ด
-  const handleBarcodeChange = (e) => {
+  const handleBarcodeChange = async (e) => {
     const value = e.target.value;
     // อนุญาตให้กรอกได้เฉพาะตัวเลขและความยาวไม่เกิน 13 หลัก
     if (/^\d{0,13}$/.test(value)) {
       setProduct({ ...product, barcode: value });
+      
+      // ตรวจสอบความซ้ำซ้อนเมื่อกรอกครบ 13 หลัก
+      if (value.length === 13 && value !== product.originalBarcode) {
+        try {
+          const res = await axios.get(
+            config.api_path + "/product/checkBarcode/" + value,
+            config.headers()
+          );
+          
+          if (res.data.exists) {
+            Swal.fire({
+              title: "บาร์โค้ดซ้ำ",
+              text: "บาร์โค้ดนี้มีอยู่ในระบบแล้ว กรุณาใช้บาร์โค้ดอื่น",
+              icon: "warning",
+            });
+          }
+        } catch (error) {
+          console.error("Error checking barcode:", error);
+        }
+      }
     }
+  };
+
+  // เพิ่มฟังก์ชันสร้างบาร์โค้ดอัตโนมัติ
+  const generateBarcode = () => {
+    // สร้างเลข 13 หลักโดยสุ่ม (12 หลักแรก + check digit)
+    const generateRandomDigits = () => {
+      let digits = "";
+      for (let i = 0; i < 12; i++) {
+        digits += Math.floor(Math.random() * 10);
+      }
+      
+      // คำนวณ check digit (ตามมาตรฐาน EAN-13)
+      let sum = 0;
+      for (let i = 0; i < 12; i++) {
+        sum += parseInt(digits[i]) * (i % 2 === 0 ? 1 : 3);
+      }
+      const checkDigit = (10 - (sum % 10)) % 10;
+      
+      return digits + checkDigit;
+    };
+    
+    // ตรวจสอบความซ้ำซ้อนของบาร์โค้ดที่สร้าง
+    const checkAndSetBarcode = async () => {
+      const newBarcode = generateRandomDigits();
+      
+      try {
+        const res = await axios.get(
+          config.api_path + "/product/checkBarcode/" + newBarcode,
+          config.headers()
+        );
+        
+        if (res.data.exists) {
+          // ถ้าซ้ำ ให้สร้างใหม่
+          checkAndSetBarcode();
+        } else {
+          // ถ้าไม่ซ้ำ ให้กำหนดค่า
+          setProduct({ ...product, barcode: newBarcode });
+          Swal.fire({
+            title: "สร้างบาร์โค้ดสำเร็จ",
+            text: "ระบบได้สร้างบาร์โค้ดใหม่ให้คุณแล้ว",
+            icon: "success",
+            timer: 1500
+          });
+        }
+      } catch (error) {
+        console.error("Error checking barcode:", error);
+        // หากเกิดข้อผิดพลาดในการตรวจสอบ ให้ใช้บาร์โค้ดนั้นไปก่อน
+        setProduct({ ...product, barcode: newBarcode });
+      }
+    };
+    
+    checkAndSetBarcode();
   };
 
   const handlePrintBarcode = (barcodeValue) => {
@@ -404,22 +514,31 @@ function Product() {
     const printWindow = window.open("", "_blank", "width=600,height=400");
 
     printWindow.document.write(`
-      <html>\n      <head>\n        
-      <title>Print Barcode</title>\n       
-       <style>\n         
-       body { text-align: center; margin-top: 50px; font-family: Arial, sans-serif; }\n        
-         .barcode-container { display: inline-block; }\n    
-             </style>\n    
-                 <script src=\"https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js\"></script>\n  
-                     </head>\n      <body>\n        <div class=\"barcode-container\">\n  
-                             <svg id=\"barcode\"></svg>\n        </div>\n        <script>\n   
-                                    window.onload = function() {\n       
-                                         JsBarcode(\"#barcode\", \"${barcodeValue}\", {\n        
-                                               width: 2, \n              height: 57, \n          
-                                                   displayValue: true\n            });\n     
-                                                          setTimeout(() => window.print(), 500);\n     
-                                                               }\n        </script>\n      </body>\n 
-                                                                  </html>\n
+      <html>
+      <head>
+        <title>Print Barcode</title>
+        <style>
+          body { text-align: center; margin-top: 50px; font-family: Arial, sans-serif; }
+          .barcode-container { display: inline-block; }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+      </head>
+      <body>
+        <div class="barcode-container">
+          <svg id="barcode"></svg>
+        </div>
+        <script>
+          window.onload = function() {
+            JsBarcode("#barcode", "${barcodeValue}", {
+              width: 2, 
+              height: 57, 
+              displayValue: true
+            });
+            setTimeout(() => window.print(), 500);
+          }
+        </script>
+      </body>
+      </html>
     `);
 
     printWindow.document.write(
@@ -480,8 +599,7 @@ function Product() {
                   <tr style={{ background: "#f8f9fa" }}>
                     <th className="py-3">Barcode</th>
                     <th className="py-3">ชื่อสินค้า</th>
-                    <th className="py-3 text-center">รูปภาพ</th>{" "}
-                    {/* เพิ่มคอลัมน์นี้ */}
+                    <th className="py-3 text-center">รูปภาพ</th>
                     <th className="py-3 text-right">ราคาทุน</th>
                     <th className="py-3 text-right">ราคาจำหน่าย</th>
                     <th className="py-3 text-right">วันหมดอายุ</th>
@@ -552,7 +670,10 @@ function Product() {
                               </button>
                               <button
                                 onClick={() => {
-                                  setProduct(item);
+                                  setProduct({
+                                    ...item,
+                                    originalBarcode: item.barcode // เก็บค่าบาร์โค้ดเดิมไว้
+                                  });
                                   setShowProductModal(true);
                                 }}
                                 className="btn btn-info btn-sm mr-1"
@@ -669,62 +790,60 @@ function Product() {
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="mt-3">
-            {productImage.name !== undefined && (
-              <button
-                onClick={handleUpload}
-                className="btn btn-primary shadow-sm"
-                disabled={!imagePreview}
-              >
-                <i className="fa fa-cloud-upload mr-2"></i> อัพโหลดรูปภาพ
-              </button>
-            )}
-          </div>
+            <div className="mt-3">
+              {productImage.name !== undefined && (
+                <button
+                  onClick={handleUpload}
+                  className="btn btn-primary shadow-sm"
+                  disabled={!imagePreview}
+                >
+                  <i className="fa fa-cloud-upload mr-2"></i> อัพโหลดรูปภาพ
+                </button>
+              )}
+            </div>
 
-          <div className="mt-3">ภาพสินค้า</div>
-          <div className="row mt-2">
-            {productImages.length > 0 ? (
-              productImages.map((item) => (
-                <div className="col-3" key={item.id}>
-                  <div className="card shadow-sm border-0">
-                    <img
-                      className="card-img-top"
-                      src={config.api_path + "/uploads/" + item.imageName}
-                      ช
-                      width="100%"
-                      alt=""
-                    />
-                    <div className="card-body text-center">
-                      {item.isMain ? (
-                        <button className="btn btn-info btn-sm mr-2 shadow-sm">
-                          ภาพหลัก
-                        </button>
-                      ) : (
+            <div className="mt-3">ภาพสินค้า</div>
+            <div className="row mt-2">
+              {productImages.length > 0 ? (
+                productImages.map((item) => (
+                  <div className="col-3" key={item.id}>
+                    <div className="card shadow-sm border-0">
+                      <img
+                        className="card-img-top"
+                        src={config.api_path + "/uploads/" + item.imageName}
+                        width="100%"
+                        alt=""
+                      />
+                      <div className="card-body text-center">
+                        {item.isMain ? (
+                          <button className="btn btn-info btn-sm mr-2 shadow-sm">
+                            ภาพหลัก
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleChooseMainImage(item)}
+                            className="btn btn-outline-secondary btn-sm mr-2 shadow-sm"
+                          >
+                            ภาพหลัก
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleChooseMainImage(item)}
-                          className="btn btn-outline-secondary btn-sm mr-2 shadow-sm"
+                          onClick={() => handleDeleteProductImage(item)}
+                          className="btn btn-danger btn-sm shadow-sm"
                         >
-                          ภาพหลัก
+                          <i className="fa fa-times"></i>
                         </button>
-                      )}
-
-                      <button
-                        onClick={() => handleDeleteProductImage(item)}
-                        className="btn btn-danger btn-sm shadow-sm"
-                      >
-                        <i className="fa fa-times"></i>
-                      </button>
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="col-12 text-center text-muted">
+                  ไม่มีภาพสินค้า
                 </div>
-              ))
-            ) : (
-              <div className="col-12 text-center text-muted">
-                ไม่มีภาพสินค้า
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </Modal>
 
@@ -754,20 +873,30 @@ function Product() {
                 <label>
                   บาร์โค้ด <span className="text-danger">*</span>
                 </label>
-                <input
-                  value={product.barcode || ""}
-                  onChange={handleBarcodeChange}
-                  type="text"
-                  className="form-control shadow-sm"
-                  required
-                  maxLength="13"
-                  pattern="\d{13}"
-                  title="กรุณากรอกบาร์โค้ด 13 หลัก"
-                  placeholder="กรอกบาร์โค้ด 13 หลัก"
-                />
+                <div className="input-group">
+                  <input
+                    value={product.barcode || ""}
+                    onChange={handleBarcodeChange}
+                    type="text"
+                    className="form-control shadow-sm"
+                    required
+                    maxLength="13"
+                    pattern="\d{13}"
+                    title="กรุณากรอกบาร์โค้ด 13 หลัก"
+                    placeholder="กรอกบาร์โค้ด 13 หลัก"
+                  />
+                  <div className="input-group-append">
+                    <button 
+                      type="button" 
+                      className="btn btn-outline-secondary" 
+                      onClick={generateBarcode}
+                      title="สร้างบาร์โค้ดอัตโนมัติ">
+                      <i className="fa fa-refresh"></i>
+                    </button>
+                  </div>
+                </div>
                 <small className="text-muted">
-                  บาร์โค้ดต้องเป็นตัวเลข 13 หลัก (
-                  {(product.barcode || "").length}/13)
+                  บาร์โค้ดต้องเป็นตัวเลข 13 หลัก ({(product.barcode || "").length}/13)
                 </small>
               </div>
               <div className="form-group col-md-6">
@@ -816,36 +945,54 @@ function Product() {
                   min={new Date().toISOString().split("T")[0]}
                 />
               </div>
-              <div className="form-group col-md-6">
+              <div className="form-group col-md-12">
                 <label>
                   ประเภทสินค้า <span className="text-danger">*</span>
                 </label>
-                <div className="input-group">
-                  <select
-                    className="form-control shadow-sm"
-                    value={product.category || ""}
-                    onChange={(e) =>
-                      setProduct({ ...product, category: e.target.value })
-                    }
-                    required
-                  >
-                    <option value="">เลือกประเภทสินค้า</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.name}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="input-group-append">
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary"
-                      onClick={handleCategoryManagement}
-                      title="จัดการหมวดหมู่"
-                    >
-                      <i className="fa fa-cog"></i>
-                    </button>
+                <div className="d-flex">
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <Select
+                      value={product.category ? { value: product.category, label: product.category } : null}
+                      onChange={(selectedOption) =>
+                        setProduct({ ...product, category: selectedOption.value })
+                      }
+                      options={categories.map(cat => ({ value: cat.name, label: cat.name }))}
+                      placeholder="เลือกประเภทสินค้า"
+                      className="basic-single"
+                      classNamePrefix="select"
+                      isClearable={false}
+                      isSearchable={true}
+                      styles={{
+                        control: (baseStyles) => ({
+                          ...baseStyles,
+                          minHeight: "38px",
+                          borderTopRightRadius: 0,
+                          borderBottomRightRadius: 0,
+                          borderRight: 0
+                        }),
+                        container: (baseStyles) => ({
+                          ...baseStyles,
+                          width: "100%"
+                        })
+                      }}
+                    />
                   </div>
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={handleCategoryManagement}
+                    title="จัดการหมวดหมู่"
+                    style={{
+                      height: 38,
+                      display: 'flex',
+                      alignItems: 'center',
+                      borderTopLeftRadius: 0,
+                      borderBottomLeftRadius: 0,
+                      borderLeft: '1px solid #ced4da'
+                    }}
+                  >
+                    <i className="fa fa-cog"></i>
+                  </button>
                 </div>
               </div>
             </div>

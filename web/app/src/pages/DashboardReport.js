@@ -389,7 +389,7 @@ function Dashboard() {
       let startDate = new Date();
       let endDate = new Date();
       
-      // eslint-disable-next-line default-case
+      // กำหนดช่วงเวลาตามที่เลือก
       switch(dateRange) {
         case 'yesterday':
           startDate.setDate(startDate.getDate() - 1);
@@ -411,40 +411,73 @@ function Dashboard() {
             endDate = dateRangeValue[1];
           }
           break;
+        // case 'today' เป็นค่าเริ่มต้น ไม่ต้องกำหนดอะไร
       }
   
+      // ตั้งค่าเวลาเริ่มต้นและสิ้นสุด
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
   
+      // เรียก API combinedReport
       const res = await axios.post(url, {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         dateRange: dateRange
       }, config.headers());
   
+      // ตรวจสอบผลลัพธ์
       if (res.data.message === "success") {
-        // Create a map of product stock data
+        console.log("API Response:", res.data.results);
+        
+        // สร้าง map ของข้อมูล stock
         const stockMap = new Map(stockReport.map(item => [item.result.id, {
           stockIn: item.stockIn || 0,
           stockOut: item.stockOut || 0,
           remainingQty: item.stockIn - item.stockOut
         }]));
   
-        // Combine sales data with stock data
+        // รวมข้อมูลการขายกับข้อมูล stock และคำนวณกำไรที่ถูกต้อง
         const combinedData = res.data.results.map(item => {
           const stockData = stockMap.get(item.productId) || { remainingQty: 0 };
+          
+          // คำนวณกำไรสุทธิอีกครั้งเพื่อความถูกต้อง
+          const calculatedProfit = (item.price - item.cost) * item.soldQty;
+          
+          // ใช้ค่าที่คำนวณใหม่เสมอ เนื่องจากพบปัญหากับข้อมูลจาก API
           return {
             ...item,
-            remainingQty: Math.max(0, stockData.remainingQty)
+            remainingQty: Math.max(0, stockData.remainingQty),
+            barcode: item.barcode || '-',
+            name: item.name || 'ไม่ระบุชื่อ',
+            cost: typeof item.cost === 'number' ? item.cost : 0,
+            price: typeof item.price === 'number' ? item.price : 0,
+            // ใช้ค่ากำไรที่คำนวณเอง แทนค่าจาก API ที่อาจไม่ถูกต้อง
+            netProfit: calculatedProfit
           };
         });
   
+        // เรียงลำดับตามกำไรสุทธิจากมากไปน้อย
+        combinedData.sort((a, b) => b.netProfit - a.netProfit);
+        
         setCombinedStockData(combinedData);
+      } else {
+        console.error('Error response from API:', res.data);
+        Swal.fire({
+          title: "ไม่สามารถดึงข้อมูลได้",
+          text: "ระบบไม่สามารถดึงข้อมูลสินค้าได้ในขณะนี้",
+          icon: "warning"
+        });
       }
     } catch (e) {
       console.error('Error fetching combined stock data:', e);
+      Swal.fire({
+        title: "เกิดข้อผิดพลาด",
+        text: "ไม่สามารถดึงข้อมูลสินค้าได้ กรุณาลองใหม่อีกครั้ง",
+        icon: "error"
+      });
     }
   };
+
 
   useEffect(() => {
     if (activeSection === 'stock') {
@@ -701,10 +734,10 @@ function Dashboard() {
       const date = new Date(dateStr);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-  
+    
       const thaiDays = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
       const dayAbbr = date.getTime() === today.getTime() ? 'วันนี้' : thaiDays[date.getDay()];
-  
+    
       return {
         fullDate: date.toLocaleDateString('th-TH', {
           day: 'numeric',
@@ -714,6 +747,7 @@ function Dashboard() {
         dayAbbr
       };
     };
+    
   
     return (
       <div className="col-md-12">
@@ -768,8 +802,8 @@ function Dashboard() {
                           {`${fullDate} ${dayAbbr}`}
                         </td>
                         <td style={{ border: 'none', padding: '12px 8px' }}>{formatNumber(item.totalAmount)} บาท</td>
-                        <td style={{ border: 'none', padding: '12px 8px' }}>{formatNumber(item.minCostPerUnit)} บาท</td>
-                        <td style={{ border: 'none', padding: '12px 8px' }}>{formatNumber(item.maxPricePerUnit)} บาท</td>
+                        <td style={{ border: 'none', padding: '12px 8px' }}>{formatNumber(item.avgCost)} บาท</td>
+                        <td style={{ border: 'none', padding: '12px 8px' }}>{formatNumber(item.avgPrice)} บาท</td>
                         <td style={{ border: 'none', padding: '12px 8px' }}>{formatNumber(item.netProfit)} บาท</td>
                       </tr>
                     );
@@ -1027,36 +1061,58 @@ function Dashboard() {
                 </div>
               </div>
               <div className="card-body">
-                <div style={tableWrapperStyle}>
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>รหัสสินค้า</th>
-                        <th>ชื่อสินค้า</th>
-                        {showSold && <th>จำนวนขาย</th>}
-                        {showRemaining && <th>จำนวนคงเหลือ</th>}
-                        <th>รวมเป็นเงิน</th>
-                        <th>เฉลี่ยต่อชิ้น (ทุน/ขาย)</th>
-                        <th>กำไรสุทธิ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {combinedStockData.map((item, index) => (
-                        <tr key={index}>
-                          <td>{item.productId || '-'}</td>
-                          <td>{item.name || '-'}</td>
-                          {showSold && <td>{formatNumber(item.soldQty) || 0} ชิ้น</td>}
-                          {showRemaining && <td>{formatNumber(item.remainingQty) || 0} ชิ้น</td>}
-                          <td>฿{formatNumber(item.totalAmount) || 0}</td>
-                          <td>฿{formatNumber(item.cost)} | ฿{formatNumber(item.price)}</td>
-                          <td className="text-success">
-                            ฿{formatNumber(item.netProfit) || 0}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div style={tableWrapperStyle}>
+  <table className="table">
+    <thead>
+      <tr>
+        <th>บาร์โค้ด</th>
+        <th>ชื่อสินค้า</th>
+        {showSold && <th>จำนวนขาย</th>}
+        {showRemaining && <th>จำนวนคงเหลือ</th>}
+        <th>รวมเป็นเงิน</th>
+        <th>เฉลี่ยต่อชิ้น (ทุน/ขาย)</th>
+        <th>กำไรสุทธิ</th>
+      </tr>
+    </thead>
+    <tbody>
+    {combinedStockData.length > 0 ? (
+  combinedStockData.map((item, index) => {
+    // คำนวณกำไรอีกครั้งตอนแสดงผลเพื่อความแน่ใจ
+    const expectedProfit = (item.price - item.cost) * item.soldQty;
+    const displayProfit = Math.abs(expectedProfit - item.netProfit) > 100 
+      ? expectedProfit 
+      : item.netProfit;
+    
+    return (
+      <tr key={index}>
+        <td>{item.barcode || '-'}</td>
+        <td>{item.name || '-'}</td>
+        {showSold && <td>{formatNumber(item.soldQty) || 0} ชิ้น</td>}
+        {showRemaining && <td>{formatNumber(item.remainingQty) || 0} ชิ้น</td>}
+        <td>฿{formatNumber(item.totalAmount) || 0}</td>
+        <td>
+          {item.cost && item.price 
+            ? `฿${formatNumber(item.cost)} | ฿${formatNumber(item.price)}`
+            : '-'}
+        </td>
+        <td className="text-success">
+          ฿{formatNumber(displayProfit) || 0}
+        </td>
+      </tr>
+    );
+  })
+) : (
+        <tr>
+          <td colSpan={showSold && showRemaining ? 7 : (showSold || showRemaining ? 6 : 5)} className="text-center py-3">
+            <div className="text-muted">
+              <i className="fas fa-info-circle mr-2"></i> ไม่พบข้อมูลสินค้าในช่วงเวลาที่เลือก
+            </div>
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
                 {renderTopSalesChart()}
               </div>
             </div>

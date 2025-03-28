@@ -43,7 +43,7 @@ app.post("/category/insert", async (req, res) => {
         });
         res.json({ message: "success", results: newCategory });
     } catch (error) {
-        res.status(500).json({ message: "error", error: error.message });
+        res.status(500).json({ message: "error", error: error});
     }
 });
 

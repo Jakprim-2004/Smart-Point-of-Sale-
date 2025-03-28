@@ -6,6 +6,7 @@ const ProductModel = require('../models/ProductModel');
 const BillSaleModel = require('../models/BillSaleModel');
 const sequelize = require('sequelize');
 const jwt = require("jsonwebtoken");
+const { Op } = require('sequelize');
 require("dotenv").config();
 const service = require("./Service");
 
@@ -606,24 +607,32 @@ router.post('/productDetails', async (req, res) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
     
-    // Adjust for Bangkok timezone
-    start.setHours(start.getHours() + 7);
-    end.setHours(end.getHours() + 7);
+    // Adjust times
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
 
+    // เรียกข้อมูลแบบรายวัน โดยอย่าเพิ่ม cost/price ในการ GROUP BY
     const results = await BillSaleDetailModel.findAll({
       attributes: [
-        [sequelize.literal('DATE("billSaleDetail"."createdAt" AT TIME ZONE \'Asia/Bangkok\')'), 'saleDate'],
-        [sequelize.fn('SUM', sequelize.literal('qty * totalprice')), 'totalAmount'],
+        [sequelize.literal('DATE("billSaleDetail"."createdAt")'), 'saleDate'],
+        [sequelize.fn('SUM', sequelize.literal('qty * "billSaleDetail"."price"')), 'totalAmount'],
         [sequelize.fn('SUM', sequelize.col('qty')), 'totalQuantity'],
-        [sequelize.fn('SUM', sequelize.literal('(totalprice - product.cost) * qty')), 'netProfit'],
-        [sequelize.fn('MIN', sequelize.col('product.cost')), 'minCostPerUnit'],
-        [sequelize.fn('MAX', sequelize.col('product.price')), 'maxPricePerUnit']
+        [sequelize.fn('SUM', sequelize.literal('("billSaleDetail"."price" - "product"."cost") * qty')), 'netProfit'],
+        [sequelize.fn('AVG', sequelize.col('product.cost')), 'avgCost'], // เปลี่ยนเป็นค่าเฉลี่ย
+        [sequelize.fn('AVG', sequelize.col('product.price')), 'avgPrice'] // เปลี่ยนเป็นค่าเฉลี่ย
       ],
       include: [{
         model: ProductModel,
         as: 'product',
         attributes: [],
         required: true
+      }, {
+        model: BillSaleModel,
+        as: 'billSale',
+        attributes: [],
+        where: {
+          status: 'pay' // เพิ่มเงื่อนไขให้ดึงเฉพาะบิลที่ชำระเงินแล้ว
+        }
       }],
       where: { 
         userId,
@@ -632,40 +641,27 @@ router.post('/productDetails', async (req, res) => {
         }
       },
       group: [
-        sequelize.literal('DATE("billSaleDetail"."createdAt" AT TIME ZONE \'Asia/Bangkok\')'),
-        'product.cost',
-        'product.price'
+        sequelize.literal('DATE("billSaleDetail"."createdAt")')
       ],
       order: [
-        [sequelize.literal('DATE("billSaleDetail"."createdAt" AT TIME ZONE \'Asia/Bangkok\')'), 'ASC']
+        [sequelize.literal('DATE("billSaleDetail"."createdAt")'), 'ASC']
       ],
       raw: true
     });
 
-    // Group results by date
-    const groupedResults = results.reduce((acc, curr) => {
-      const date = curr.saleDate;
-      if (!acc[date]) {
-        acc[date] = {
-          saleDate: curr.saleDate,
-          totalAmount: 0,
-          totalQuantity: 0,
-          netProfit: 0,
-          minCostPerUnit: curr.minCostPerUnit,
-          maxPricePerUnit: curr.maxPricePerUnit
-        };
-      }
-      acc[date].totalAmount += parseFloat(curr.totalAmount || 0);
-      acc[date].totalQuantity += parseInt(curr.totalQuantity || 0);
-      acc[date].netProfit += parseFloat(curr.netProfit || 0);
-      acc[date].minCostPerUnit = Math.min(acc[date].minCostPerUnit, curr.minCostPerUnit);
-      acc[date].maxPricePerUnit = Math.max(acc[date].maxPricePerUnit, curr.maxPricePerUnit);
-      return acc;
-    }, {});
+    // แปลงข้อมูลให้อยู่ในรูปแบบที่ต้องการใช้งาน
+    const processedResults = results.map(item => ({
+      saleDate: item.saleDate,
+      totalAmount: parseFloat(item.totalAmount) || 0,
+      totalQuantity: parseInt(item.totalQuantity) || 0,
+      netProfit: parseFloat(item.netProfit) || 0,
+      avgCost: parseFloat(item.avgCost) || 0,
+      avgPrice: parseFloat(item.avgPrice) || 0
+    }));
 
     res.send({
       message: 'success',
-      results: Object.values(groupedResults)
+      results: processedResults
     });
 
   } catch (error) {
@@ -800,27 +796,29 @@ router.post('/stock/combinedReport', async (req, res) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
+    // ใช้ Model API แทน raw query
     const results = await BillSaleDetailModel.findAll({
       attributes: [
         'productId',
         [sequelize.fn('SUM', sequelize.col('qty')), 'soldQty'],
-        [sequelize.fn('SUM', sequelize.literal('qty * totalprice')), 'totalAmount'],
-        [sequelize.fn('SUM', sequelize.literal('(totalprice - product.cost) * qty')), 'netProfit'],
+        [sequelize.fn('SUM', sequelize.literal('"billSaleDetail"."price" * qty')), 'totalAmount'],
+        [sequelize.fn('SUM', sequelize.literal('("billSaleDetail"."price" - "product"."cost") * qty')), 'netProfit']
       ],
       include: [{
         model: ProductModel,
         as: 'product',
-        attributes: ['name', 'cost', 'price']
-      }],
-      where: {
-        userId,
-        createdAt: {
-          [sequelize.Op.between]: [start, end]
+        attributes: ['name', 'barcode', 'cost', 'price']
+      }, {
+        model: BillSaleModel,
+        as: 'billSale',
+        attributes: [],
+        where: {
+          userId,
+          createdAt: { [sequelize.Op.between]: [start, end] },
+          status: 'pay'
         }
-      },
-      group: ['productId', 'product.name', 'product.cost', 'product.price'],
-      having: sequelize.literal('SUM(qty) > 0'),
-      order: [[sequelize.literal('SUM(qty)'), 'DESC']],
+      }],
+      group: ['productId', 'product.id', 'product.name', 'product.barcode', 'product.cost', 'product.price'],
       raw: true
     });
 
@@ -828,21 +826,19 @@ router.post('/stock/combinedReport', async (req, res) => {
       message: 'success',
       results: results.map(item => ({
         productId: item.productId,
-        name: item.product?.name || '',
+        name: item['product.name'] || 'ไม่ระบุชื่อ',
+        barcode: item['product.barcode'] || '-',
         soldQty: parseInt(item.soldQty) || 0,
-        cost: parseFloat(item.product?.cost) || 0,
-        price: parseFloat(item.product?.price) || 0,
+        cost: parseFloat(item['product.cost']) || 0,
+        price: parseFloat(item['product.price']) || 0,
         totalAmount: parseFloat(item.totalAmount) || 0,
         netProfit: parseFloat(item.netProfit) || 0
       }))
     });
-
   } catch (error) {
     console.error('Error in combined stock report:', error);
     res.status(500).send({ message: error.message });
   }
 });
-
-
 
 module.exports = router;

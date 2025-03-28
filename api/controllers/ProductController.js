@@ -112,4 +112,27 @@ app.get("/product/nearExpiry", Service.isLogin, async (req, res) => {
   }
 });
 
+app.get('/product/checkBarcode/:barcode', Service.isLogin, async (req, res) => {
+  try {
+    const { barcode } = req.params;
+    
+    // ตรวจสอบว่าบาร์โค้ดมีอยู่แล้วหรือไม่
+    const product = await ProductModel.findOne({
+      where: { 
+        barcode: barcode,
+        userId: Service.getMemberId(req) // เพิ่มเงื่อนไขเพื่อดูเฉพาะสินค้าของผู้ใช้นั้น
+      }
+    });
+    
+    res.json({
+      message: 'success',
+      exists: !!product // true ถ้ามี, false ถ้าไม่มี
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'error',
+      error: error.message
+    });
+  }
+});
 module.exports = app;
