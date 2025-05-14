@@ -92,37 +92,31 @@ app.post("/member/register", async (req, res) => {
 });
 
 app.get("/member/info", service.isLogin, async (req, res, next) => {
-  try {
-    MemberModel.belongsTo(PackageModel);
-
-    const payLoad = jwt.decode(service.getToken(req));
-    const member = await MemberModel.findByPk(payLoad.id, {
-      attributes: [
-        "id",
-        "email",
-        "firstName",
-        "lastName",
-        "phone",
-      ],
-      include: [
-        {
-          model: PackageModel,
-          attributes: ["name", "bill_amount"],
-        },
-      ],
-    });
-
-    res.send({ result: member, message: "success" });
-  } catch (e) {
-    res.statusCode = 500;
-    return res.send({ message: e.message });
-  }
-});
+    try {
+      const payLoad = jwt.decode(service.getToken(req));
+      const member = await MemberModel.findByPk(payLoad.id, {
+        attributes: [
+          "id",
+          "email",
+          "firstName",
+          "lastName",
+          "phone",
+        ]
+      });
+  
+      if (!member) {
+        return res.status(404).send({ message: "ไม่พบข้อมูลสมาชิก" });
+      }
+  
+      res.send({ result: member, message: "success" });
+    } catch (e) {
+      res.statusCode = 500;
+      return res.send({ message: e.message });
+    }
+  });
 
 app.get("/member/list", service.isLogin, async (req, res) => {
   try {
-    MemberModel.belongsTo(PackageModel, { foreignKey: 'packageId' });
-
     const results = await MemberModel.findAll({
       order: [["id", "DESC"]],
       attributes: [
@@ -133,10 +127,6 @@ app.get("/member/list", service.isLogin, async (req, res) => {
         "phone", 
         "createdAt"
       ],
-      include: {
-        model: PackageModel,
-        attributes: ["id", "name", "bill_amount", "price"],
-      },
     });
 
     res.send({ 

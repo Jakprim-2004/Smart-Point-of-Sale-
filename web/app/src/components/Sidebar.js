@@ -16,22 +16,23 @@ import service from "../assets/service.gif";
 
 const Sidebar = forwardRef((props, sidebarRef) => {
   const [firstName, setfirstName] = useState();
-  const [totalBill, setTotalBill] = useState(0);
-  const [billAmount, setBillAmount] = useState(0);
   const [banks, setBanks] = useState([]);
   const [dropdownStates, setDropdownStates] = useState({
+    dashboard: false,
     reports: false,
+    settings: false,
+    member: false,
+    stock: false,
+    promotion: false,
     documents: false,
-    CRM: false,
+    CRM: false
   });
   const [userLevel, setUserLevel] = useState("");
   const navigate = useNavigate();
-  const [showPackageModal, setShowPackageModal] = useState(false);
   const [showBankModal, setShowBankModal] = useState(false);
 
   useEffect(() => {
     fetchData();
-    fetchDataTotalBill();
     // Get user level from localStorage
     const storedUserType = localStorage.getItem("userType");
     const storedUserLevel = localStorage.getItem("userLevel");
@@ -76,27 +77,6 @@ const Sidebar = forwardRef((props, sidebarRef) => {
     });
   };
 
-  const fetchDataTotalBill = async () => {
-    try {
-      await axios
-        .get(config.api_path + "/package/countBill", config.headers())
-        .then((res) => {
-          if (res.data.totalBill != undefined) {
-            setTotalBill(res.data.totalBill);
-          }
-        })
-        .catch((err) => {
-          throw err.response.data;
-        });
-    } catch (e) {
-      Swal.fire({
-        title: "error",
-        text: e.message,
-        icon: "error",
-      });
-    }
-  };
-
   const handleTokenError = (error) => {
     if (
       error.response?.status === 401 ||
@@ -133,7 +113,6 @@ const Sidebar = forwardRef((props, sidebarRef) => {
         } else {
           setfirstName(res.data.result.firstName); // For owners, use firstName from member table
         }
-        setBillAmount(res.data.result.package.bill_amount);
       }
     } catch (error) {
       if (!handleTokenError(error)) {
@@ -146,59 +125,20 @@ const Sidebar = forwardRef((props, sidebarRef) => {
     }
   };
 
-  const fetchPackages = async () => {
-    try {
-      await axios.get(config.api_path + "/package/list").then((res) => {
-        setPackages(res.data.results);
-      });
-    } catch (error) {
-      console.error("Error fetching packages:", error);
-    }
-  };
-
-  const handleChangePackage = async () => {
-    if (isPackageSubscribed) {
-      try {
-        await axios.post(
-          config.api_path + "/package/changePackage/" + choosePackage.id,
-          {},
-          config.headers()
-        );
-        setIsPackageSubscribed(true);
-      } catch (error) {
-        console.error("Error changing package:", error);
-      }
-    }
-  };
-
-  const handleDropdownClick = (dropdownId) => {
-    setDropdownStates((prevStates) => ({
-      ...Object.keys(prevStates).reduce(
-        (acc, key) => ({
-          ...acc,
-          [key]: key === dropdownId ? !prevStates[key] : false,
-        }),
-        {}
-      ),
+  const handleDropdownClick = (dropdown) => {
+    setDropdownStates((prev) => ({
+      ...prev,
+      [dropdown]: !prev[dropdown],
     }));
   };
 
   const handleNavigation = (path) => {
     navigate(path);
-    setDropdownStates((prevStates) =>
-      Object.keys(prevStates).reduce(
-        (acc, key) => ({
-          ...acc,
-          [key]: false,
-        }),
-        {}
-      )
-    );
   };
 
   useImperativeHandle(sidebarRef, () => ({
     refreshCountBill() {
-      fetchDataTotalBill();
+      fetchData();
     },
   }));
 
@@ -593,62 +533,41 @@ const Sidebar = forwardRef((props, sidebarRef) => {
         </div>
       </aside>
 
-      {/* Only render package modals if user is owner */}
+      {/* Only render bank modal if user is owner */}
       {isOwner && (
-        <>
-          <Modal
-            show={showBankModal}
-            onHide={() => setShowBankModal(false)}
-            title="ช่องทางชำระเงิน" 
-            modalSize="modal-lg"
-          >
-            <div className="h4 text-secondary">
-              Package ที่เลือกคือ{" "}
-              <span className="text-primary">{choosePackage.name}</span>
-            </div>
-            <div className="mt-3 h5">
-              ราคา{" "}
-              <span className="text-danger">
-                {parseInt(choosePackage.price).toLocaleString("th-TH")}
-              </span>{" "}
-              บาท/เดือน
-            </div>
+        <Modal
+          show={showBankModal}
+          onHide={() => setShowBankModal(false)}
+          title="ช่องทางชำระเงิน" 
+          modalSize="modal-lg"
+        >
+          <table className="table table-bordered table-striped mt-3">
+            <thead>
+              <tr>
+                <th>ธนาคาร</th>
+                <th>เลขบัญชี</th>
+                <th>เจ้าของบัญชี</th>
+                <th>สาขา</th>
+              </tr>
+            </thead>
+            <tbody>
+              {banks.length > 0
+                ? banks.map((item) => (
+                  <tr key={item.bankCode}>
+                    <td>{item.bankCode}</td>
+                    <td>{item.bankName}</td>
+                    <td>{item.bankBranch}</td>
+                  </tr>
+                ))
+                : ""}
+            </tbody>
+          </table>
 
-            <table className="table table-bordered table-striped mt-3">
-              <thead>
-                <tr>
-                  <th>ธนาคาร</th>
-                  <th>เลขบัญชี</th>
-                  <th>เจ้าของบัญชี</th>
-                  <th>สาขา</th>
-                </tr>
-              </thead>
-              <tbody>
-                {banks.length > 0
-                  ? banks.map((item) => (
-                    <tr key={item.bankCode}>
-                      <td>{item.bankCode}</td>
-                      <td>{item.bankName}</td>
-                      <td>{item.bankBranch}</td>
-                    </tr>
-                  ))
-                  : ""}
-              </tbody>
-            </table>
-
-            <div className="alert mt-3 alert-warning">
-              <i className="fa fa-info-circle me-2"></i>
-              เมื่อโอนชำระเงินแล้ว ให้แจ้งที่ไลน์ ID = Min0ru21 ชื่อ Kaimuk.j
-            </div>
-
-            <div className="mt-3 text-center">
-              <button onClick={handleChangePackage} className="btn btn-primary">
-                <i className="fa fa-check me-2"></i>
-                ยืนยันการสมัคร
-              </button>
-            </div>
-          </Modal>
-        </>
+          <div className="alert mt-3 alert-warning">
+            <i className="fa fa-info-circle me-2"></i>
+            เมื่อโอนชำระเงินแล้ว ให้แจ้งที่ไลน์ ID = Min0ru21 ชื่อ Kaimuk.j
+          </div>
+        </Modal>
       )}
     </>
   );

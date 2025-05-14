@@ -89,28 +89,7 @@ app.get("/product/listForSale", Service.isLogin, async (req, res) => {
   }
 });
 
-app.get("/product/nearExpiry", Service.isLogin, async (req, res) => {
-  try {
-    const threemonths = new Date();
-    threemonths.setMonth(threemonths.getMonth() + 3);
 
-    const results = await ProductModel.findAll({
-      where: {
-        userId: Service.getMemberId(req),
-        expirationdate: {
-          [Op.lte]: threemonths,
-          [Op.gt]: new Date()
-        }
-      },
-      order: [["expirationdate", "ASC"]]
-    });
-
-    res.send({ results: results, message: "success" });
-  } catch (e) {
-    res.statusCode = 500;
-    res.send({ message: e.message });
-  }
-});
 
 app.get('/product/checkBarcode/:barcode', Service.isLogin, async (req, res) => {
   try {

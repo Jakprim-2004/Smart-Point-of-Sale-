@@ -111,7 +111,6 @@ function Dashboard() {
     reportTopSellingCategories();
     getTodaySalesReport();
     getPaymentStats();
-    reportNearExpiryProducts();
   }, [year, month, viewType]);
 
   useEffect(() => {
@@ -238,22 +237,7 @@ function Dashboard() {
     }
   };
 
-  const reportNearExpiryProducts = async () => {
-    try {
-      const url = config.api_path + "/product/nearExpiry";
-      const res = await axios.get(url, config.headers());
-      if (res.data.message === "success") {
-        setNearExpiryProducts(res.data.results);
-        setNearExpiryCount(res.data.results.length);
-      }
-    } catch (e) {
-      Swal.fire({
-        title: "error",
-        text: e.message,
-        icon: "error",
-      });
-    }
-  };
+ 
 
   const calculateLowStockCount = () => {
     const CRITICAL_THRESHOLD = 5;
