@@ -1254,6 +1254,7 @@ function Sale() {
             marginBottom: "8px",
             width: "100%"
           }}>
+            // คำนวณยอดรวมจาก lastBill.billSaleDetails ใน slip
             <span style={{ flex: 1, textAlign: "left" }}>รวมทั้งสิ้น:</span>
             <span style={{ flex: 1, textAlign: "right" }}>
               {lastBill?.billSaleDetails
