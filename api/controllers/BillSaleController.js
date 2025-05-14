@@ -8,23 +8,23 @@ const BillSaleDetailModel = require("../models/BillSaleDetailModel");
 const CustomerModel = require("../models/CustomerModel"); 
 const PointTransactionModel = require('../models/PointTransactionModel'); 
 
+// ฟังก์ชันสำหรับดึงวันที่และเวลาปัจจุบันตามโซนเวลาไทย
 const getThaiDateTime = () => {
     const now = new Date();
     return new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
 };
 
-// Add this helper function at the top 
-
-
-// API สำหรับเปิดบิล
+// API สำหรับเปิดบิลขายใหม่
 app.get('/billSale/openBill', service.isLogin, async (req, res) => {
     try {
+        // เตรียมข้อมูลสำหรับสร้างบิลใหม่
         const payload = {
-            userId: service.getMemberId(req),
-            status: 'open',
-            createdAt: getThaiDateTime() 
+            userId: service.getMemberId(req), // ดึงรหัสผู้ใช้จาก request
+            status: 'open', // ตั้งสถานะบิลเป็นเปิด
+            createdAt: getThaiDateTime() // เก็บวันที่และเวลาตามโซนไทย
         };
 
+        // ตรวจสอบว่ามีบิลที่เปิดอยู่ของผู้ใช้หรือไม่
         let result = await BillSaleModel.findOne({
             where: {
                 userId: payload.userId,
@@ -32,45 +32,46 @@ app.get('/billSale/openBill', service.isLogin, async (req, res) => {
             }
         });
 
+        // ถ้าไม่มีบิลที่เปิดอยู่ ให้สร้างบิลใหม่
         if (result == null) {
             result = await BillSaleModel.create(payload);
         }
 
+        // ส่งผลลัพธ์สำเร็จพร้อมข้อมูลบิล
         res.send({ message: 'success', result: result });
     } catch (e) {
+        // ส่งข้อความข้อผิดพลาดเมื่อเกิดปัญหา
         res.statusCode = 500;
         res.send({ message: e.message });
     }
 });
 
-// Modify the sale endpoint
+// API สำหรับเพิ่มสินค้าลงในบิลขาย
 app.post('/billSale/sale', service.isLogin, async (req, res) => {
     try {
         const userId = service.getMemberId(req);
         
-        // Check bill limit
-        const billLimit = await checkBillLimit(userId);
-        if (billLimit.hasReachedLimit) {
-            return res.status(403).send({ 
-                message: 'ไม่สามารถขายได้ เนื่องจากถึงขีดจำกัดจำนวนบิลแล้ว',
-                billInfo: billLimit
-            });
-        }
-
+        // เตรียมข้อมูลสำหรับเพิ่มสินค้า
         const payload = {
             userId: service.getMemberId(req),
             status: 'open'
         };
+
+        // ดึงข้อมูลบิลปัจจุบัน
         const currentBill = await BillSaleModel.findOne({
             where: payload
         });
+
+        // เตรียมข้อมูลรายการสินค้า
         const item = {
             price: req.body.price,
             productId: req.body.id,
             billSaleId: currentBill.id,
             userId: payload.userId,
-            qty: req.body.qty // เพิ่มจำนวนสินค้า
+            qty: req.body.qty // จำนวนสินค้า
         }
+
+        // ตรวจสอบว่ามีสินค้านี้ในบิลแล้วหรือไม่
         const billSaleDetail = await BillSaleDetailModel.findOne({
             where: {
                 productId: item.productId,
@@ -78,9 +79,11 @@ app.post('/billSale/sale', service.isLogin, async (req, res) => {
             }
         });
 
+        // ถ้าไม่มีสินค้าในบิล ให้เพิ่มรายการใหม่
         if (billSaleDetail == null) {
             await BillSaleDetailModel.create(item);
         } else {
+            // ถ้ามีสินค้าแล้ว ให้เพิ่มจำนวน
             item.qty = parseInt(billSaleDetail.qty) + parseInt(item.qty);
             await BillSaleDetailModel.update(item, {
                 where: {
@@ -96,85 +99,19 @@ app.post('/billSale/sale', service.isLogin, async (req, res) => {
     }
 });
 
-// API สำหรับพักบิล
-app.post('/billSale/pauseBill', service.isLogin, async (req, res) => {
-    try {
-        const { id, billSaleDetails } = req.body;
-
-        if (!id || !billSaleDetails || billSaleDetails.length === 0) {
-            return res.status(400).send({ message: "ข้อมูลไม่ครบถ้วน" });
-        }
-
-        // ดึงข้อมูลบิลจาก BillSaleModel
-        const bill = await BillSaleModel.findOne({ where: { id } });
-
-        if (!bill) {
-            return res.status(404).send({ message: "ไม่พบข้อมูลบิล" });
-        }
-
-        // สร้างรายการใหม่ใน PausedBillModel
-        await PausedBillModel.create({
-            userId: bill.userId,
-            items: JSON.stringify(billSaleDetails),
-            status: 'paused'
-        });
-
-        // ลบรายการบิลจาก BillSaleModel
-        await BillSaleModel.destroy({ where: { id } });
-
-        res.send({ message: "success" });
-    } catch (error) {
-        res.status(500).send({ message: error.message });
-    }
-});
-
-// API สำหรับดึงบิลที่มีสถานะ paused
-app.get('/billSale/pausedBills', service.isLogin, async (req, res) => {
-    try {
-        const pausedBills = await BillSaleModel.findAll({
-            where: {
-                status: 'paused'
-            }
-        });
-
-        res.send(pausedBills);
-    } catch (error) {
-        res.status(500).send({ message: error.message });
-    }
-});
-
-app.post('/billSale/retrieveBill', service.isLogin, async (req, res) => {
-    try {
-        const { id } = req.body;
-
-        if (!id) {
-            return res.status(400).send({ message: "ข้อมูลไม่ครบถ้วน" });
-        }
-
-        // อัปเดตสถานะบิลเป็น "open"
-        await BillSaleModel.update(
-            { status: 'open' },
-            { where: { id } }
-        );
-
-        res.send({ message: "success" });
-    } catch (error) {
-        res.status(500).send({ message: error.message });
-    }
-});
 
 
-
-
-// API สำหรับข้อมูลบิลปัจจุบัน
+// API สำหรับดึงข้อมูลบิลปัจจุบัน
 app.get('/billSale/currentBillInfo', service.isLogin, async (req, res) => {
     try {
         const BillSaleDetailModel = require('../models/BillSaleDetailModel');
         const ProductModel = require('../models/ProductModel');
 
+        // กำหนดความสัมพันธ์ระหว่างโมเดล
         BillSaleModel.hasMany(BillSaleDetailModel);
         BillSaleDetailModel.belongsTo(ProductModel);
 
+        // ดึงข้อมูลบิลปัจจุบันพร้อมรายละเอียดสินค้า
         const results = await BillSaleModel.findOne({
             where: {
                 status: 'open',
@@ -200,6 +137,7 @@ app.get('/billSale/currentBillInfo', service.isLogin, async (req, res) => {
 // API สำหรับลบรายการสินค้าในบิล
 app.delete('/billSale/deleteItem/:id', service.isLogin, async (req, res) => {
     try {
+        // ลบรายการสินค้าตาม ID
         await BillSaleDetailModel.destroy({
             where: {
                 id: req.params.id
@@ -212,7 +150,7 @@ app.delete('/billSale/deleteItem/:id', service.isLogin, async (req, res) => {
     }
 });
 
-// API สำหรับล้างตะกร้า
+// API สำหรับล้างตะกร้าสินค้าทั้งหมด
 app.delete('/billSale/clearCart/:id', service.isLogin, async (req, res) => {
     try {
         // ตรวจสอบว่ามีบิลนี้อยู่จริงหรือไม่
@@ -249,6 +187,7 @@ app.delete('/billSale/clearCart/:id', service.isLogin, async (req, res) => {
 // API สำหรับอัปเดตจำนวนสินค้าในบิล
 app.post('/billSale/updateQty', service.isLogin, async (req, res) => {
     try {
+        // อัปเดตจำนวนสินค้า
         await BillSaleDetailModel.update({
             qty: req.body.qty
         }, {
@@ -271,7 +210,7 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
         const currentTime = getThaiDateTime();
         const vatRate = 0.07; // VAT 7%
 
-        // Update bill with customerId
+        // อัปเดตข้อมูลบิล
         const updatedBill = await BillSaleModel.update({
             status: 'pay',
             paymentMethod: method,
@@ -281,7 +220,7 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
             customerId: customerId,
             createdAt: currentTime,
             updatedAt: currentTime,
-            description: description // บันทึกข้อมูลการใช้แต้มลงในฐานข้อมูล
+            description: description
         }, {
             where: {
                 status: 'open',
@@ -289,22 +228,22 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
             }
         });
 
-        // อัพเดท billSaleDetail
+        // อัปเดตรายละเอียดบิล
         for (const detail of billSaleDetails) {
             const subtotal = detail.qty * detail.price;
-            const totalWithVat = subtotal * (1 + vatRate); // คำนวณราคารวม VAT
+            const totalWithVat = subtotal * (1 + vatRate);
 
             await BillSaleDetailModel.update({
                 customerId: customerId || null,
                 pointsEarned: customerId ? Math.floor(totalWithVat / 100) : 0,
-                totalprice: totalWithVat, // บันทึกเฉพาะราคารวม VAT
+                totalprice: totalWithVat,
                 updatedAt: currentTime
             }, {
                 where: { id: detail.id }
             });
         }
 
-        // อัพเดทแต้มลูกค้าและ billSaleDetail
+        // อัปเดตแต้มลูกค้า
         if (customerId) {
             const customer = await CustomerModel.findByPk(customerId);
             if (customer) {
@@ -317,7 +256,7 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
             }
         }
 
-        // อัพเดท billSaleDetail พร้อมคำนวณ VAT
+        // อัปเดตรายละเอียดบิลพร้อมคำนวณ VAT
         for (const detail of billSaleDetails) {
             const subtotal = detail.qty * detail.price;
             const itemVat = subtotal * vatRate;
@@ -326,8 +265,8 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
             await BillSaleDetailModel.update({
                 customerId: customerId || null,
                 pointsEarned: customerId ? Math.floor(totalWithVat / 100) : 0,
-                totalprice: totalWithVat, // บันทึกราคารวม VAT
-                vatAmount: itemVat, // บันทึก VAT แยกต่างหาก
+                totalprice: totalWithVat,
+                vatAmount: itemVat,
                 updatedAt: currentTime
             }, {
                 where: { id: detail.id }
@@ -349,15 +288,17 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
     }
 });
 
-// API สำหรับบิลล่าสุด
+// API สำหรับดึงบิลล่าสุด
 app.get('/billSale/lastBill', service.isLogin, async (req, res) => {
     try {
         const BillSaleDetailModel = require('../models/BillSaleDetailModel');
         const ProductModel = require('../models/ProductModel');
 
+        // กำหนดความสัมพันธ์ระหว่างโมเดล
         BillSaleModel.hasMany(BillSaleDetailModel);
         BillSaleDetailModel.belongsTo(ProductModel);
 
+        // ดึงข้อมูลบิลล่าสุด
         const result = await BillSaleModel.findAll({
             where: {
                 status: 'pay',
@@ -382,17 +323,17 @@ app.get('/billSale/lastBill', service.isLogin, async (req, res) => {
     }
 });
 
-
-
-// API สำหรับรายการบิลทั้งหมด
+// API สำหรับดึงรายการบิลทั้งหมด
 app.get('/billSale/list', service.isLogin, async (req, res) => {
     const BillSaleDetailModel = require('../models/BillSaleDetailModel');
     const ProductModel = require('../models/ProductModel');
 
+    // กำหนดความสัมพันธ์ระหว่างโมเดล
     BillSaleModel.hasMany(BillSaleDetailModel);
     BillSaleDetailModel.belongsTo(ProductModel);
 
     try {
+        // ดึงรายการบิลทั้งหมด
         const results = await BillSaleModel.findAll({
             attributes: ['id', 'createdAt', 'paymentMethod', 'status', 'userId','totalAmount', 'description'],
             order: [['id', 'DESC']],
@@ -415,7 +356,7 @@ app.get('/billSale/list', service.isLogin, async (req, res) => {
     }
 });
 
-// API สำหรับรายการบิลตามปีและเดือน
+// API สำหรับดึงรายการบิลตามปีและเดือน
 app.get('/billSale/listByYearAndMonth/:year/:month', service.isLogin, async (req, res) => {
     try {
         let arr = [];
@@ -428,10 +369,11 @@ app.get('/billSale/listByYearAndMonth/:year/:month', service.isLogin, async (req
         const BillSaleDetailModel = require('../models/BillSaleDetailModel');
         const ProductModel = require('../models/ProductModel');
 
+        // กำหนดความสัมพันธ์ระหว่างโมเดล
         BillSaleModel.hasMany(BillSaleDetailModel);
         BillSaleDetailModel.belongsTo(ProductModel);
 
-        // สร้าง array สำหรับทุกวันในเดือน
+        // ดึงข้อมูลบิลตามวันในเดือน
         for (let i = 1; i <= daysInMonth; i++) {
             let startDate = new Date(y, m-1, i, 0, 0, 0);
             let endDate = new Date(y, m-1, i, 23, 59, 59);
@@ -452,6 +394,7 @@ app.get('/billSale/listByYearAndMonth/:year/:month', service.isLogin, async (req
                 }
             });
 
+            // คำนวณยอดขายรวมของแต่ละวัน
             let sum = 0;
             if (results.length > 0) {
                 for (let result of results) {
@@ -461,7 +404,7 @@ app.get('/billSale/listByYearAndMonth/:year/:month', service.isLogin, async (req
                 }
             }
 
-            // เพิ่มข้อมูลทุกวัน แม้จะไม่มียอดขาย
+            // เพิ่มข้อมูลยอดขายรายวัน
             arr.push({
                 day: i,
                 date: startDate,

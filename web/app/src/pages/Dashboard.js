@@ -255,19 +255,19 @@ function Dashboard() {
     navigate('/reportStock');
   };
 
-  const renderTopSellingContent = () => {
-    if (topSellingViewType === 'products') {
-      const totalAmount = topSellingProducts.reduce((sum, item) =>
-        sum + parseFloat(item.totalAmount || 0), 0);
+const renderTopSellingContent = () => {
+  if (topSellingViewType === 'products') {
+    const totalAmount = topSellingProducts.reduce((sum, item) =>
+      sum + parseFloat(item.totalAmount || 0), 0);
 
-      return topSellingProducts.length > 0 ? (
+    return topSellingProducts.length > 0 ? (
         <div className="top-selling-container p-2">
           <div className="row">
             <div className="col-12">
-              {topSellingProducts.map((item, index) => {
+            {topSellingProducts.map((item, index) => {
                 const productName = item.productName || 'สินค้าไม่มีชื่อ';
-                const amount = parseFloat(item.totalAmount || 0);
-                const actualQty = parseInt(item.totalQty || 0);
+              const amount = parseFloat(item.totalAmount || 0);
+              const actualQty = parseInt(item.totalQty || 0);
                 
                 let percentage = "0.00";
                 if (totalAmount > 0) {
@@ -278,10 +278,10 @@ function Dashboard() {
                 
                 // Calculate width for progress bar based on percentage
                 const barWidth = totalAmount > 0 ? `${Math.max(percentage, 5)}%` : '5%';
-                
-                return (
-                  <div 
-                    key={index} 
+              
+              return (
+                <div
+                  key={index}
                     className="mb-3 position-relative product-card"
                     style={{
                       borderRadius: '12px',
@@ -294,7 +294,7 @@ function Dashboard() {
                   >
                     {/* Rank badge */}
                     <div 
-                      style={{
+                  style={{
                         position: 'absolute',
                         top: '0px',
                         left: '0px',
@@ -337,25 +337,25 @@ function Dashboard() {
                           aria-valuemin="0" 
                           aria-valuemax="100"
                         ></div>
-                      </div>
-                    </div>
                   </div>
-                );
-              })}
-            </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      ) : (
-        <div className="alert alert-info text-center">
-          <i className="fas fa-question-circle fa-2x mb-2"></i>
-          <p>ไม่มีข้อมูลสินค้าขายดี</p>
-        </div>
-      );
-    } else {
-      const totalAmount = topSellingCategories.reduce((sum, item) =>
-        sum + parseFloat(item.totalAmount || 0), 0);
+      </div>
+    ) : (
+      <div className="alert alert-info text-center">
+        <i className="fas fa-question-circle fa-2x mb-2"></i>
+        <p>ไม่มีข้อมูลสินค้าขายดี</p>
+      </div>
+    );
+  } else {
+    const totalAmount = topSellingCategories.reduce((sum, item) =>
+      sum + parseFloat(item.totalAmount || 0), 0);
 
-      return topSellingCategories.length > 0 ? (
+    return topSellingCategories.length > 0 ? (
         <div className="top-selling-container p-2">
           <div className="row">
             <div className="col-12">
@@ -373,10 +373,10 @@ function Dashboard() {
                 
                 // Calculate width for progress bar
                 const barWidth = totalAmount > 0 ? `${Math.max(percentage, 5)}%` : '5%';
-                
-                return (
-                  <div 
-                    key={index} 
+              
+              return (
+                <div
+                  key={index}
                     className="mb-3 position-relative category-card"
                     style={{
                       borderRadius: '12px',
@@ -389,7 +389,7 @@ function Dashboard() {
                   >
                     {/* Rank badge */}
                     <div 
-                      style={{
+                  style={{
                         position: 'absolute',
                         top: '0px',
                         left: '0px',
@@ -432,26 +432,26 @@ function Dashboard() {
                           aria-valuemin="0" 
                           aria-valuemax="100"
                         ></div>
-                      </div>
-                    </div>
                   </div>
-                );
-              })}
-            </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      ) : (
+      </div>
+    ) : (
         <div className="text-center w-100 d-flex flex-column align-items-center justify-content-center" style={{ height: '100%' }}>
           <svg width="38" height="38" viewBox="0 0 24 24" fill="#8a94a6" style={{ marginBottom: 8 }}>
             <rect x="3" y="10" width="3" height="7"/><rect x="9" y="7" width="3" height="10"/><rect x="15" y="4" width="3" height="13"/>
           </svg>
           <div style={{ color: '#8a94a6', fontSize: 15, fontWeight: 500 }}>
-            ไม่มีข้อมูลหมวดหมู่ขายดี
+        ไม่มีข้อมูลหมวดหมู่ขายดี
           </div>
-        </div>
-      );
-    }
-  };
+      </div>
+    );
+  }
+};
 
   const renderPaymentStats = () => {
     const total = paymentStats.reduce((sum, stat) => sum + parseFloat(stat.total || 0), 0);
@@ -467,7 +467,7 @@ function Dashboard() {
       <div className="p-3">
         <div className="mb-3 text-center">
           <h5 className="text-muted">ยอดรวมทั้งหมด: ฿{total.toLocaleString('th-TH')}</h5>
-        </div>
+          </div>
         <div className="payment-methods-list">
           {paymentStats.length > 0 ? (
             paymentStats.map((stat, index) => {
@@ -476,8 +476,8 @@ function Dashboard() {
               const color = paymentColors[stat.paymentMethod] || `hsl(${index * 60}, 70%, 60%)`;
               
               return (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="payment-method-item mb-3 p-3"
                   style={{
                     backgroundColor: 'white',
@@ -494,7 +494,7 @@ function Dashboard() {
                     <div className="text-end">
                       <h5 style={{ color: '#0d6efd', fontWeight: 'bold' }}>฿{amount.toLocaleString('th-TH')}</h5>
                       <small className="text-muted">{percentage}%</small>
-                    </div>
+                  </div>
                   </div>
                 </div>
               );
@@ -503,7 +503,7 @@ function Dashboard() {
             <div className="text-center p-5">
               <i className="fas fa-random mb-2" style={{ fontSize: '2.8rem', color: '#bdbdbd' }}></i>
               <div className="text-muted" style={{ fontSize: '1.1rem' }}>ไม่มีข้อมูลวิธีการชำระเงินในวันนี้</div>
-            </div>
+          </div>
           )}
         </div>
       </div>
@@ -616,8 +616,8 @@ function Dashboard() {
                   }}>
                 <i className="fa fa-trophy me-2 text-warning"></i>
                 <div style={{ position: 'relative', marginRight: 8 }}>
-                  <select
-                    value={topSellingViewType}
+                    <select
+                      value={topSellingViewType}
                     onChange={e => setTopSellingViewType(e.target.value)}
                     style={{
                       appearance: 'none',
@@ -654,7 +654,7 @@ function Dashboard() {
                     <i className="fas fa-chart-bar fa-3x mb-3 text-muted"></i>
                     <div style={{ color: '#8a94a6', fontSize: 15, fontWeight: 500 }}>
                       ไม่มีข้อมูล{topSellingViewType === 'products' ? 'สินค้าขายดี' : 'หมวดหมู่ขายดี'}
-                    </div>
+                        </div>
                   </div>
                 ) : (
                   renderTopSellingContent()

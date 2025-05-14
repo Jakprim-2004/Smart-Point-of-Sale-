@@ -5,7 +5,7 @@ require("dotenv").config();
 const service = require("./Service");
 const CategoryModel = require("../models/CategoryModel");
 
-// Add this new endpoint to get all categories
+// API สำหรับดึงหมวดหมู่สินค้าทั้งหมด
 app.get("/category/list", async (req, res) => {
   try {
     const userId = await service.getMemberId(req);
@@ -19,7 +19,7 @@ app.get("/category/list", async (req, res) => {
   }
 });
 
-// Get category by ID 
+// API สำหรับดึงหมวดหมู่สินค้าตาม ID
 app.get("/category/:id", async (req, res) => {
     try {
         const userId = await service.getMemberId(req);
@@ -33,7 +33,7 @@ app.get("/category/:id", async (req, res) => {
     }
 });
 
-// Create new category
+// API สำหรับเพิ่มหมวดหมู่สินค้าใหม่
 app.post("/category/insert", async (req, res) => {
     try {
         const userId = await service.getMemberId(req);
@@ -47,7 +47,7 @@ app.post("/category/insert", async (req, res) => {
     }
 });
 
-// Update category
+// API สำหรับอัปเดตข้อมูลหมวดหมู่สินค้า
 app.post("/category/update/:id", async (req, res) => {
     try {
         const userId = await service.getMemberId(req);
@@ -66,7 +66,7 @@ app.post("/category/update/:id", async (req, res) => {
     }
 });
 
-// Delete category
+// API สำหรับลบหมวดหมู่สินค้า
 app.delete("/category/delete/:id", async (req, res) => {
     try {
         const userId = await service.getMemberId(req);

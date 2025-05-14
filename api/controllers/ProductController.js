@@ -4,6 +4,7 @@ const ProductModel = require("../models/ProductModel");
 const Service = require("./Service");
 const { Op } = require('sequelize'); 
 
+// API สำหรับเพิ่มสินค้าใหม่
 app.post("/product/insert", Service.isLogin, async (req, res) => {
   try {
     let payload = req.body;
@@ -18,6 +19,7 @@ app.post("/product/insert", Service.isLogin, async (req, res) => {
   }
 });
 
+// API สำหรับดึงรายการสินค้าทั้งหมด
 app.get("/product/list", Service.isLogin, async (req, res) => {
   try {
     const results = await ProductModel.findAll({
@@ -33,6 +35,7 @@ app.get("/product/list", Service.isLogin, async (req, res) => {
   }
 });
 
+// API สำหรับลบสินค้าตาม ID
 app.delete("/product/delete/:id", Service.isLogin, async (req, res) => {
   try {
     await ProductModel.destroy({
@@ -47,6 +50,8 @@ app.delete("/product/delete/:id", Service.isLogin, async (req, res) => {
     res.send({ message: e.message });
   }
 });
+
+// API สำหรับอัปเดตข้อมูลสินค้า
 app.post("/product/update", Service.isLogin, async (req, res) => {
   try {
     let payload = req.body;
@@ -63,6 +68,8 @@ app.post("/product/update", Service.isLogin, async (req, res) => {
     res.send({ message: e.message });
   }
 });
+
+// API สำหรับดึงรายการสินค้าพร้อมรูปภาพหลักสำหรับหน้าร้าน
 app.get("/product/listForSale", Service.isLogin, async (req, res) => {
   const ProductImageModel = require("../models/ProductImageModel");
 
@@ -89,8 +96,7 @@ app.get("/product/listForSale", Service.isLogin, async (req, res) => {
   }
 });
 
-
-
+// API สำหรับตรวจสอบบาร์โค้ดซ้ำ
 app.get('/product/checkBarcode/:barcode', Service.isLogin, async (req, res) => {
   try {
     const { barcode } = req.params;
@@ -114,4 +120,5 @@ app.get('/product/checkBarcode/:barcode', Service.isLogin, async (req, res) => {
     });
   }
 });
+
 module.exports = app;

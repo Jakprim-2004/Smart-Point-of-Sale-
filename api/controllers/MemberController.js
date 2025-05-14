@@ -80,7 +80,7 @@ app.post("/member/register", async (req, res) => {
       phone: req.body.phone,
       firstName: req.body.firstName,
       lastName: req.body.lastName,
-      pass: encryptedPassword, // Store encrypted password
+      pass: encryptedPassword, 
     };
 
     const member = await MemberModel.create(payload);
