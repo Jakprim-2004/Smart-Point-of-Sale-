@@ -49,7 +49,6 @@ function Sale() {
     fetchData();
     openBill();
     fetchBillSaleDetail();
-    fetchBillLimitInfo();
     loadCustomers();
     
     // โหลดรายการบิลที่พักไว้จาก localStorage
@@ -502,28 +501,6 @@ function Sale() {
     const method = e.target.value;
     setPaymentMethod(method);
     setShowQR(method === "PromptPay");
-  };
-
-  const fetchBillLimitInfo = async () => {
-    try {
-      const res = await axios.get(
-        config.api_path + "/member/info",
-        config.headers()
-      );
-      if (res.data.message === "success") {
-        setBillAmount(res.data.result.package.bill_amount);
-
-        const billsRes = await axios.get(
-          config.api_path + "/package/countBill",
-          config.headers()
-        );
-        if (billsRes.data.totalBill !== undefined) {
-          setTotalBill(billsRes.data.totalBill);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching bill limit info:", error);
-    }
   };
 
   const loadCustomers = async () => {

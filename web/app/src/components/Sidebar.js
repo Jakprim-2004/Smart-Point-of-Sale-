@@ -16,13 +16,9 @@ import service from "../assets/service.gif";
 
 const Sidebar = forwardRef((props, sidebarRef) => {
   const [firstName, setfirstName] = useState();
-  const [packageName, setPackageName] = useState();
-  const [packages, setPackages] = useState([]);
   const [totalBill, setTotalBill] = useState(0);
   const [billAmount, setBillAmount] = useState(0);
   const [banks, setBanks] = useState([]);
-  const [choosePackage, setChoosePackage] = useState({});
-  const [isPackageSubscribed, setIsPackageSubscribed] = useState(false);
   const [dropdownStates, setDropdownStates] = useState({
     reports: false,
     documents: false,
@@ -137,7 +133,6 @@ const Sidebar = forwardRef((props, sidebarRef) => {
         } else {
           setfirstName(res.data.result.firstName); // For owners, use firstName from member table
         }
-        setPackageName(res.data.result.package.name);
         setBillAmount(res.data.result.package.bill_amount);
       }
     } catch (error) {
@@ -154,65 +149,25 @@ const Sidebar = forwardRef((props, sidebarRef) => {
   const fetchPackages = async () => {
     try {
       await axios.get(config.api_path + "/package/list").then((res) => {
-        if (res.data.results.length > 0) {
-          setPackages(res.data.results);
-        }
+        setPackages(res.data.results);
       });
-    } catch (e) {
-      Swal.fire({
-        title: "error",
-        text: e.message,
-        icon: "error",
-      });
+    } catch (error) {
+      console.error("Error fetching packages:", error);
     }
   };
 
-  
-
-  
-
-
-
   const handleChangePackage = async () => {
     if (isPackageSubscribed) {
-      Swal.fire({
-        title: "ไม่สามารถสมัครได้",
-        text: "คุณได้สมัครแพคเกจแล้ว",
-        icon: "warning",
-      });
-      return;
-    }
-
-    try {
-      axios
-        .get(
+      try {
+        await axios.post(
           config.api_path + "/package/changePackage/" + choosePackage.id,
+          {},
           config.headers()
-        )
-        .then((res) => {
-          if (res.data.message === "success") {
-            Swal.fire({
-              title: "ส่งข้อมูล",
-              text: "ส่งข้อมูลการขอเปลี่ยนแพคเกจของคุณแล้ว",
-              icon: "success",
-              timer: 2000,
-            });
-
-            setIsPackageSubscribed(true);
-
-            const btns = document.getElementsByClassName("btnClose");
-            for (let i = 0; i < btns.length; i++) btns[i].click();
-          }
-        })
-        .catch((err) => {
-          throw err.response.data;
-        });
-    } catch (e) {
-      Swal.fire({
-        title: "error",
-        text: e.message,
-        icon: "error",
-      });
+        );
+        setIsPackageSubscribed(true);
+      } catch (error) {
+        console.error("Error changing package:", error);
+      }
     }
   };
 
@@ -642,56 +597,6 @@ const Sidebar = forwardRef((props, sidebarRef) => {
       {isOwner && (
         <>
           <Modal
-            show={showPackageModal}
-            onHide={() => setShowPackageModal(false)}
-            title="เลือกแพคเกจที่ต้องการ"
-            modalSize="modal-lg"
-          >
-            <div className="row g-4">
-              {packages.length > 0
-                ? packages.map((item) => (
-                  <div className="col-4" key={item.id}>
-                    <div
-                      className="card h-100 shadow-sm hover-shadow"
-                      style={{
-                        borderRadius: "12px",
-                        transition: "all 0.3s ease",
-                        cursor: "pointer",
-                        "&:hover": {
-                          transform: "translateY(-5px)",
-                          boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
-                        },
-                      }}
-                    >
-                      <div className="card-body d-flex flex-column">
-                        <div className="flex-grow-1">
-                          <div className="h3">{item.name}</div>
-
-                          <div className="h4 mt-3 text-primary">
-                            <strong>
-                              {isNaN(item.price)
-                                ? item.price
-                                : parseInt(item.price).toLocaleString(
-                                  "th-TH"
-                                )}{" "}
-                              .-
-                            </strong>
-                            <span className="ms-2">/ เดือน</span>
-                          </div>
-
-                     
-                        </div>
-
-                       
-                      </div>
-                    </div>
-                  </div>
-                ))
-                : ""}
-            </div>
-          </Modal>
-
-          <Modal 
             show={showBankModal}
             onHide={() => setShowBankModal(false)}
             title="ช่องทางชำระเงิน" 

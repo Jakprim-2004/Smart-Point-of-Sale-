@@ -5,7 +5,6 @@ const app = express();
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const service = require("./Service");
-const PackageModel = require("../models/PackageModel");
 const { encryptPassword, comparePassword } = require('../utils/encryption');
 
 app.post("/member/check-duplicate", async (req, res) => {
@@ -122,7 +121,6 @@ app.get("/member/info", service.isLogin, async (req, res, next) => {
 
 app.get("/member/list", service.isLogin, async (req, res) => {
   try {
-    const PackageModel = require("../models/PackageModel");
     MemberModel.belongsTo(PackageModel, { foreignKey: 'packageId' });
 
     const results = await MemberModel.findAll({

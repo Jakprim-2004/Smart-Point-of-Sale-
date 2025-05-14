@@ -5,15 +5,16 @@ import Swal from 'sweetalert2';
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaEnvelope, FaPhone, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 
-
-function Package() {
+function Register() {
+    const [formData, setFormData] = useState({
+        username: '',
+        password: '',
+        name: '',
+        email: '',
+        phone: '',
+        address: ''
+    });
     const [packages, setPackages] = useState([]);
-    const [phone, setPhone] = useState('');
-    const [pass, setPass] = useState('');
-    const [confirmPass, setConfirmPass] = useState('');
-    const [email, setEmail] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordMatch, setPasswordMatch] = useState(true);
@@ -22,7 +23,6 @@ function Package() {
 
     useEffect(() => {
         fetchData();
-       
     }, []);
 
     const fetchData = useCallback(async () => {
@@ -37,10 +37,6 @@ function Package() {
         }
     }, []);
 
-   
-
-    
-
     const validateEmail = (email) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
@@ -49,7 +45,7 @@ function Package() {
     const handlePhoneChange = (e) => {
         const value = e.target.value.replace(/\D/g, ''); 
         if (value.length <= 10) {
-            setPhone(value);
+            setFormData(prev => ({ ...prev, phone: value }));
         }
     };
 
@@ -71,14 +67,14 @@ function Package() {
 
     const handlePasswordChange = (e) => {
         const newPassword = e.target.value;
-        setPass(newPassword);
-        setPasswordMatch(newPassword === confirmPass);
+        setFormData(prev => ({ ...prev, password: newPassword }));
+        setPasswordMatch(newPassword === formData.confirmPassword);
     };
 
     const handleConfirmPasswordChange = (e) => {
         const newConfirmPass = e.target.value;
-        setConfirmPass(newConfirmPass);
-        setPasswordMatch(pass === newConfirmPass);
+        setFormData(prev => ({ ...prev, confirmPassword: newConfirmPass }));
+        setPasswordMatch(formData.password === newConfirmPass);
     };
 
     const togglePasswordVisibility = () => {
@@ -100,12 +96,11 @@ function Package() {
         }
     };
 
-    const handleRegister = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-
         try {
             // Check email duplicate
-            const emailCheck = await checkDuplicate('email', email);
+            const emailCheck = await checkDuplicate('email', formData.email);
             if (emailCheck.isDuplicate) {
                 Swal.fire({
                     title: 'Error',
@@ -116,7 +111,7 @@ function Package() {
             }
 
             // Check phone duplicate
-            const phoneCheck = await checkDuplicate('phone', phone);
+            const phoneCheck = await checkDuplicate('phone', formData.phone);
             if (phoneCheck.isDuplicate) {
                 Swal.fire({
                     title: 'Error',
@@ -127,7 +122,7 @@ function Package() {
             }
 
             // Continue with existing validation
-            if (!validateEmail(email)) {
+            if (!validateEmail(formData.email)) {
                 Swal.fire({
                     title: 'Error',
                     text: 'กรุณากรอกอีเมลให้ถูกต้อง',
@@ -136,7 +131,7 @@ function Package() {
                 return;
             }
 
-            if (phone.length !== 10) {
+            if (formData.phone.length !== 10) {
                 Swal.fire({
                     title: 'Error',
                     text: 'กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก',
@@ -145,7 +140,7 @@ function Package() {
                 return;
             }
 
-            const passwordValidation = validatePassword(pass);
+            const passwordValidation = validatePassword(formData.password);
             if (!passwordValidation.isValid) {
                 Swal.fire({
                     title: 'Error',
@@ -155,7 +150,7 @@ function Package() {
                 return;
             }
 
-            if (pass !== confirmPass) {
+            if (formData.password !== formData.confirmPassword) {
                 Swal.fire({
                     title: 'Error',
                     text: 'กรุณากรอกรหัสผ่านให้ตรงกัน',
@@ -164,7 +159,24 @@ function Package() {
                 return;
             }
 
-            handleConfirmation.call(this);
+            const response = await axios.post(config.api_path + '/member/register', {
+                username: formData.username,
+                password: formData.password,
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                address: formData.address
+            });
+
+            if (response.data.message === 'success') {
+                Swal.fire({
+                    title: 'บันทึกข้อมูล',
+                    text: 'บันทึกข้อมูลการสมัครเรียบร้อยแล้ว',
+                    icon: 'success',
+                    timer: 2000
+                });
+                navigate('/');
+            }
         } catch (error) {
             Swal.fire({
                 title: 'Error',
@@ -174,54 +186,12 @@ function Package() {
         }
     };
 
-    const handleConfirmation = function() {
-        Swal.fire({
-            title: 'ยืนยันการสมัคร',
-            text: 'โปรดยืนยันการสมัครใช้บริการ package ของเรา',
-            icon: 'question',
-            showCancelButton: true,
-            showConfirmButton: true
-        }).then(res => {
-            if (res.isConfirmed) {
-                const payload = {
-                    packageId: 1, // Set packageId to 1 automatically
-                    email: email,
-                    phone: phone, 
-                    password: pass,
-                    firstName: firstName,
-                    lastName: lastName,
-                    status: 'active'
-                };
-
-                axios.post(config.api_path + '/member/register', payload)
-                    .then(res => {
-                        if (res.data.message === 'success') {
-                            Swal.fire({
-                                title: 'บันทึกข้อมูล',
-                                text: 'บันทึกข้อมูลการสมัครเรียบร้อยแล้ว',
-                                icon: 'success',
-                                timer: 2000
-                            });
-                            navigate('/');
-                        }
-                    })
-                    .catch(err => {
-                        Swal.fire({
-                            title: 'Error',
-                            text: err.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล',
-                            icon: 'error'
-                        });
-                    });
-            }
-        });
-    };
-
     return (
         <div className="container py-5">
             <div className="card shadow-lg rounded-3 border-0">
                 <div className="card-body p-4">
                     <h2 className="text-center mb-4 text-primary">สมัครสมาชิก</h2>
-                    <form onSubmit={handleRegister} className="row g-4">
+                    <form onSubmit={handleSubmit} className="row g-4">
                         {/* Basic Information Section */}
                         <div className="col-12">
                             <h5 className="text-secondary mb-3">ข้อมูลพื้นฐาน</h5>
@@ -229,7 +199,7 @@ function Package() {
                                 <div className="col-md-6">
                                     <div className="input-group">
                                         <span className="input-group-text bg-light"><FaEnvelope /></span>
-                                        <input type="email" className="form-control" placeholder="อีเมล" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                                        <input type="email" className="form-control" placeholder="อีเมล" value={formData.email} onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} required />
                                     </div>
                                 </div>
                                 <div className="col-md-6">
@@ -238,12 +208,11 @@ function Package() {
                                         <input type="tel" 
                                             className="form-control" 
                                             placeholder="เบอร์โทรศัพท์" 
-                                            value={phone} 
+                                            value={formData.phone} 
                                             onChange={handlePhoneChange}
                                             required />
                                     </div>
                                 </div>
-                               
                             </div>
                         </div>
 
@@ -258,7 +227,7 @@ function Package() {
                                             type={showPassword ? "text" : "password"}
                                             className="form-control" 
                                             placeholder="รหัสผ่าน (8+ ตัว, A-Z 1-2 ตัว, อักขระพิเศษเช่น !@#$%^&*)" 
-                                            value={pass} 
+                                            value={formData.password} 
                                             onChange={handlePasswordChange}
                                             required 
                                         />
@@ -276,9 +245,9 @@ function Package() {
                                         <span className="input-group-text bg-light"><FaLock /></span>
                                         <input 
                                             type={showConfirmPassword ? "text" : "password"}
-                                            className={`form-control ${confirmPass && !passwordMatch ? 'is-invalid' : ''}`}
+                                            className={`form-control ${formData.confirmPassword && !passwordMatch ? 'is-invalid' : ''}`}
                                             placeholder="ยืนยันรหัสผ่าน" 
-                                            value={confirmPass} 
+                                            value={formData.confirmPassword} 
                                             onChange={handleConfirmPasswordChange}
                                             required 
                                         />
@@ -290,7 +259,7 @@ function Package() {
                                             {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                                         </button>
                                     </div>
-                                    {confirmPass && !passwordMatch && (
+                                    {formData.confirmPassword && !passwordMatch && (
                                         <div className="invalid-feedback d-block">
                                             รหัสผ่านไม่ตรงกัน
                                         </div>
@@ -306,20 +275,30 @@ function Package() {
                                 <div className="col-md-6">
                                     <div className="input-group">
                                         <span className="input-group-text bg-light"><FaUser /></span>
-                                        <input type="text" className="form-control" placeholder="ชื่อ" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                                        <input type="text" className="form-control" placeholder="ชื่อ" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} required />
                                     </div>
                                 </div>
                                 <div className="col-md-6">
                                     <div className="input-group">
                                         <span className="input-group-text bg-light"><FaUser /></span>
-                                        <input type="text" className="form-control" placeholder="นามสกุล" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                                        <input type="text" className="form-control" placeholder="นามสกุล" value={formData.lastName} onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))} required />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Address Section */}
-                       
+                        <div className="col-12">
+                            <h5 className="text-secondary mb-3">ที่อยู่</h5>
+                            <div className="row g-3">
+                                <div className="col-md-12">
+                                    <div className="input-group">
+                                        <span className="input-group-text bg-light"><FaUser /></span>
+                                        <input type="text" className="form-control" placeholder="ที่อยู่" value={formData.address} onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))} required />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div className="col-12 text-center mt-4">
                             <button type="submit" className="btn btn-primary btn-lg px-5 rounded-pill">
@@ -333,4 +312,4 @@ function Package() {
     );
 }
 
-export default Package;
+export default Register;

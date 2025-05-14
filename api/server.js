@@ -17,7 +17,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use("/uploads", express.static("uploads"));
 
-app.use(require("./controllers/PackageController"));
 app.use(require("./controllers/MemberController"));
 app.use(require("./controllers/ProductController"));
 app.use(require("./controllers/ProductImageController"));

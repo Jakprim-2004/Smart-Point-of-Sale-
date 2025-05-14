@@ -45,17 +45,6 @@ MemberModel.hasMany(UserModel, {
     onUpdate: 'CASCADE'
 });
 
-// Add Member and Package association
-const PackageModel = require('./PackageModel');
-MemberModel.belongsTo(PackageModel, { 
-    foreignKey: 'packageId',
-    onDelete: 'SET NULL',
-    onUpdate: 'CASCADE'
-});
-PackageModel.hasMany(MemberModel, { 
-    foreignKey: 'packageId'
-});
-
 // Add Customer and BillSale associations
 BillSaleModel.belongsTo(CustomerModel, { foreignKey: 'customerId' });
 CustomerModel.hasMany(BillSaleModel, { foreignKey: 'customerId' });

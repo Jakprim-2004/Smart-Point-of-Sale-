@@ -3,7 +3,6 @@ const app = express();
 const Service = require("./Service");
 const UserModel = require("../models/UserModel");
 const MemberModel = require("../models/MemberModel");
-const PackageModel = require("../models/PackageModel");
 const jwt = require("jsonwebtoken");
 
 // ดึงรายการผู้ใช้ทั้งหมด (เฉพาะเจ้าของร้านเท่านั้น)
@@ -124,15 +123,17 @@ app.post("/user/signin", async (req, res) => {
       process.env.secret
     );
 
+    const response = {
+      id: user.id,
+      username: user.username,
+      role: user.level,
+      member: user.member
+    };
+
     res.send({
       token: token,
       message: "success",
-      userInfo: {
-        name: user.name,
-        level: user.level,
-        store: member.firstName || member.name,
-        allowedActions: allowedActions[user.level] || [],
-      },
+      userInfo: response,
     });
   } catch (e) {
     console.error("ข้อผิดพลาดในการเข้าสู่ระบบ:", e);
@@ -145,20 +146,12 @@ app.get("/user/info", Service.isLogin, async (req, res) => {
   try {
     const employeeId = Service.getEmployeeId(req);
 
-    // ความสัมพันธ์ MemberModel และ PackageModel
-    MemberModel.belongsTo(PackageModel, { foreignKey: "packageId" });
-
     const user = await UserModel.findOne({
       where: { id: employeeId },
       include: [
         {
           model: MemberModel,
-          include: [
-            {
-              model: PackageModel,
-              attributes: ["name", "bill_amount"],
-            },
-          ],
+          attributes: ['name', 'email', 'phone', 'address']
         },
       ],
     });
@@ -171,7 +164,6 @@ app.get("/user/info", Service.isLogin, async (req, res) => {
       message: "success",
       result: {
         name: user.name,
-        package: user.member.package,
       },
     });
   } catch (e) {
