@@ -105,61 +105,88 @@ function Category() {
           <h4 className="mb-0">จัดการหมวดหมู่สินค้า</h4>
         </div>
         <div className="card-body">
-          <div className="d-flex mb-3">
+          <div className="d-flex flex-wrap align-items-center mb-3 gap-2">
             <button
-              className="btn btn-primary mr-2"
+              className="btn btn-primary d-flex align-items-center shadow-sm"
+              style={{ borderRadius: 20, fontWeight: 500, padding: '8px 20px' }}
               onClick={() => {
                 setCategory({});
                 setShowModal(true);
               }}
             >
-              <i className="fa fa-plus mr-2"></i>เพิ่มหมวดหมู่
+              <i className="fa fa-plus mr-2"></i> เพิ่มหมวดหมู่
             </button>
             <button
               onClick={handleBack}
-              className="btn btn-secondary"
-              title="เพิ่มรายการสินค้า"
+              className="btn btn-outline-primary d-flex align-items-center shadow-sm"
+              style={{ borderRadius: 20, fontWeight: 500, padding: '8px 20px' }}
+              title="กลับไปหน้าสินค้า"
             >
-            <i class=" me-2 fa fa-shopping-cart" aria-hidden="true"></i>เพิ่มรายการสินค้า
+              <i className="fa fa-shopping-cart mr-2"></i> กลับไปหน้าสินค้า
             </button>
           </div>
-          
           <div className="table-responsive">
-            <table className="table table-bordered table-hover">
-              <thead className="bg-light">
-                <tr>
-                  <th>ชื่อหมวดหมู่</th>
-                  <th width="150">จัดการ</th>
+            <table className="table table-hover table-bordered shadow-sm bg-white" style={{ borderRadius: "12px", overflow: "hidden" }}>
+              <thead className="thead-light">
+                <tr style={{ background: "#f1f3f6" }}>
+                  <th className="py-3">ชื่อหมวดหมู่</th>
+                  <th className="py-3" width="150">จัดการ</th>
                 </tr>
               </thead>
               <tbody>
-                {categories.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.name}</td>
-                    <td>
-                      <button
-                        className="btn btn-info btn-sm mr-2"
-                        onClick={() => {
-                          setCategory(item);
-                          setShowModal(true);
-                        }}
-                      >
-                        <i className="fa fa-edit"></i>
-                      </button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleDelete(item)}
-                      >
-                        <i className="fa fa-trash"></i>
-                      </button>
+                {categories.length > 0 ? (
+                  categories.map((item) => (
+                    <tr key={item.id}>
+                      <td style={{ fontWeight: 500 }}>{item.name}</td>
+                      <td>
+                        <button
+                          className="btn btn-info btn-sm mr-2"
+                          style={{ borderRadius: 8, fontWeight: 500 }}
+                          onClick={() => {
+                            setCategory(item);
+                            setShowModal(true);
+                          }}
+                          title="แก้ไข"
+                        >
+                          <i className="fa fa-edit"></i>
+                        </button>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          style={{ borderRadius: 8, fontWeight: 500 }}
+                          onClick={() => handleDelete(item)}
+                          title="ลบ"
+                        >
+                          <i className="fa fa-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="2" className="text-center text-muted py-4">
+                      <i className="fa fa-box-open mb-2 fa-2x"></i>
+                      <p>ไม่มีหมวดหมู่</p>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </div>
+      <style jsx>{`
+        .table th, .table td {
+          vertical-align: middle !important;
+        }
+        .table th {
+          color: #495057;
+          font-weight: 600;
+          background: #f1f3f6 !important;
+        }
+        .btn {
+          font-size: 15px;
+        }
+      `}</style>
 
       <Modal
         show={showModal}

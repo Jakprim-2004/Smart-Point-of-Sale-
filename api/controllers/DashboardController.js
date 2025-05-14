@@ -5,72 +5,70 @@ const BillSaleDetailModel = require('../models/BillSaleDetailModel');
 const ProductModel = require('../models/ProductModel');
 const BillSaleModel = require('../models/BillSaleModel');
 const sequelize = require('sequelize');
-const jwt = require("jsonwebtoken");
-const { Op } = require('sequelize');
 require("dotenv").config();
 const service = require("./Service");
 
 
-
-
 router.post("/reportSumSalePerMonth", async (req, res) => {
   try {
-    const { year, month, viewType } = req.body; 
-    const userId = service.getMemberId(req); 
-    let attributes, groupBy;
-
-    if (viewType === "daily") {
-      attributes = [
-        [sequelize.fn("EXTRACT", sequelize.literal("DAY FROM \"billSaleDetail\".\"createdAt\"")), "day"],
-        [sequelize.fn("SUM", sequelize.literal("\"product\".\"price\" * \"billSaleDetail\".\"qty\"")), "sum"],
-        [sequelize.fn("SUM", sequelize.literal("(\"product\".\"price\" - \"product\".\"cost\") * \"billSaleDetail\".\"qty\"")), "profit"],
-        [sequelize.fn("SUM", sequelize.literal("\"product\".\"cost\" * \"billSaleDetail\".\"qty\"")), "cost"]
-      ];
-      groupBy = [sequelize.fn("EXTRACT", sequelize.literal("DAY FROM \"billSaleDetail\".\"createdAt\""))];
-    } else if (viewType === "monthly") {
-      attributes = [
-        [sequelize.fn("EXTRACT", sequelize.literal("MONTH FROM \"billSaleDetail\".\"createdAt\"")), "month"],
-        [sequelize.fn("SUM", sequelize.literal("\"product\".\"price\" * \"billSaleDetail\".\"qty\"")), "sum"],
-        [sequelize.fn("SUM", sequelize.literal("(\"product\".\"price\" - \"product\".\"cost\") * \"billSaleDetail\".\"qty\"")), "profit"],
-        [sequelize.fn("SUM", sequelize.literal("\"product\".\"cost\" * \"billSaleDetail\".\"qty\"")), "cost"]
-      ];
-      groupBy = [sequelize.fn("EXTRACT", sequelize.literal("MONTH FROM \"billSaleDetail\".\"createdAt\""))];
-    }
-
-    const whereConditions = [
-      sequelize.where(sequelize.fn("EXTRACT", sequelize.literal("YEAR FROM \"billSaleDetail\".\"createdAt\"")), year),
-      { userId: userId }
+    const { year, month, viewType } = req.body;
+    const userId = service.getMemberId(req);
+    
+    // กำหนดค่าสำหรับมุมมองรายวันหรือรายเดือน
+    const dateUnit = viewType === "daily" ? "DAY" : "MONTH";
+    const dateAlias = viewType === "daily" ? "day" : "month";
+    
+    // สร้าง attributes ที่ต้องการเลือก
+    const attributes = [
+      [sequelize.fn("EXTRACT", sequelize.literal(`${dateUnit} FROM "billSaleDetail"."createdAt"`)), dateAlias],
+      [sequelize.fn("SUM", sequelize.literal(`"product"."price" * "billSaleDetail"."qty"`)), "sum"],
+      [sequelize.fn("SUM", sequelize.literal(`("product"."price" - "product"."cost") * "billSaleDetail"."qty"`)), "profit"],
+      [sequelize.fn("SUM", sequelize.literal(`"product"."cost" * "billSaleDetail"."qty"`)), "cost"]
     ];
-
+    
+    // สร้างเงื่อนไข where
+    const whereConditions = {
+      userId,
+      [sequelize.Op.and]: [
+        sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`YEAR FROM "billSaleDetail"."createdAt"`)), year)
+      ]
+    };
+    
+    // เพิ่มเงื่อนไขกรองตามเดือน (เฉพาะมุมมองรายวัน)
     if (viewType === "daily") {
-      whereConditions.push(sequelize.where(sequelize.fn("EXTRACT", sequelize.literal("MONTH FROM \"billSaleDetail\".\"createdAt\"")), month));
+      whereConditions[sequelize.Op.and].push(
+        sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`MONTH FROM "billSaleDetail"."createdAt"`)), month)
+      );
     }
-
+    
+    // ดึงข้อมูลจากฐานข้อมูล
     const results = await BillSaleDetailModel.findAll({
-      attributes: attributes,
-      where: {
-        [sequelize.Op.and]: whereConditions
-      },
-      group: groupBy,
+      attributes,
+      where: whereConditions,
+      group: [sequelize.fn("EXTRACT", sequelize.literal(`${dateUnit} FROM "billSaleDetail"."createdAt"`))],
       include: [{ 
         model: ProductModel, 
         as: 'product',  
         attributes: [] 
-      }] 
+      }],
+      order: [[sequelize.fn("EXTRACT", sequelize.literal(`${dateUnit} FROM "billSaleDetail"."createdAt"`)), 'ASC']]
     });
-
+    
+    // คำนวณผลรวม
     const totalSales = results.reduce((sum, item) => sum + parseFloat(item.dataValues.sum || 0), 0);
     const totalProfit = results.reduce((sum, item) => sum + parseFloat(item.dataValues.profit || 0), 0);
     const totalCost = results.reduce((sum, item) => sum + parseFloat(item.dataValues.cost || 0), 0);
-
+    
+    // ส่งผลลัพธ์กลับไป
     res.send({
       message: "success",
-      results: results,
+      results,
       totalSales,
       totalProfit,
       totalCost
     });
   } catch (error) {
+    console.error("Error in reportSumSalePerMonth:", error);
     res.status(500).send({ message: error.message });
   }
 });
@@ -133,8 +131,7 @@ router.get('/reportTopSellingProducts', async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    console.log("Fetching top selling products for userId:", userId);
-    console.log("Date range:", today, tomorrow);
+   
 
     // Get product info first
     const products = await ProductModel.findAll({
@@ -167,12 +164,12 @@ router.get('/reportTopSellingProducts', async (req, res) => {
     });
 
     if (paidBills.length === 0) {
-      console.log("No paid bills found for today");
+      
       return res.send({ message: 'success', results: [] });
     }
 
     const paidBillIds = paidBills.map(bill => bill.id);
-    console.log("Paid bill IDs:", paidBillIds);
+   
 
     // Get product quantities from billSaleDetails
     const salesDetails = await BillSaleDetailModel.findAll({
@@ -190,18 +187,17 @@ router.get('/reportTopSellingProducts', async (req, res) => {
       raw: true
     });
 
-    console.log("Sales details found:", salesDetails);
+   
 
     // Process results and manually calculate total amount if needed
     const results = salesDetails.map(item => {
       const product = productMap.get(item.productId);
       const totalQty = parseInt(item.totalQty || 0);
-      const price = product ? parseFloat(product.price || 0) : 0;
+      const price = product && product.price ? parseFloat(product.price) : 0;
       const totalAmount = totalQty * price;
-      
       return {
         productId: item.productId,
-        productName: product ? product.name : 'Unknown Product',
+        productName: product ? product.name : (item.productId ? `รหัสสินค้า ${item.productId}` : 'ไม่ระบุชื่อสินค้า'),
         totalQty: totalQty,
         totalAmount: totalAmount // Calculate even if not directly available
       };
@@ -212,7 +208,7 @@ router.get('/reportTopSellingProducts', async (req, res) => {
     
     // Take top 5
     const topResults = results.slice(0, 5);
-    console.log("Final processed results:", topResults);
+    
     
     res.send({ message: 'success', results: topResults });
   } catch (error) {
@@ -229,17 +225,18 @@ router.get('/reportTopSellingCategories', async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    // แก้ไขการคำนวณยอดจาก totalprice เป็นการคำนวณจาก price ของสินค้าและจำนวน
     const topSellingCategories = await BillSaleDetailModel.findAll({
       attributes: [
         [sequelize.col('product.category'), 'category'],
         [sequelize.fn('SUM', sequelize.col('qty')), 'totalQty'],
         [sequelize.fn('SUM', 
-          sequelize.literal('qty * totalprice') // Changed to use totalprice
+          sequelize.literal('qty * "billSaleDetail"."price"') // ใช้ price จาก billSaleDetail แทน totalprice
         ), 'totalAmount']
       ],
-      group: ['product.category', 'product.price'],  // เพิ่ม product.price ใน group by
-      having: sequelize.literal('SUM(qty) > 0'),  // เพิ่มเงื่อนไขให้แสดงเฉพาะที่มีการขาย
-      order: [[sequelize.fn('SUM', sequelize.literal('qty * totalprice')), 'DESC']], // Changed to use totalprice
+      group: ['product.category'],
+      having: sequelize.literal('SUM(qty) > 0'),
+      order: [[sequelize.fn('SUM', sequelize.literal('qty * "billSaleDetail"."price"')), 'DESC']],
       limit: 5,
       include: [{ 
         model: ProductModel, 
@@ -250,7 +247,7 @@ router.get('/reportTopSellingCategories', async (req, res) => {
         model: BillSaleModel,
         as: 'billSale',
         attributes: [],
-        where: { status: 'pay' } // เพิ่มเงื่อนไขกรองสถานะ pay
+        where: { status: 'pay' }
       }],
       where: { 
         userId: userId,
@@ -270,15 +267,15 @@ router.get('/reportTopSellingCategories', async (req, res) => {
       };
     });
 
-    // คำนวณ total amount รวมทั้งหมด
-    const totalAmount = topSellingCategories.reduce((sum, category) => 
-      sum + parseFloat(category.dataValues.totalAmount || 0), 0);
+    // คำนวณ total amount รวมทั้งหมดให้ถูกต้อง
+    const totalAmount = results.reduce((sum, category) => 
+      sum + parseFloat(category.totalAmount || 0), 0);
 
     // เพิ่มเปอร์เซ็นต์ให้แต่ละ category
-    const categoriesWithPercentage = topSellingCategories.map(category => ({
-      ...category.dataValues,
+    const categoriesWithPercentage = results.map(category => ({
+      ...category,
       percentage: totalAmount > 0 ? 
-        ((parseFloat(category.dataValues.totalAmount || 0) / totalAmount) * 100).toFixed(2) : 0
+        ((parseFloat(category.totalAmount || 0) / totalAmount) * 100).toFixed(2) : 0
     }));
 
     res.send({ 
@@ -286,6 +283,7 @@ router.get('/reportTopSellingCategories', async (req, res) => {
       results: categoriesWithPercentage 
     });
   } catch (error) {
+    console.error('Error in reportTopSellingCategories:', error);
     res.status(500).send({ message: error.message });
   }
 });
@@ -417,9 +415,7 @@ router.get('/todaySalesReport', async (req, res) => {
       hourlyData[hour].amount += parseFloat(bill.totalAmount || 0);
     });
 
-    // Log values for debugging
-    console.log(`Today's total: ${todayTotal}, Yesterday's total: ${yesterdayTotal}`);
-    console.log(`Growth rate: ${growthRate}%`);
+   
 
     const response = {
       message: 'success',
@@ -475,8 +471,7 @@ router.get('/paymentMethodStats', async (req, res) => {
       raw: true
     });
 
-    // Log the payment stats for debugging
-    console.log("Payment stats:", paymentStats);
+   
 
     res.send({ 
       message: 'success', 
@@ -488,7 +483,7 @@ router.get('/paymentMethodStats', async (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('Payment stats error:', error);
+    
     res.status(500).send({ message: error.message });
   }
 });

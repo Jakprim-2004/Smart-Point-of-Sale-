@@ -878,15 +878,7 @@ function Dashboard() {
               {!isSidebarCollapsed && <span className="ms-2">กราฟ</span>}
             </div>
             
-            <div 
-              style={menuItemStyle(activeSection === 'stock')}
-              onClick={() => setActiveSection('stock')}
-              className="d-flex align-items-center"
-              title="ยอดขาย"
-            >
-              <i className="fas fa-calendar-alt" style={iconStyle} />
-              {!isSidebarCollapsed && <span className="ms-2">ยอดขาย</span>}
-            </div>
+            
             
             <div 
               style={menuItemStyle(activeSection === 'timeline')}
@@ -1070,7 +1062,7 @@ function Dashboard() {
         {showSold && <th>จำนวนขาย</th>}
         {showRemaining && <th>จำนวนคงเหลือ</th>}
         <th>รวมเป็นเงิน</th>
-        <th>เฉลี่ยต่อชิ้น (ทุน/ขาย)</th>
+       
         <th>กำไรสุทธิ</th>
       </tr>
     </thead>

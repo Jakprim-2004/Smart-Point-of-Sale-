@@ -470,18 +470,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                           <span style={styles.navText}>รายงาน</span>
                           </a>
                         </li>
-                        <li className="nav-item" style={styles.navItem}>
-                          <Link
-                          to="/sumSalePerDay"
-                          className="nav-link"
-                          style={styles.navLink}
-                          >
-                          <span style={styles.navIcon}>
-                            <i className="nav-icon fas fa-calendar-day"></i>
-                          </span>
-                          <span style={styles.navText}>สรุปยอดขายรายวัน</span>
-                          </Link>
-                        </li>
+                       
                         <li className="nav-item" style={styles.navItem}>
                           <Link
                           to="/billSales"
@@ -642,28 +631,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                   </li>
                 </ul>
               </li>
-              
-              {/* Users management - visible only to owner */}
-              {isOwner && (
-                <li className="nav-item" style={styles.navItem}>
-                  <Link to="/user" className="nav-link" style={styles.navLink}>
-                    <span style={styles.navIcon}>
-                      <img
-                        src={candidates}
-                        alt="candidates"
-                        style={{ height: "45px", marginRight: "100px" }}
-                      />
-                    </span>
-                    <span className="ml-4" style={styles.navText}>
-                      ผู้ใช้งานระบบ
-                    </span>
-                  </Link>
-                </li>
-              )}
-
-             
-
-              {/* Report issues - visible to all */}
+           
              
             </ul>
           </nav>

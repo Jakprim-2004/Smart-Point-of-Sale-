@@ -41,9 +41,6 @@ function Sale() {
   const [showBillDetailModal, setShowBillDetailModal] = useState(false);
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
   const [discountFromPoints, setDiscountFromPoints] = useState(0);
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [filteredCustomers, setFilteredCustomers] = useState([]);
-
 
   const saleRef = useRef();
   const searchInputRef = useRef();
@@ -54,7 +51,7 @@ function Sale() {
     fetchBillSaleDetail();
     fetchBillLimitInfo();
     loadCustomers();
-
+    
     // โหลดรายการบิลที่พักไว้จาก localStorage
     const savedHeldBills = localStorage.getItem('heldBills');
     if (savedHeldBills) {
@@ -70,16 +67,6 @@ function Sale() {
       searchInputRef.current.focus();
     }
   }, []);
-
-  // ฟังก์ชันสำหรับการค้นหาลูกค้า
-  const handleCustomerSearch = (searchText) => {
-    setCustomerSearch(searchText);
-    const filtered = customers.filter(customer =>
-      customer.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      customer.phone.includes(searchText)
-    );
-    setFilteredCustomers(filtered);
-  };
 
   // เพิ่มฟังก์ชัน fetchData ที่ขาดหายไป
   const fetchData = async () => {
@@ -100,7 +87,7 @@ function Sale() {
 
           const updatedProducts = products.map((product) => {
             const stockItem = stockData.find(
-              (stock) => stock.productId === product.id
+              (stock) => String(stock.productId) === String(product.id)
             );
             return {
               ...product,
@@ -153,17 +140,6 @@ function Sale() {
     });
   };
 
-  // ฟังก์ชันสำหรับเคลียร์ฟอร์มการขาย
-  const clearSaleForm = () => {
-    setPaymentMethod('Cash');
-    setShowQR(false);
-    setInputMoney(0);
-    setSelectedCustomer(null);
-    setCustomerSearch('');
-    setPointsToRedeem(0);
-    setDiscountFromPoints(0);
-  };
-
   const fetchBillSaleDetail = async () => {
     try {
       await axios
@@ -183,26 +159,15 @@ function Sale() {
     }
   };
 
-  const calculateVAT = (amount, vatRate) => {
-    return amount * (vatRate / 100);
-  };
-
   const sumTotalPrice = (billSaleDetails) => {
     let sum = 0;
-    const vatRate = 7; // อัตรา VAT 7%
-
     for (let i = 0; i < billSaleDetails.length; i++) {
       const item = billSaleDetails[i];
       const qty = parseInt(item.qty);
       const price = parseInt(item.price);
-
       sum += qty * price;
     }
-
-    const vatAmount = calculateVAT(sum, vatRate);
-    const totalWithVAT = sum + vatAmount;
-
-    setTotalPrice(totalWithVAT);
+    setTotalPrice(sum);
   };
 
   const openBill = async () => {
@@ -246,11 +211,11 @@ function Sale() {
         icon: "success",
         timer: 1000,
       });
-
+      
       const updatedHeldBills = [...heldBills, bill];
       setHeldBills(updatedHeldBills);
       localStorage.setItem("heldBills", JSON.stringify(updatedHeldBills));
-
+      
       setCurrentBill({});
       setTotalPrice(0);
       setInputMoney(0);
@@ -280,105 +245,101 @@ function Sale() {
 
   const handleEndSale = () => {
     if (!currentBill.billSaleDetails || currentBill.billSaleDetails.length === 0) {
-      Swal.fire({
-        title: "ไม่สามารถจบการขายได้",
-        text: "ไม่มีสินค้าในตะกร้า",
-        icon: "warning",
-      });
-      return;
+        Swal.fire({
+            title: "ไม่สามารถจบการขายได้",
+            text: "ไม่มีสินค้าในตะกร้า",
+            icon: "warning",
+        });
+        return;
     }
 
     Swal.fire({
-      title: "จบการขาย",
-      text: "ยืนยันจบการขาย",
-      icon: "question",
-      showCancelButton: true,
-      showConfirmButton: true,
+        title: "จบการขาย",
+        text: "ยืนยันจบการขาย",
+        icon: "question",
+        showCancelButton: true,
+        showConfirmButton: true,
     }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const vatRate = 7;
-          const priceAfterDiscount = totalPrice - discountFromPoints;
-          const vatAmount = calculateVAT(priceAfterDiscount, vatRate);
-          const totalWithVAT = priceAfterDiscount + vatAmount;
+        if (result.isConfirmed) {
+            try {
+                const priceAfterDiscount = totalPrice - discountFromPoints;
 
-          // สร้างข้อความอธิบายการใช้แต้ม
-          let description = '';
-          if (pointsToRedeem > 0) {
-            description = `ใช้แต้มสะสม ${pointsToRedeem} แต้ม เป็นส่วนลด ${discountFromPoints} บาท`;
-          }
+                // สร้างข้อความอธิบายการใช้แต้ม
+                let description = '';
+                if (pointsToRedeem > 0) {
+                    description = `ใช้แต้มสะสม ${pointsToRedeem} แต้ม เป็นส่วนลด ${discountFromPoints} บาท`;
+                }
 
-          // สร้างข้อมูลการใช้แต้ม (ถ้ามี)
-          const pointTransaction = pointsToRedeem > 0 ? {
-            customerId: selectedCustomer.id,
-            points: pointsToRedeem,
-            transactionType: 'DISCOUNT',
-            description: `ใช้แต้มส่วนลด ${pointsToRedeem} แต้ม สำหรับบิลเลขที่ #${currentBill.id} (ส่วนลด ${discountFromPoints} บาท)`
-          } : null;
+                // สร้างข้อมูลการใช้แต้ม (ถ้ามี)
+                const pointTransaction = pointsToRedeem > 0 ? {
+                    customerId: selectedCustomer.id,
+                    points: pointsToRedeem,
+                    transactionType: 'DISCOUNT',
+                    description: `ใช้แต้มส่วนลด ${pointsToRedeem} แต้ม สำหรับบิลเลขที่ #${currentBill.id} (ส่วนลด ${discountFromPoints} บาท)`
+                } : null;
 
-          const paymentData = {
-            method: paymentMethod,
-            amount: totalWithVAT,
-            vatAmount: vatAmount,
-            billSaleDetails: currentBill.billSaleDetails,
-            customerId: selectedCustomer?.id || null,
-            pointTransaction: pointTransaction, // เพิ่มข้อมูล point transaction
-            discountFromPoints: discountFromPoints, // เพิ่มข้อมูลส่วนลด
-            description: description // เพิ่ม description เข้าไปในข้อมูลที่ส่ง
-          };
+                const paymentData = {
+                    method: paymentMethod,
+                    amount: priceAfterDiscount,
+                    billSaleDetails: currentBill.billSaleDetails,
+                    customerId: selectedCustomer?.id || null,
+                    pointTransaction: pointTransaction, // เพิ่มข้อมูล point transaction
+                    discountFromPoints: discountFromPoints, // เพิ่มข้อมูลส่วนลด
+                    description: description // เพิ่ม description เข้าไปในข้อมูลที่ส่ง
+                };
 
-          const res = await axios.post(
-            config.api_path + "/billSale/endSale",
-            paymentData,
-            config.headers()
-          );
+                const res = await axios.post(
+                    config.api_path + "/billSale/endSale",
+                    paymentData,
+                    config.headers()
+                );
 
-          if (res.data.message === "success") {
-            Swal.fire({
-              title: "จบการขาย",
-              text: "จบการขายสำเร็จแล้ว",
-              icon: "success",
-              timer: 1000,
-            });
+                if (res.data.message === "success") {
+                    Swal.fire({
+                        title: "จบการขาย",
+                        text: "จบการขายสำเร็จแล้ว",
+                        icon: "success",
+                        timer: 1000,
+                    });
 
-            // รีเซ็ตค่าต่างๆ
-            setCurrentBill({});
-            setTotalPrice(0);
-            setInputMoney(0);
-            setMemberInfo({});
-            setLastBill({});
-            setSumTotal(0);
-            setSelectedCustomer(null);
+                    // รีเซ็ตค่าต่างๆ
+                    setCurrentBill({});
+                    setTotalPrice(0);
+                    setInputMoney(0);
+                    setMemberInfo({});
+                    setLastBill({});
+                    setSumTotal(0);
+                    setSelectedCustomer(null);
 
-            // เรียก API เพื่อรีเฟรชข้อมูล
-            await Promise.all([
-              openBill(),
-              fetchBillSaleDetail(),
-              fetchData()
-            ]);
+                    // เรียก API เพื่อรีเฟรชข้อมูล
+                    await Promise.all([
+                        openBill(),
+                        fetchBillSaleDetail(),
+                        fetchData()
+                    ]);
 
-            // ปิด Modal
-            const modalEndSale = document.getElementById('modalEndSale');
-            if (modalEndSale) {
-              const modalBackdrop = document.querySelector('.modal-backdrop');
-              if (modalBackdrop) {
-                modalBackdrop.parentNode.removeChild(modalBackdrop);
-              }
-              modalEndSale.style.display = 'none';
-              document.body.classList.remove('modal-open');
+                    // ปิด Modal
+                    const modalEndSale = document.getElementById('modalEndSale');
+                    if (modalEndSale) {
+                        const modalBackdrop = document.querySelector('.modal-backdrop');
+                        if (modalBackdrop) {
+                            modalBackdrop.parentNode.removeChild(modalBackdrop);
+                        }
+                        modalEndSale.style.display = 'none';
+                        document.body.classList.remove('modal-open');
+                    }
+                }
+            } catch (error) {
+                console.error('End sale error:', error);
+                Swal.fire({
+                    title: "เกิดข้อผิดพลาด",
+                    text: error.response?.data?.error || error.message,
+                    icon: "error",
+                });
             }
-          }
-        } catch (error) {
-          console.error('End sale error:', error);
-          Swal.fire({
-            title: "เกิดข้อผิดพลาด",
-            text: error.response?.data?.error || error.message,
-            icon: "error",
-          });
         }
-      }
     });
-  };
+};
 
   const handlePrint = async () => {
     try {
@@ -402,10 +363,6 @@ function Sale() {
         let sum = currentBill.billSaleDetails.reduce((acc, item) => {
           return acc + parseInt(item.qty) * parseInt(item.price);
         }, 0);
-
-        const vatAmount = calculateVAT(sum, 7);
-        const totalWithVAT = sum + vatAmount;
-        setSumTotal(totalWithVAT);
 
         await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -572,7 +529,7 @@ function Sale() {
   const loadCustomers = async () => {
     try {
       const response = await axios.get(
-        config.api_path + "/customers",
+        config.api_path + "/customers", 
         config.headers()
       );
       if (response.data.result) {
@@ -593,9 +550,9 @@ function Sale() {
     const maxPoints = selectedCustomer ? selectedCustomer.points : 0;
     const maxPointsByPrice = Math.floor(totalPrice / 10); // จำนวนแต้มสูงสุดที่ใช้ได้ตามราคาสินค้า
     const maxAllowedPoints = Math.min(maxPoints, maxPointsByPrice);
-
+    
     const validPoints = Math.min(Math.max(0, points), maxAllowedPoints);
-
+    
     if (points > maxAllowedPoints) {
       Swal.fire({
         title: "ไม่สามารถใช้แต้มได้",
@@ -603,7 +560,7 @@ function Sale() {
         icon: "warning"
       });
     }
-
+    
     setPointsToRedeem(validPoints);
     setDiscountFromPoints(validPoints * 10);
   };
@@ -641,7 +598,7 @@ function Sale() {
             icon: "success",
             timer: 1000
           });
-
+          
           // รีเฟรชข้อมูล
           fetchBillSaleDetail();
           fetchData();
@@ -671,7 +628,7 @@ function Sale() {
                 ขายสินค้า
               </h5>
               <div className="button-group">
-
+              
                 <button
                   onClick={handleClearCart}
                   className="btn btn-danger me-2"
@@ -688,7 +645,7 @@ function Sale() {
                 >
                   <i className="fa fa-shopping-basket me-2"></i>พักบิล
                 </button>
-
+                
                 {/** ปุ่มสำหรับดูบิลที่พักไว้ */}
                 <button
                   onClick={() => setShowHeldBillsModal(true)}
@@ -708,8 +665,8 @@ function Sale() {
                   <i className="fa fa-check me-2"></i>จบการขาย
                 </button>
 
-
-
+                
+                
 
                 {/** ปุ่มสำหรับพิมพ์บิลล่าสุด */}
                 <button
@@ -802,9 +759,8 @@ function Sale() {
                           <div className="cart-total">
                             {totalPrice.toLocaleString("th-TH")} ฿
                           </div>
-                          <div className="cart-label">รวม VAT 7%</div>
                         </div>
-
+                      
                       </div>
                     </div>
 
@@ -879,8 +835,9 @@ function Sale() {
                                 className="progress-bar bg-success"
                                 role="progressbar"
                                 style={{
-                                  width: `${(item.qty / item.product.remainingQty) * 100
-                                    }%`,
+                                  width: `${
+                                    (item.qty / item.product.remainingQty) * 100
+                                  }%`,
                                   borderRadius: "2px",
                                 }}
                               />
@@ -954,29 +911,29 @@ function Sale() {
           <tbody>
             {billToday.length > 0
               ? billToday.map((item) => (
-                <tr key={item.id}>
-                  <td className="text-center">
-                    <button
-                      onClick={() => {
-                        setSelectedBill(item);
-                        setShowBillDetailModal(true);
-                      }}
-                      className="btn btn-primary"
-                    >
-                      <i className="fa fa-eye me-2"></i>
-                      ดูรายการ
-                    </button>
-                  </td>
-                  <td>{item.id}</td>
-                  <td>{dayjs(item.createdAt).format("DD/MM/YYYY HH:mm")}</td>
-                </tr>
-              ))
+                  <tr key={item.id}>
+                    <td className="text-center">
+                      <button
+                        onClick={() => {
+                          setSelectedBill(item);
+                          setShowBillDetailModal(true);
+                        }}
+                        className="btn btn-primary"
+                      >
+                        <i className="fa fa-eye me-2"></i>
+                        ดูรายการ
+                      </button>
+                    </td>
+                    <td>{item.id}</td>
+                    <td>{dayjs(item.createdAt).format("DD/MM/YYYY HH:mm")}</td>
+                  </tr>
+                ))
               : null}
           </tbody>
         </table>
       </Modal>
 
-      <Modal
+      <Modal 
         show={showQtyModal}
         onHide={() => setShowQtyModal(false)}
         title="ปรับจำนวน"
@@ -1009,11 +966,11 @@ function Sale() {
           />
 
           <div className="mt-3">
-            <button
+            <button 
               onClick={() => {
                 handleAddToBill();
                 setShowQtyModal(false);
-              }}
+              }} 
               className="btn btn-primary"
             >
               <i className="fa fa-check me-2"></i>เพิ่มลงบิล
@@ -1024,31 +981,44 @@ function Sale() {
 
       <Modal
         show={showEndSaleModal}
-        onHide={() => {
-          setShowEndSaleModal(false)
-          clearSaleForm();
-        }}
-
+        onHide={() => setShowEndSaleModal(false)}
         title="จบการขาย"
       >
         <div>
           <div className="mb-3">
             <label className="form-label">เลือกลูกค้าเพื่อสะสมแต้ม (ไม่บังคับ)</label>
             <div className="input-group">
-              <input
-                type="text"
+              <select 
                 className="form-control"
-                placeholder="ค้นหาด้วยชื่อหรือเบอร์โทร..."
-                value={customerSearch}
-                onChange={(e) => handleCustomerSearch(e.target.value)}
-              />
+                value={selectedCustomer?.id || ''}
+                onChange={(e) => {
+                  const customerId = e.target.value;
+                  if (customerId) {
+                    const customer = customers.find(c => c.id === Number(customerId));
+                    setSelectedCustomer(customer || null);
+                    // รีเซ็ตค่าแต้มที่ใช้เมื่อเปลี่ยนลูกค้า
+                    setPointsToRedeem(0);
+                    setDiscountFromPoints(0);
+                  } else {
+                    setSelectedCustomer(null);
+                    setPointsToRedeem(0);
+                    setDiscountFromPoints(0);
+                  }
+                }}
+              >
+                <option value="">-- ไม่เลือก --</option>
+                {customers && customers.map(customer => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name} - {customer.phone}
+                  </option>
+                ))}
+              </select>
               {selectedCustomer && (
-                <button
+                <button 
                   className="btn btn-outline-secondary"
                   type="button"
                   onClick={() => {
                     setSelectedCustomer(null);
-                    setCustomerSearch("");
                     setPointsToRedeem(0);
                     setDiscountFromPoints(0);
                   }}
@@ -1057,34 +1027,6 @@ function Sale() {
                 </button>
               )}
             </div>
-
-            {/* แสดงผลการค้นหา */}
-            {customerSearch && !selectedCustomer && (
-              <div className="list-group mt-2" style={{ maxHeight: "200px", overflowY: "auto" }}>
-                {filteredCustomers.map(customer => (
-                  <button
-                    key={customer.id}
-                    className="list-group-item list-group-item-action"
-                    onClick={() => {
-                      setSelectedCustomer(customer);
-                      setCustomerSearch("");
-                      setPointsToRedeem(0);
-                      setDiscountFromPoints(0);
-                    }}
-                  >
-                    <div className="d-flex justify-content-between">
-                      <div>{customer.name}</div>
-                      <div className="text-muted">{customer.phone}</div>
-                    </div>
-                  </button>
-                ))}
-                {filteredCustomers.length === 0 && (
-                  <div className="list-group-item text-muted">
-                    ไม่พบลูกค้าที่ค้นหา
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {selectedCustomer && (
@@ -1094,7 +1036,7 @@ function Sale() {
                 <div><strong>ชื่อ:</strong> {selectedCustomer.name}</div>
                 <div><strong>เบอร์โทร:</strong> {selectedCustomer.phone}</div>
                 <div><strong>แต้มสะสม:</strong> {selectedCustomer.points || 0} แต้ม</div>
-
+               
                 <div className="mt-2 text-success">
                   <i className="fas fa-plus-circle me-1"></i>
                   จะได้รับแต้มเพิ่ม {Math.floor(totalPrice / 100)} แต้ม จากยอดซื้อครั้งนี้
@@ -1137,99 +1079,69 @@ function Sale() {
               disabled
               className="form-control text-end"
             />
-            {discountFromPoints > 0 && (
-              <div className="text-muted small mt-1">
-                <span>ราคาเต็ม: {totalPrice.toLocaleString("th-TH")} บาท</span>
-                <br />
-                <span className="text-success">ส่วนลดจากแต้ม: -{discountFromPoints.toLocaleString()} บาท</span>
-              </div>
-            )}
           </div>
 
-          <div className="mt-3">
+
+         <div className="mt-3">
             <label>ช่องทางการชำระเงิน</label>
-            <div className="dropdown">
-              <button
-                className="btn btn-outline-secondary dropdown-toggle w-100 text-start"
-                type="button"
-                data-bs-toggle="dropdown"
-              >
-                {paymentMethod === 'Cash' ? 'เงินสด' : 'พร้อมเพย์'}
-              </button>
-              <ul className="dropdown-menu w-100">
-                <li>
-                  <button
-                    className="dropdown-item"
-                    onClick={() => {
-                      setPaymentMethod('Cash');
-                      setShowQR(false);
-                    }}
-                  >
-                    <i className="fas fa-money-bill me-2"></i>เงินสด
-                  </button>
-                </li>
-                <li>
-                  <button
-                    className="dropdown-item"
-                    onClick={() => {
-                      setPaymentMethod('PromptPay');
-                      setShowQR(true);
-                    }}
-                  >
-                    <i className="fas fa-qrcode me-2"></i>พร้อมเพย์
-                  </button>
-                </li>
-              </ul>
-            </div>
           </div>
-
           <div>
-            {paymentMethod === "PromptPay" ? (
-              <div className="text-center mt-4">
-                <QRCodeSVG value={generateQRCode()} size={256} level="L" />
-                <p className="mt-2">สแกนเพื่อชำระเงิน</p>
-                <button onClick={handleEndSale} className="btn btn-success mt-2">
-                  ยืนยันการชำระเงิน
+            <select
+              value={paymentMethod}
+              onChange={handlePaymentMethodChange}
+              className="form-control"
+            >
+              <option value="Cash">Cash(เงินสด)</option>
+              <option value="PromptPay">PromptPay(พร้อมเพย์)</option>
+            </select>
+          </div>
+          <div>
+          {paymentMethod === "PromptPay" ? (
+            <div className="text-center mt-4">
+              <QRCodeSVG value={generateQRCode()} size={256} level="L" />
+              <p className="mt-2">สแกนเพื่อชำระเงิน</p>
+              <button onClick={handleEndSale} className="btn btn-success mt-2">
+                ยืนยันการชำระเงิน
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="mt-3">
+                <label>รับเงิน</label>
+                <input
+                  value={(inputMoney).toLocaleString("th-TH")}
+                  onChange={(e) => setInputMoney(e.target.value)}
+                  className="form-control text-end"
+                />
+              </div>
+              <div className="mt-3">
+                <label>เงินทอน</label>
+                <input
+                  value={(inputMoney - (totalPrice - discountFromPoints)).toLocaleString("th-TH")}
+                  className="form-control text-end"
+                  disabled
+                />
+              </div>
+              <div className="text-center mt-3">
+                <button
+                  onClick={(e) => setInputMoney(totalPrice - discountFromPoints)}
+                  className="btn btn-primary me-2"
+                >
+                  <i className="fa fa-check me-2"></i>
+                  จ่ายพอดี
+                </button>
+                <button
+                  onClick={handleEndSale}
+                  className="btn btn-success"
+                  disabled={inputMoney <= 0}
+                >
+                  <i className="fa fa-check me-2"></i>
+                  จบการขาย
                 </button>
               </div>
-            ) : (
-              <>
-                <div className="mt-3">
-                  <label>รับเงิน</label>
-                  <input
-                    value={(inputMoney).toLocaleString("th-TH")}
-                    onChange={(e) => setInputMoney(e.target.value)}
-                    className="form-control text-end"
-                  />
-                </div>
-                <div className="mt-3">
-                  <label>เงินทอน</label>
-                  <input
-                    value={(inputMoney - (totalPrice - discountFromPoints)).toLocaleString("th-TH")}
-                    className="form-control text-end"
-                    disabled
-                  />
-                </div>
-                <div className="text-center mt-3">
-                  <button
-                    onClick={(e) => setInputMoney(totalPrice - discountFromPoints)}
-                    className="btn btn-primary me-2"
-                  >
-                    <i className="fa fa-check me-2"></i>
-                    จ่ายพอดี
-                  </button>
-                  <button
-                    onClick={handleEndSale}
-                    className="btn btn-success"
-                    disabled={inputMoney <= 0}
-                  >
-                    <i className="fa fa-check me-2"></i>
-                    จบการขาย
-                  </button>
-                </div>
-              </>
-
-            )}
+            </>
+            
+          )}
           </div>
         </div>
       </Modal>
@@ -1248,18 +1160,17 @@ function Sale() {
                   <th>รายการ</th>
                   <th>จำนวน</th>
                   <th className="text-end">ราคา</th>
-
+                
                 </tr>
               </thead>
               <tbody>
-                {selectedBill?.billSaleDetails?.map((item, index) => {
-                  const priceWithVat = item.price * 1.07; // คำนวณราคารวม VAT
+              {selectedBill?.billSaleDetails?.map((item, index) => {
                   return (
                     <tr key={index}>
                       <td>{item.product.name}</td>
                       <td className="text-center">{item.qty}</td>
                       <td className="text-end">
-                        {(item.qty * priceWithVat).toLocaleString("th-TH")} บาท
+                        {item.price.toLocaleString("th-TH")} บาท
                       </td>
                     </tr>
                   );
@@ -1271,140 +1182,133 @@ function Sale() {
       </Modal>
 
       <div
-  id="slip"
-  style={{
-    display: "none",
-    width: "400px",
-    fontFamily: "Arial, sans-serif",
-    fontSize: "12px",
-    lineHeight: "1.5",
-  }}
->
-  <div style={{ padding: "10px" }}>
-    {/* Header */}
-    <div style={{ textAlign: "center", marginBottom: "10px" }}>
-      <h4 style={{ margin: "0", fontSize: "14px", fontWeight: "bold" }}>
-        {memberInfo?.name || ""}
-      </h4>
-    </div>
-
-    {/* Bill Info */}
-    <div
-      style={{
-        marginBottom: "10px",
-        borderBottom: "1px dashed #000",
-      }}
-    >
-      <p style={{ margin: "0" }}>
-        วันที่: {dayjs(lastBill?.createdAt).format("DD/MM/YYYY HH:mm")}
-      </p>
-      <p style={{ margin: "0" }}>เลขที่บิล: {lastBill?.id || "-"}</p>
-    </div>
-
-    {/* Items Table */}
-    <table
-      style={{
-        width: "100%",
-        marginBottom: "10px",
-        borderBottom: "1px dashed #000",
-      }}
-    >
-      <thead>
-        <tr>
-          <th style={{ textAlign: "left", fontSize: "12px", paddingRight: "10px" }}>
-            รายการ
-          </th>
-          <th style={{ textAlign: "center", fontSize: "12px" }}>
-            จำนวน
-          </th>
-          <th style={{ textAlign: "right", fontSize: "12px", paddingLeft: "10px" }}>
-            ราคา
-          </th>
-          <th style={{ textAlign: "right", fontSize: "12px", paddingLeft: "10px" }}>
-            รวม
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {lastBill?.billSaleDetails?.map((item, index) => (
-          <tr key={index}>
-            <td style={{ textAlign: "left", paddingTop: "5px" }}>
-              {item.product.name || "D"}
-            </td>
-            <td style={{ textAlign: "center" }}>{item.qty || 1}</td>
-            <td style={{ textAlign: "right" }}>
-              {parseFloat(item.price).toLocaleString("th-TH")}
-            </td>
-            <td style={{ textAlign: "right" }}>
-              {(item.qty * item.price).toLocaleString("th-TH")}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-
-    {/* Summary */}
-    <div
-      style={{
-        fontSize: "12px",
-        borderBottom: "1px dashed #000",
-        paddingBottom: "10px",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <span style={{ flex: "1", textAlign: "left", minWidth: "80px" }}>
-          รวมทั้งสิ้น:
-        </span>
-        <span style={{ flex: "1", textAlign: "right", minWidth: "80px" }}>
-          {selectedBill?.totalAmount?.toFixed(2) || sumTotal.toFixed(2)} บาท
-        </span>
-      </div>
-      {discountFromPoints > 0 && (
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span style={{ flex: "1", textAlign: "left", minWidth: "80px" }}>
-            ส่วนลดจากแต้ม:
-          </span>
-          <span style={{ flex: "1", textAlign: "right", minWidth: "80px", color: "green" }}>
-            -{discountFromPoints.toFixed(2)} บาท
-          </span>
-        </div>
-      )}
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <span style={{ flex: "1", textAlign: "left", minWidth: "80px" }}>
-          VAT 7%:
-        </span>
-        <span style={{ flex: "1", textAlign: "right", minWidth: "80px" }}>
-          {(sumTotal * 0.07).toFixed(2)} บาท
-        </span>
-      </div>
-      <div
+        id="slip"
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          fontSize: "14px",
-          fontWeight: "bold",
-          borderTop: "1px dashed #000",
-          paddingTop: "5px",
-          marginTop: "5px",
+          display: "none",
+          width: "400px",
+          fontFamily: "Arial, sans-serif",
+          fontSize: "12px",
+          lineHeight: "1.5",
         }}
       >
-        <span style={{ flex: "1", textAlign: "left", minWidth: "80px" }}>
-          สุทธิ:
-        </span>
-        <span style={{ flex: "1", textAlign: "right", minWidth: "80px" }}>
-          {(sumTotal - discountFromPoints).toFixed(2)} บาท
-        </span>
-      </div>
-    </div>
+        <div style={{ padding: "10px" }}>
+          {/* Header */}
+          <div style={{ textAlign: "center", marginBottom: "10px" }}>
+            <h4 style={{ margin: "0", fontSize: "14px", fontWeight: "bold" }}>
+              {memberInfo?.name || ""}
+            </h4>
+          </div>
 
-    {/* Footer */}
-    <div
-      style={{ textAlign: "center", marginTop: "10px", fontSize: "12px" }}
-    >
-      <p style={{ margin: "0" }}>*** ขอบคุณที่ใช้บริการ ***</p>
-    </div>
-  </div>
-</div>
+          {/* Bill Info */}
+          <div
+            style={{
+              marginBottom: "10px",
+              borderBottom: "1px dashed #000",
+              paddingBottom: "10px",
+            }}
+          >
+            <p style={{ margin: "0" }}>
+              วันที่: {dayjs(lastBill?.createdAt).format("DD/MM/YYYY HH:mm")}
+            </p>
+            <p style={{ margin: "0" }}>เลขที่บิล: {lastBill?.id || "-"}</p>
+          </div>
+
+          {/* Items Table */}
+          <table
+            style={{
+              width: "100%",
+              marginBottom: "10px",
+              borderBottom: "1px dashed #000",
+            }}
+          >
+            <thead>
+              <tr>
+                <th
+                  style={{
+                    textAlign: "left",
+                    fontSize: "12px",
+                    paddingBottom: "5px",
+                  }}
+                >
+                  รายการ
+                </th>
+                <th style={{ textAlign: "center", fontSize: "12px" }}>จำนวน</th>
+                <th style={{ textAlign: "right", fontSize: "12px" }}>ราคา</th>
+                <th style={{ textAlign: "right", fontSize: "12px" }}>รวม</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lastBill?.billSaleDetails?.map((item, index) => (
+                <tr key={index}>
+                  <td style={{ textAlign: "left", paddingTop: "3px" }}>
+                    {item.product.name || "D"}
+                  </td>
+                  <td style={{ textAlign: "center" }}>{item.qty || 1}</td>
+                  <td style={{ textAlign: "right" }}>
+                    {item.price.toLocaleString("th-TH")}
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    {(item.qty * item.price).toLocaleString("th-TH")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Summary */}
+          <div
+            style={{
+              fontSize: "12px",
+              borderBottom: "1px dashed #000",
+              paddingBottom: "10px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ flex: "1", textAlign: "left", minWidth: "80px" }}>
+                รวมทั้งสิ้น:
+              </span>
+              <span style={{ flex: "1", textAlign: "right", minWidth: "80px" }}>
+              {selectedBill?.totalAmount?.toFixed(2) || sumTotal.toFixed(2)} บาท 
+              </span>
+            </div>
+            {discountFromPoints > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ flex: "1", textAlign: "left", minWidth: "80px" }}>
+                        ส่วนลดจากแต้ม:
+                    </span>
+                    <span style={{ flex: "1", textAlign: "right", minWidth: "80px", color: "green" }}>
+                        -{discountFromPoints.toFixed(2)} บาท
+                    </span>
+                </div>
+            )}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "14px",
+                fontWeight: "bold",
+                borderTop: "1px dashed #000",
+                paddingTop: "5px",
+                marginTop: "5px",
+              }}
+            >
+              <span style={{ flex: "1", textAlign: "left", minWidth: "80px" }}>
+                สุทธิ:
+              </span>
+              <span style={{ flex: "1", textAlign: "right", minWidth: "80px" }}>
+                {(sumTotal - discountFromPoints).toFixed(2)} บาท
+              </span>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div
+            style={{ textAlign: "center", marginTop: "10px", fontSize: "12px" }}
+          >
+            <p style={{ margin: "0" }}>*** ขอบคุณที่ใช้บริการ ***</p>
+          </div>
+        </div>
+      </div>
     </>
   );
 }

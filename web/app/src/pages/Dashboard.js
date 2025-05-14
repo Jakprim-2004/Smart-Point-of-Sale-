@@ -15,21 +15,21 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
-  LineElement,  // Add this
-  PointElement,  // Add this
+  LineElement,
+  PointElement,
   Title,
   Tooltip,
   Legend,
   ArcElement,
 } from "chart.js";
-import { Bar, Pie, Line } from "react-chartjs-2";  // Add Line import
+import { Bar, Pie, Line } from "react-chartjs-2";
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
-  LineElement,  // Add this
-  PointElement,  // Add this
+  LineElement,
+  PointElement,
   Title,
   Tooltip,
   Legend,
@@ -42,13 +42,10 @@ function Dashboard() {
   const [month] = useState(myDate.getMonth() + 1);
   const [viewType] = useState("daily"); 
   const [topSellingViewType, setTopSellingViewType] = useState('products');
-  const [paymentChartType, setPaymentChartType] = useState('pie');
-  const [hourlyChartType, setHourlyChartType] = useState('line');
   const [nearExpiryProducts, setNearExpiryProducts] = useState([]);
   const [nearExpiryCount, setNearExpiryCount] = useState(0);
   const navigate = useNavigate();
 
-  // Keep existing state variables for data
   const [stockData, setStockData] = useState([]);
   const [lowStockItems, setLowStockItems] = useState([]);
   const [topSellingProducts, setTopSellingProducts] = useState([]);
@@ -70,7 +67,6 @@ function Dashboard() {
   const [paymentStats, setPaymentStats] = useState([]);
   const [lowStockCount, setLowStockCount] = useState(0);
 
-  // Remove unused options state and replace with simple object
   const chartOptions = {
     responsive: true,
     plugins: {
@@ -102,12 +98,10 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    // Update time every second
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
 
-    // Cleanup interval on component unmount
     return () => clearInterval(timer);
   }, []);
 
@@ -115,16 +109,14 @@ function Dashboard() {
     reportStock();
     reportTopSellingProducts();
     reportTopSellingCategories();
-    getTodaySalesReport(); // Add this line
-    getPaymentStats(); // Add this line
+    getTodaySalesReport();
+    getPaymentStats();
     reportNearExpiryProducts();
   }, [year, month, viewType]);
 
   useEffect(() => {
-    calculateLowStockCount(); // Add this
+    calculateLowStockCount();
   }, [stockData]);
-
-
 
   const reportStock = async () => {
     try {
@@ -155,12 +147,11 @@ function Dashboard() {
     try {
       const url = config.api_path + "/reportTopSellingProducts";
       const res = await axios.get(url, config.headers());
-      console.log("Top selling products API response:", res.data); // Debug logging
+      console.log("Top selling products API response:", res.data);
       
       if (res.data.message === "success") {
-        // Remove the filtering as the API endpoint should already filter for 'pay' status
         const filteredResults = res.data.results.slice(0, 5);
-        console.log("Filtered top selling products:", filteredResults); // Debug logging
+        console.log("Filtered top selling products:", filteredResults);
         setTopSellingProducts(filteredResults);
       }
     } catch (e) {
@@ -177,13 +168,22 @@ function Dashboard() {
     try {
       const url = config.api_path + "/reportTopSellingCategories";
       const res = await axios.get(url, config.headers());
+      console.log("Categories API response:", res.data); // Add logging to debug
+      
       if (res.data.message === "success") {
-        // กรองเฉพาะรายการที่มีสถานะเป็น 'pay' เท่านั้น
-        const paidResults = res.data.results.filter(item => item.billSale?.status === 'pay');
-        const filteredResults = paidResults.slice(0, 5);
-        setTopSellingCategories(filteredResults);
+        // Don't filter by status as API now does the filtering correctly
+        setTopSellingCategories(res.data.results);
       }
     } catch (e) {
+      console.error("Error fetching top selling categories:", e);
+      // Set a default value in case of error
+      setTopSellingCategories([{
+        category: 'เกิดข้อผิดพลาดในการโหลดข้อมูล',
+        totalQty: 0,
+        totalAmount: 0,
+        percentage: 100
+      }]);
+      
       Swal.fire({
         title: "error", 
         text: e.message,
@@ -214,7 +214,6 @@ function Dashboard() {
         });
       }
     } catch (error) {
-
       Swal.fire({
         title: "error",
         text: error.message,
@@ -256,10 +255,9 @@ function Dashboard() {
     }
   };
 
-  // ปรับค่า threshold สำหรับแยกระดับสินค้าใกล้หมด
   const calculateLowStockCount = () => {
-    const CRITICAL_THRESHOLD = 5;  // สีแดง
-    const WARNING_THRESHOLD = 10;  // สีเหลือง
+    const CRITICAL_THRESHOLD = 5;
+    const WARNING_THRESHOLD = 10;
     const lowStockProducts = stockData.filter(item => item.remainingQty <= WARNING_THRESHOLD);
     setLowStockCount(lowStockProducts.length);
     setLowStockItems(lowStockProducts);
@@ -273,297 +271,261 @@ function Dashboard() {
     navigate('/reportStock');
   };
 
-  // ปรับฟังก์ชัน renderTopSellingContent() ส่วนที่แสดงผลสินค้าขายดี
-const renderTopSellingContent = () => {
-  if (topSellingViewType === 'products') {
-    const totalAmount = topSellingProducts.reduce((sum, item) =>
-      sum + parseFloat(item.totalAmount || 0), 0);
+  const renderTopSellingContent = () => {
+    if (topSellingViewType === 'products') {
+      const totalAmount = topSellingProducts.reduce((sum, item) =>
+        sum + parseFloat(item.totalAmount || 0), 0);
 
-    return topSellingProducts.length > 0 ? (
-      <div style={{ position: 'relative', height: '100%', padding: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'start' }}>
-          <div style={{ width: '35%', height: '150px' }}>
-            <Bar
-              data={{
-                labels: topSellingProducts.map(() => ''), // Empty labels
-                datasets: [{
-                  data: topSellingProducts.map(item => parseFloat(item.totalAmount || 0)),
-                  backgroundColor: [
-                    'rgba(255, 99, 132, 0.8)',
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(255, 206, 86, 0.8)',
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(153, 102, 255, 0.8)',
-                  ]
-                }]
-              }}
-              options={{
-                indexAxis: 'y',
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: { display: false },
-                  tooltip: {
-                    callbacks: {
-                      title: (items) => {
-                        if (!items.length) return '';
-                        const index = items[0].dataIndex;
-                        return topSellingProducts[index]?.productName || '';
-                      }
-                    }
-                  }
-                },
-                scales: {
-                  y: {
-                    ticks: { display: false }
-                  }
+      return topSellingProducts.length > 0 ? (
+        <div className="top-selling-container p-2">
+          <div className="row">
+            <div className="col-12">
+              {topSellingProducts.map((item, index) => {
+                const productName = item.productName || 'สินค้าไม่มีชื่อ';
+                const amount = parseFloat(item.totalAmount || 0);
+                const actualQty = parseInt(item.totalQty || 0);
+                
+                let percentage = "0.00";
+                if (totalAmount > 0) {
+                  percentage = ((amount / totalAmount) * 100).toFixed(2);
+                } else if (index === 0 && topSellingProducts.length === 1) {
+                  percentage = "100.00";
                 }
-              }}
-            />
-          </div>
-          <div style={{ width: '65%', paddingLeft: '20px' }}>
-            {topSellingProducts.map((item, index) => {
-              const amount = parseFloat(item.totalAmount || 0);
-              const percentage = totalAmount > 0 ? ((amount / totalAmount) * 100).toFixed(2) : "0.00";
-              const actualQty = parseInt(item.totalQty || 0);
-              
-              return (
-                <div
-                  key={index}
-                  style={{
-                    marginBottom: '15px',
-                    borderLeft: `3px solid ${['rgba(255, 99, 132, 0.8)',
-                      'rgba(54, 162, 235, 0.8)',
-                      'rgba(255, 206, 86, 0.8)',
-                      'rgba(75, 192, 192, 0.8)',
-                      'rgba(153, 102, 255, 0.8)',][index]}`,
-                    paddingLeft: '10px'
-                  }}
-                >
-                  <div style={{ fontWeight: 'bold' }}>{item.productName}</div>
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    color: '#666',
-                    marginTop: '3px' 
-                  }}>
-                    <span>฿{amount.toLocaleString()}</span>
-                    <span><i className="fas fa-box me-1"></i>{actualQty} ชิ้น</span>
+                
+                // Calculate width for progress bar based on percentage
+                const barWidth = totalAmount > 0 ? `${Math.max(percentage, 5)}%` : '5%';
+                
+                return (
+                  <div 
+                    key={index} 
+                    className="mb-3 position-relative product-card"
+                    style={{
+                      borderRadius: '12px',
+                      padding: '16px',
+                      background: 'white',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                      border: '1px solid rgba(0,0,0,0.05)',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {/* Rank badge */}
+                    <div 
+                      style={{
+                        position: 'absolute',
+                        top: '0px',
+                        left: '0px',
+                        background: ['#FF3860', '#3273DC', '#FFDD57', '#23D160', '#209CEE'][index],
+                        borderRadius: '0 0 12px 0',
+                        padding: '5px 15px',
+                        color: index === 2 ? '#333' : 'white',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        boxShadow: '2px 2px 5px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      #{index + 1}
+                    </div>
+                    
+                    {/* Product info */}
+                    <div className="ps-3 pt-4">
+                      <div className="mb-2">
+                        <div className="d-flex justify-content-between">
+                          <h5 style={{ fontWeight: 'bold', color: '#333' }}>{productName}</h5>
+                          <span className="text-primary fw-bold">฿{amount.toLocaleString('th-TH')}</span>
+                        </div>
+                        
+                        <div className="d-flex justify-content-between text-muted small">
+                          <div><i className="fas fa-box me-1"></i> {actualQty} ชิ้น</div>
+                          <div>{percentage}%</div>
+                        </div>
+                      </div>
+                      
+                      {/* Progress bar */}
+                      <div className="progress mt-2" style={{ height: '6px' }}>
+                        <div 
+                          className="progress-bar" 
+                          role="progressbar" 
+                          style={{
+                            width: barWidth,
+                            background: ['#FF3860', '#3273DC', '#FFDD57', '#23D160', '#209CEE'][index]
+                          }} 
+                          aria-valuenow={percentage}
+                          aria-valuemin="0" 
+                          aria-valuemax="100"
+                        ></div>
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ color: '#888', fontSize: '0.9em' }}>
-                    ({percentage}%)
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
-    ) : (
-      <div className="alert alert-info text-center">
-        <i className="fas fa-question-circle fa-2x mb-2"></i>
-        <p>ไม่มีข้อมูลสินค้าขายดี</p>
-      </div>
-    );
-  } else {
-    const totalAmount = topSellingCategories.reduce((sum, item) =>
-      sum + parseFloat(item.totalAmount || 0), 0);
+      ) : (
+        <div className="alert alert-info text-center">
+          <i className="fas fa-question-circle fa-2x mb-2"></i>
+          <p>ไม่มีข้อมูลสินค้าขายดี</p>
+        </div>
+      );
+    } else {
+      const totalAmount = topSellingCategories.reduce((sum, item) =>
+        sum + parseFloat(item.totalAmount || 0), 0);
 
-    return topSellingCategories.length > 0 ? (
-      <div style={{ position: 'relative', height: '100%', padding: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'start' }}>
-          <div style={{ width: '35%', height: '150px' }}>
-            <Bar
-              data={{
-                labels: topSellingCategories.map(() => ''), // Empty labels
-                datasets: [{
-                  data: topSellingCategories.map(item => parseFloat(item.totalAmount || 0)),
-                  backgroundColor: [
-                    'rgba(255, 99, 132, 0.8)',
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(255, 206, 86, 0.8)',
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(153, 102, 255, 0.8)',
-                  ]
-                }]
-              }}
-              options={{
-                indexAxis: 'y',
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: { display: false },
-                  tooltip: {
-                    callbacks: {
-                      title: (items) => {
-                        if (!items.length) return '';
-                        const index = items[0].dataIndex;
-                        return topSellingCategories[index]?.category || '';
-                      }
-                    }
-                  }
-                },
-                scales: {
-                  y: {
-                    ticks: { display: false }
-                  }
+      return topSellingCategories.length > 0 ? (
+        <div className="top-selling-container p-2">
+          <div className="row">
+            <div className="col-12">
+              {topSellingCategories.map((item, index) => {
+                // Handle missing data with defaults
+                const categoryName = item.category || 'ไม่ระบุหมวดหมู่';
+                const amount = parseFloat(item.totalAmount || 0);
+                const qty = parseInt(item.totalQty || 0);
+                
+                // Safe percentage calculation
+                let percentage = item.percentage || "0.00";
+                if (!item.percentage && totalAmount > 0) {
+                  percentage = ((amount / totalAmount) * 100).toFixed(2);
                 }
-              }}
-            />
-          </div>
-          <div style={{ width: '65%', paddingLeft: '20px' }}>
-            {topSellingCategories.map((item, index) => {
-              const amount = parseFloat(item.totalAmount || 0);
-              const percentage = ((amount / totalAmount) * 100).toFixed(2);
-              
-              return (
-                <div
-                  key={index}
-                  style={{
-                    marginBottom: '15px',
-                    borderLeft: `3px solid ${['rgba(255, 99, 132, 0.8)',
-                      'rgba(54, 162, 235, 0.8)',
-                      'rgba(255, 206, 86, 0.8)',
-                      'rgba(75, 192, 192, 0.8)',
-                      'rgba(153, 102, 255, 0.8)',][index]}`,
-                    paddingLeft: '10px'
-                  }}
-                >
-                  <div style={{ fontWeight: 'bold' }}>{item.category}</div>
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    color: '#666',
-                    marginTop: '3px' 
-                  }}>
-                    <span>฿{amount.toLocaleString()}</span>
-                    <span><i className="fas fa-box me-1"></i>30 ชิ้น</span>
+                
+                // Calculate width for progress bar
+                const barWidth = totalAmount > 0 ? `${Math.max(percentage, 5)}%` : '5%';
+                
+                return (
+                  <div 
+                    key={index} 
+                    className="mb-3 position-relative category-card"
+                    style={{
+                      borderRadius: '12px',
+                      padding: '16px',
+                      background: 'white',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                      border: '1px solid rgba(0,0,0,0.05)',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {/* Rank badge */}
+                    <div 
+                      style={{
+                        position: 'absolute',
+                        top: '0px',
+                        left: '0px',
+                        background: ['#FF3860', '#3273DC', '#FFDD57', '#23D160', '#209CEE'][index],
+                        borderRadius: '0 0 12px 0',
+                        padding: '5px 15px',
+                        color: index === 2 ? '#333' : 'white',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        boxShadow: '2px 2px 5px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      #{index + 1}
+                    </div>
+                    
+                    {/* Category info */}
+                    <div className="ps-3 pt-4">
+                      <div className="mb-2">
+                        <div className="d-flex justify-content-between">
+                          <h5 style={{ fontWeight: 'bold', color: '#333' }}>{categoryName}</h5>
+                          <span className="text-primary fw-bold">฿{amount.toLocaleString('th-TH')}</span>
+                        </div>
+                        
+                        <div className="d-flex justify-content-between text-muted small">
+                          <div><i className="fas fa-box me-1"></i> {qty} ชิ้น</div>
+                          <div>{percentage}%</div>
+                        </div>
+                      </div>
+                      
+                      {/* Progress bar */}
+                      <div className="progress mt-2" style={{ height: '6px' }}>
+                        <div 
+                          className="progress-bar" 
+                          role="progressbar" 
+                          style={{
+                            width: barWidth,
+                            background: ['#FF3860', '#3273DC', '#FFDD57', '#23D160', '#209CEE'][index]
+                          }} 
+                          aria-valuenow={percentage}
+                          aria-valuemin="0" 
+                          aria-valuemax="100"
+                        ></div>
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ color: '#888', fontSize: '0.9em' }}>
-                    ({percentage}%)
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
-    ) : (
-      <div className="alert alert-info text-center">
-        ไม่มีข้อมูลหมวดหมู่ขายดี
-      </div>
-    );
-  }
-};
-  const renderPaymentChart = () => {
+      ) : (
+        <div className="text-center w-100 d-flex flex-column align-items-center justify-content-center" style={{ height: '100%' }}>
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="#8a94a6" style={{ marginBottom: 8 }}>
+            <rect x="3" y="10" width="3" height="7"/><rect x="9" y="7" width="3" height="10"/><rect x="15" y="4" width="3" height="13"/>
+          </svg>
+          <div style={{ color: '#8a94a6', fontSize: 15, fontWeight: 500 }}>
+            ไม่มีข้อมูลหมวดหมู่ขายดี
+          </div>
+        </div>
+      );
+    }
+  };
+
+  const renderPaymentStats = () => {
     const total = paymentStats.reduce((sum, stat) => sum + parseFloat(stat.total || 0), 0);
 
-    const chartData = {
-      labels: paymentStats.map(stat => ''), // Empty labels
-      datasets: [{
-        data: paymentStats.map(stat => stat.total),
-        backgroundColor: [
-          '#FF6384',
-          '#36A2EB',
-          '#FFCE56',
-          '#4BC0C0'
-        ]
-      }]
-    };
-
-    const barChartOptions = {
-      indexAxis: 'y',
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: (items) => {
-              if (!items.length) return '';
-              const index = items[0].dataIndex;
-              return paymentStats[index]?.paymentMethod || '';
-            }
-          }
-        }
-      },
-      scales: {
-        y: {
-          ticks: { display: false } // Hide y-axis labels
-        }
-      }
+    const paymentColors = {
+      'เงินสด': '#FF6384',
+      'โอนเงิน': '#36A2EB',
+      'บัตรเครดิต': '#FFCE56',
+      'ไม่ระบุ': '#4BC0C0',
     };
 
     return (
-      <div style={{ position: 'relative', height: '100%', padding: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'start' }}>
-          <div style={{ width: '35%', height: '150px' }}> {/* ปรับขนาดตรงนี้ */}
-            {paymentChartType === 'pie' ? (
-              <Pie
-                data={chartData}
-                options={{
-                  maintainAspectRatio: true,
-                  aspectRatio: 1, // ปรับให้กราฟเป็นวงกลมสมบูรณ์
-                  plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                      enabled: true,
-                      callbacks: {
-                        title: (items) => {
-                          if (!items.length) return '';
-                          const index = items[0].dataIndex;
-                          return paymentStats[index]?.paymentMethod || '';
-                        },
-                        label: (item) => {
-                          const value = parseFloat(item.raw || 0);
-                          return `฿${value.toLocaleString()}`;
-                        }
-                      }
-                    }
-                  }
-                }}
-              />
-            ) : (
-              <Bar
-                data={{
-                  labels: paymentStats.map(() => ''), // Empty labels
-                  datasets: [{
-                    data: paymentStats.map(stat => stat.total),
-                    backgroundColor: chartData.datasets[0].backgroundColor
-                  }]
-                }}
-                options={barChartOptions}
-              />
-            )}
-          </div>
-          <div style={{ width: '65%', paddingLeft: '20px' }}> {/* เพิ่มพื้นที่ส่วนข้อมูล */}
-            {paymentStats.map((stat, index) => {
+      <div className="p-3">
+        <div className="mb-3 text-center">
+          <h5 className="text-muted">ยอดรวมทั้งหมด: ฿{total.toLocaleString('th-TH')}</h5>
+        </div>
+        <div className="payment-methods-list">
+          {paymentStats.length > 0 ? (
+            paymentStats.map((stat, index) => {
               const amount = parseFloat(stat.total || 0);
               const percentage = ((amount / total) * 100).toFixed(2);
+              const color = paymentColors[stat.paymentMethod] || `hsl(${index * 60}, 70%, 60%)`;
+              
               return (
-                <div
-                  key={index}
+                <div 
+                  key={index} 
+                  className="payment-method-item mb-3 p-3"
                   style={{
-                    marginBottom: '15px',
-                    borderLeft: `3px solid ${chartData.datasets[0].backgroundColor[index]}`,
-                    paddingLeft: '10px'
+                    backgroundColor: 'white',
+                    borderRadius: '10px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                    borderLeft: `5px solid ${color}`
                   }}
                 >
-                  <div style={{ fontWeight: 'bold' }}>{stat.paymentMethod}</div>
-                  <div style={{ color: '#666' }}>
-                    ฿{amount.toLocaleString()}
-                  </div>
-                  <div style={{ color: '#888', fontSize: '0.9em' }}>
-                    ({percentage}%)
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h5 style={{ fontWeight: 'bold', color: '#333' }}>{stat.paymentMethod}</h5>
+                      <div className="text-muted">{stat.count || 0} รายการ</div>
+                    </div>
+                    <div className="text-end">
+                      <h5 style={{ color: '#0d6efd', fontWeight: 'bold' }}>฿{amount.toLocaleString('th-TH')}</h5>
+                      <small className="text-muted">{percentage}%</small>
+                    </div>
                   </div>
                 </div>
               );
-            })}
-          </div>
+            })
+          ) : (
+            <div className="text-center p-5">
+              <i className="fas fa-random mb-2" style={{ fontSize: '2.8rem', color: '#bdbdbd' }}></i>
+              <div className="text-muted" style={{ fontSize: '1.1rem' }}>ไม่มีข้อมูลวิธีการชำระเงินในวันนี้</div>
+            </div>
+          )}
         </div>
       </div>
     );
   };
 
-
-  // Consolidate styles into a single styles object
   const styles = {
     container: {
       backgroundColor: "#f8f9fa",
@@ -618,354 +580,119 @@ const renderTopSellingContent = () => {
     }
   };
 
-  // Add new state for hover
   const [billCountHover, setBillCountHover] = useState(false);
   const [averageHover, setAverageHover] = useState(false);
 
   return (
     <Template>
       <div style={styles.container}>
-
         <div className="row mb-4">
-
           <div className="col-12">
             <div style={{ ...styles.chartContainer, background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)' }}>
-
-
               <div style={styles.modernHeader}>
                 <h4 className="text-dark" style={{ margin: 0, fontWeight: '600' }}>
-                  <img src={growth} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
-                  ยอดขายวันนี้ {currentTime.toLocaleDateString('th-TH')}
-                  <span className="ms-2 badge bg-secondary text-dark">
-                    {currentTime.toLocaleTimeString('th-TH')}
-                  </span>
+                  ข้อมูลสรุปล่าสุดวันที่ {currentTime.toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' })} | <span style={{ fontWeight: 'bold' }}>{currentTime.toLocaleTimeString('th-TH')}</span>
                 </h4>
               </div>
-
               <div className="row p-4 g-4">
-                <div className="col-md-3">
+                <div className="col-md-4">
                   <div style={styles.statCard} className="text-center">
-                    <div className="d-flex align-items-center justify-content-between mb-2">
-                      <h5 className="mb-0">ยอดรวม</h5>
-                    </div>
+                    <h5 className="mb-0" style={{ color: '#0d6efd', fontWeight: 600 }}><i className="fas fa-coins me-2"></i>ยอดรวม</h5>
                     <h3 className="text-primary mb-0">฿ {todaySales.totalAmount.toLocaleString()}</h3>
-
+                    <div className="text-muted mt-2" style={{ fontSize: '0.95em' }}>เมื่อวาน: ฿ {todaySales.yesterdayTotal.toLocaleString()}</div>
                   </div>
                 </div>
-
-                <div className="col-md-3">
+                <div className="col-md-4">
                   <div style={styles.statCard} className="text-center">
-                    <div className="d-flex align-items-center justify-content-between mb-2">
-                      <h5 className="mb-0">การเติบโต</h5>
-                    </div>
-                    <h3 style={{ color: todaySales.growthRate < 0 ? '#dc3545' : '#198754' }}>
-                      {todaySales.growthRate >= 0 ? "+" : ""}{todaySales.growthRate}%
-                    </h3>
-                    <small className="text-muted">
-                      เทียบกับยอดขายเมื่อวาน (฿ {todaySales.yesterdayTotal.toLocaleString()})
-                    </small>
+                    <h5 className="mb-0" style={{ color: '#0dcaf0', fontWeight: 600 }}><i className="fas fa-receipt me-2"></i>จำนวนบิล</h5>
+                    <h3 className="text-info mb-0">{todaySales.billCount} บิล</h3>
+                    <div className="text-muted mt-2" style={{ fontSize: '0.95em' }}>เมื่อวาน: {todaySales.yesterdayBillCount} บิล</div>
                   </div>
                 </div>
-
-                <div className="col-md-3">
+                <div className="col-md-4">
                   <div style={styles.statCard} className="text-center">
-                    <div className="d-flex align-items-center justify-content-between mb-2">
-                      <h5 className="mb-0">จำนวนบิล</h5>
-                    </div>
-                    <h3
-                      className="text-info mb-0"
-                      style={{
-                        ...styles.clickableNumber,
-                        ...(billCountHover ? styles.clickableNumberHover : {})
-                      }}
-                      onClick={navigateToBillSales}
-                      onMouseEnter={() => setBillCountHover(true)}
-                      onMouseLeave={() => setBillCountHover(false)}
-                    >
-                      <u>{todaySales.billCount} บิล</u>
-                    </h3>
-                    <small className="text-muted d-block mt-2">
-                      เมื่อวาน: {todaySales.yesterdayBillCount} บิล
-                      <span className={`ms-2 ${todaySales.billCountGrowth >= 0 ? 'text-success' : 'text-danger'}`}>
-                        {todaySales.billCountGrowth > 0 && '+'}{todaySales.billCountGrowth}
-                      </span>
-                    </small>
-                  </div>
-                </div>
-
-                <div className="col-md-3">
-                  <div style={styles.statCard} className="text-center">
-                    <div className="d-flex align-items-center justify-content-between mb-2">
-                      <h5 className="mb-0">เฉลี่ย/บิล</h5>
-                    </div>
-                    <h3
-                      className="text-info mb-0"
-                      style={{
-                        ...styles.clickableNumber,
-                        ...(averageHover ? styles.clickableNumberHover : {})
-                      }}
-                      onClick={navigateToBillSales}
-                      onMouseEnter={() => setAverageHover(true)}
-                      onMouseLeave={() => setAverageHover(false)}
-                    >
-                      <u>฿ {todaySales.averagePerBill.toLocaleString()}</u>
-                    </h3>
-                    <small className="text-muted d-block mt-2">
-                      เมื่อวาน: ฿ {todaySales.yesterdayAveragePerBill.toLocaleString()}
-                      <span className={`ms-2 ${todaySales.averageGrowth >= 0 ? 'text-success' : 'text-danger'}`}>
-                        {todaySales.averageGrowth > 0 && '+'}{todaySales.averageGrowth}
-                      </span>
-                    </small>
+                    <h5 className="mb-0" style={{ color: '#198754', fontWeight: 600 }}><i className="fas fa-divide me-2"></i>เฉลี่ย/บิล</h5>
+                    <h3 className="text-success mb-0">฿ {todaySales.averagePerBill.toLocaleString()}</h3>
+                    <div className="text-muted mt-2" style={{ fontSize: '0.95em' }}>เมื่อวาน: ฿ {todaySales.yesterdayAveragePerBill.toLocaleString()}</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-
-
         <div className="row g-4">
-          <div className="col-md-4 ">
-            <div className="card h-100" style={styles.summaryCard}>
-              <div className="card-header text-center bg-muted">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div className="d-flex align-items-center gap-2">
-                    <img src={star} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
-
-                    <select
-                      className="form-select form-select-sm"
-                      style={{
-                        width: 'auto',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        color: 'black',
-                        cursor: 'pointer',
-                        fontWeight: 'bold',
-                        paddingRight: '2rem'
-                      }}
-                      value={topSellingViewType}
-                      onChange={(e) => setTopSellingViewType(e.target.value)}
-                    >
-                      <option value="products" style={{ color: 'black' }}> สินค้า</option>
-                      <option value="categories" style={{ color: 'black' }}>หมวดหมู่ </option>
-                    </select>
-                    <span className="text-black"> ขายดี 5 อันดับ</span>
-                  </div>
-                </div>
-              </div>
-              <div
-                className="card-body"
-                style={{
-                  height: "320px",
-                  overflowY: "auto",
-                }}
-              >
-                <div
-                  style={{
-                    overflowY: "auto",
-                    padding: "15px",
-                  }}
-                >
-                  {renderTopSellingContent()}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="card h-100" style={styles.summaryCard}>
-              <div className="card-header text-center bg-muted">
-                <div className="d-flex justify-content-between align-items-center">
-                  <h4 className="mb-0">
-                    <img src={banknotes} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
-                    วิธีการชำระเงิน
-                  </h4>
-                  <div>
-                    <i
-                      className="fas fa-chart-pie mx-2"
-                      style={paymentChartType === 'pie' ? styles.activeIcon : styles.inactiveIcon}
-                      onClick={() => setPaymentChartType('pie')}
-                      title="กราฟวงกลม"
-                    />
-                    <i
-                      className="fas fa-chart-bar mx-2"
-                      style={paymentChartType === 'bar' ? styles.activeIcon : styles.inactiveIcon}
-                      onClick={() => setPaymentChartType('bar')}
-                      title="กราฟแท่ง"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="card-body">
-                {renderPaymentChart()}
-              </div>
-            </div>
-          </div>
-
-          <div className="col-md-4">
-            <div className="card h-100" style={styles.summaryCard}>
-              <div className="card-header text-center bg-muted">
-                <div className="d-flex justify-content-between align-items-center">
-                  <h4 className="mb-0">
-                    <img src={product} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
-                    สินค้าใกล้หมด
-                  </h4>
-                  <span
-                    onClick={navigateToStock}
-                    className="badge bg-danger fs-5"
+          <div className="col-md-6">
+            <div className="card h-100" style={{...styles.summaryCard, overflow: 'hidden'}}>
+              <div className="card-header d-flex align-items-center" 
+                  style={{ 
+                    backgroundColor: 'white',
+                    paddingTop: '15px', 
+                    paddingBottom: '15px',
+                    borderBottom: '1px solid rgba(0,0,0,0.05)'
+                  }}>
+                <i className="fa fa-trophy me-2 text-warning"></i>
+                <div style={{ position: 'relative', marginRight: 8 }}>
+                  <select
+                    value={topSellingViewType}
+                    onChange={e => setTopSellingViewType(e.target.value)}
                     style={{
-                      padding: '8px 15px',
+                      appearance: 'none',
+                      WebkitAppearance: 'none',
+                      MozAppearance: 'none',
+                      border: 'none',
+                      background: 'none',
+                      fontWeight: 600,
+                      color: '#333',
+                      fontSize: 16,
+                      padding: '2px 22px 2px 0',
                       cursor: 'pointer',
-                      transition: 'all 0.2s ease',
+                      outline: 'none',
                     }}
-                    onMouseEnter={e => {
-                      e.target.style.transform = 'scale(1.1)';
-                      e.target.style.backgroundColor = '#bb2d3b';
-                    }}
-                    onMouseLeave={e => {
-                      e.target.style.transform = 'scale(1)';
-                      e.target.style.backgroundColor = '#dc3545';
-                    }}
-                    title="คลิกเพื่อดูายละเอียด"
                   >
-                    {lowStockCount} รายการ
-                  </span>
+                    <option value="products">สินค้า</option>
+                    <option value="categories">หมวดหมู่</option>
+                  </select>
+                  <span style={{
+                    position: 'absolute',
+                    right: 4,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    pointerEvents: 'none',
+                    color: '#8a94a6',
+                    fontSize: 12
+                  }}>▼</span>
                 </div>
+                <span style={{ fontWeight: 600, fontSize: 16, color: '#333' }}>ขายดี 5 อันดับ</span>
               </div>
-              <div
-                className="card-body"
-                style={{
-                  height: "320px",
-                  overflowY: "auto",
-                  padding: "0",
-                }}
-              >
-                {lowStockItems.length > 0 ? (
-                  <div className="list-group list-group-flush">
-                    {/* แสดงสินค้าที่ใกล้หมดระดับวิกฤต (สีแดง) */}
-                    {lowStockItems
-                      .filter(item => item.remainingQty <= 5)
-                      .map((item, index) => (
-                        <div
-                          key={`critical-${index}`}
-                          className="list-group-item"
-                          style={{
-                            borderLeft: "4px solid #dc3545",
-                            padding: "15px",
-                            backgroundColor: 'rgba(220, 53, 69, 0.05)'
-                          }}
-                        >
-                          <div className="d-flex justify-content-between align-items-center">
-                            <div>
-                              <h6 className="mb-1 fw-bold">{item.productName}</h6>
-                              <div className="badge bg-danger fs-6">
-                                <i className="fas fa-exclamation-triangle me-1"></i>
-                                เหลือ: {item.remainingQty} ชิ้น
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-
-                    {/* แสดงสินค้าที่ใกล้หมดระดับเตือน (สีเหลือง) */}
-                    {lowStockItems
-                      .filter(item => item.remainingQty > 5 && item.remainingQty <= 10)
-                      .map((item, index) => (
-                        <div
-                          key={`warning-${index}`}
-                          className="list-group-item"
-                          style={{
-                            borderLeft: "4px solid #ffc107",
-                            padding: "15px",
-                            backgroundColor: 'rgba(255, 193, 7, 0.05)'
-                          }}
-                        >
-                          <div className="d-flex justify-content-between align-items-center">
-                            <div>
-                              <h6 className="mb-1 fw-bold">{item.productName}</h6>
-                              <div className="badge bg-warning text-dark fs-6">
-                                <i className="fas fa-exclamation me-1"></i>
-                                เหลือ: {item.remainingQty} ชิ้น
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+              <div className="card-body" style={{ padding: 0, overflowY: 'auto', maxHeight: '500px' }}>
+                {(topSellingViewType === 'products' ? topSellingProducts.length === 0 : topSellingCategories.length === 0) ? (
+                  <div className="text-center w-100 d-flex flex-column align-items-center justify-content-center" style={{ height: '250px' }}>
+                    <i className="fas fa-chart-bar fa-3x mb-3 text-muted"></i>
+                    <div style={{ color: '#8a94a6', fontSize: 15, fontWeight: 500 }}>
+                      ไม่มีข้อมูล{topSellingViewType === 'products' ? 'สินค้าขายดี' : 'หมวดหมู่ขายดี'}
+                    </div>
                   </div>
                 ) : (
-                  <div className="alert alert-success m-3 text-center">
-                    <i className="fas fa-check-circle fa-2x mb-2"></i>
-                    <p className="mb-0">สินค้าในคลังมีเพียงพอ</p>
-                  </div>
+                  renderTopSellingContent()
                 )}
               </div>
             </div>
           </div>
-          
-          <div className="col-md-4">
+          <div className="col-md-6">
             <div className="card h-100" style={styles.summaryCard}>
-              <div className="card-header text-center bg-muted text-white">
-                <div className="d-flex justify-content-between align-items-center">
-                  <h4 className="mb-0 text-dark">
-                    <img src={calendar} alt="Payment" style={{ height: '50px', marginRight: '8px' }} />
-                    สินค้าใกล้หมดอายุ
-                  </h4>
-                  <span className="badge bg-danger fs-5">
-                    {nearExpiryCount} รายการ
-                  </span>
-                </div>
+              <div className="card-header d-flex align-items-center" style={{ 
+                backgroundColor: '#f8f9fa', 
+                padding: '15px 20px',
+                borderBottom: '1px solid rgba(0,0,0,0.05)'
+              }}>
+                <i className="fas fa-money-bill-wave me-2" style={{ color: '#0d6efd' }}></i>
+                <span className="fw-bold" style={{ fontSize: '1.1rem' }}>วิธีการชำระเงิน</span>
               </div>
-              <div
-                className="card-body"
-                style={{
-                  height: "320px",
-                  overflowY: "auto",
-                  padding: "0",
-                }}
-              >
-                {nearExpiryProducts.length > 0 ? (
-                  <div className="list-group list-group-flush">
-                    {nearExpiryProducts.map((item, index) => {
-                      const expiryDate = new Date(item.expirationdate);
-                      const daysUntilExpiry = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
-                      const isVeryNear = daysUntilExpiry <= 30;
-
-                      return (
-                        <div
-                          key={index}
-                          className="list-group-item"
-                          style={{
-                            borderLeft: isVeryNear ? "4px solid #dc3545" : "4px solid #ffc107",
-                            padding: "15px",
-                            backgroundColor: isVeryNear ? 'rgba(220, 53, 69, 0.05)' : 'rgba(255, 193, 7, 0.05)'
-                          }}
-                        >
-                          <div className="d-flex justify-content-between align-items-center">
-                            <div>
-                              <h6 className="mb-1 fw-bold">{item.name}</h6>
-                              <div className={`badge ${isVeryNear ? 'bg-danger' : 'bg-warning text-dark'} fs-6`}>
-                                <i className="fas fa-clock me-1"></i>
-                                หมดอายุใน: {daysUntilExpiry} วัน
-                              </div>
-                              <div className="text-muted small mt-1">
-                                วันหมดอายุ: {expiryDate.toLocaleDateString('th-TH')}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="alert alert-success m-3 text-center">
-                    <i className="fas fa-check-circle fa-2x mb-2"></i>
-                    <p className="mb-0">ไม่มีสินค้าใกล้หมดอายุ</p>
-                  </div>
-                )}
+              <div className="card-body" style={{ overflowY: 'auto' }}>
+                {renderPaymentStats()}
               </div>
             </div>
           </div>
-          
         </div>
       </div>
     </Template>

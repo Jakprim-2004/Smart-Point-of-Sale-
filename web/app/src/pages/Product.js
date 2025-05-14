@@ -36,16 +36,17 @@ function Product() {
         config.headers()
       );
       if (res.data.message === "success") {
-        // เพิ่มการเช็คว่ามีรูปภาพหรือไม่
+        // เพิ่มการเช็คว่ามีรูปภาพหลักหรือไม่
         const productsWithImageStatus = await Promise.all(
           res.data.results.map(async (product) => {
             const imageRes = await axios.get(
               config.api_path + "/productImage/list/" + product.id,
               config.headers()
             );
+            const mainImage = imageRes.data.results.find(img => img.isMain);
             return {
               ...product,
-              hasImage: imageRes.data.results.length > 0,
+              mainImageName: mainImage ? mainImage.imageName : null,
             };
           })
         );
@@ -560,53 +561,51 @@ function Product() {
             <h4 className="card-title mb-0 font-weight-bold">สินค้า</h4>
           </div>
           <div className="card-body bg-light">
-            <div className="row mb-4">
-              <div className="col-md-10">
-                <div className="d-flex">
-                  <button
-                    onClick={clearForm}
-                    className="btn btn-primary shadow-sm d-flex align-items-center hover-scale mr-2"
-                    style={{ transition: "transform 0.2s" }}
-                  >
-                    <i className="fa fa-plus mr-2"></i> เพิ่มรายการ
-                  </button>
-                  <button
-                    onClick={handleCategoryManagement}
-                    className="btn btn-secondary shadow-sm d-flex align-items-center hover-scale"
-                    style={{ transition: "transform 0.2s" }}
-                  >
-                    <i className="fa fa-tags mr-2"></i> จัดการหมวดหมู่
-                  </button>
+            <div className="d-flex flex-wrap align-items-center mb-4 gap-2">
+              <button
+                onClick={clearForm}
+                className="btn btn-primary d-flex align-items-center shadow-sm"
+                style={{ borderRadius: 20, fontWeight: 500, padding: '8px 20px' }}
+              >
+                <i className="fa fa-plus mr-2"></i> เพิ่มสินค้า
+              </button>
+              <button
+                onClick={handleCategoryManagement}
+                className="btn btn-outline-primary d-flex align-items-center shadow-sm"
+                style={{ borderRadius: 20, fontWeight: 500, padding: '8px 20px' }}
+              >
+                <i className="fa fa-tags mr-2"></i> จัดการหมวดหมู่
+              </button>
+              <div className="ml-auto" style={{ minWidth: 220 }}>
+                <div className="input-group">
+                  <span className="input-group-text bg-white border-0" style={{ borderRadius: '20px 0 0 20px' }}>
+                    <i className="fa fa-search text-muted"></i>
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control border-0 shadow-sm"
+                    placeholder="ค้นหาสินค้า"
+                    onChange={handleSearch}
+                    style={{ borderRadius: '0 20px 20px 0', background: '#f8f9fa' }}
+                  />
                 </div>
-              </div>
-              <div className="col-md-2">
-                <input
-                  type="text"
-                  className="form-control shadow-sm border-0"
-                  placeholder="🔍 ค้นหาสินค้า"
-                  onChange={handleSearch}
-                  style={{ borderRadius: "20px", padding: "10px 15px" }}
-                />
               </div>
             </div>
 
             <div className="table-responsive">
               <table
                 className="table table-hover table-bordered shadow-sm bg-white"
-                style={{ borderRadius: "8px", overflow: "hidden" }}
+                style={{ borderRadius: "12px", overflow: "hidden" }}
               >
                 <thead className="thead-light">
-                  <tr style={{ background: "#f8f9fa" }}>
+                  <tr style={{ background: "#f1f3f6" }}>
+                    <th className="py-3">รูป</th>
                     <th className="py-3">Barcode</th>
                     <th className="py-3">ชื่อสินค้า</th>
-                    <th className="py-3 text-center">รูปภาพ</th>
                     <th className="py-3 text-right">ราคาทุน</th>
-                    <th className="py-3 text-right">ราคาจำหน่าย</th>
-                    <th className="py-3 text-right">วันหมดอายุ</th>
-                    <th className="py-3">ประเภทสินค้า</th>
-                    <th className="py-3" width="200px">
-                      จัดการ
-                    </th>
+                    <th className="py-3 text-right">ราคาขาย</th>
+                    <th className="py-3">ประเภท</th>
+                    <th className="py-3" width="200px">จัดการ</th>
                   </tr>
                 </thead>
 
@@ -621,40 +620,32 @@ function Product() {
                       )
                       .map((item) => (
                         <tr key={item.id} className="align-middle">
-                          <td className="py-2">
-                            <Barcode
-                              value={item.barcode}
-                              width={1}
-                              height={40}
-                            />
-                          </td>
-                          <td className="py-2 font-weight-bold">{item.name}</td>
                           <td className="py-2 text-center">
-                            {item.hasImage ? (
-                              <span className="badge badge-success">
-                                <i className="fa fa-check-circle mr-1"></i>{" "}
-                                มีรูปภาพ
-                              </span>
+                            {item.mainImageName ? (
+                              <img
+                                src={config.api_path + "/uploads/" + item.mainImageName}
+                                alt="รูปหลัก"
+                                style={{
+                                  width: 80,
+                                  height: 80,
+                                  objectFit: "cover",
+                                  borderRadius: 12,
+                                  border: "2px solid #e3e6ed",
+                                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
+                                }}
+                              />
                             ) : (
-                              <span className="badge badge-warning">
-                                <i className="fa fa-exclamation-circle mr-1"></i>{" "}
-                                ไม่มีรูปภาพ
+                              <span className="badge badge-light border" style={{ color: '#888', fontSize: 13 }}>
+                                <i className="fa fa-image mr-1"></i> ไม่มีรูป
                               </span>
                             )}
                           </td>
-                          <td className="py-2 text-right">
-                            {parseInt(item.cost).toLocaleString("th-TH")} ฿
-                          </td>
-                          <td className="py-2 text-right">
-                            {parseInt(item.price).toLocaleString("th-TH")} ฿
-                          </td>
-                          <td className="py-2 text-right">
-                            {item.expirationdate?.substring(0, 10)}
-                          </td>
+                          <td className="py-2">{item.barcode}</td>
+                          <td className="py-2 font-weight-bold">{item.name}</td>
+                          <td className="py-2 text-right">{parseInt(item.cost).toLocaleString("th-TH")} ฿</td>
+                          <td className="py-2 text-right">{parseInt(item.price).toLocaleString("th-TH")} ฿</td>
                           <td className="py-2">
-                            <span className="badge badge-info px-3 py-2">
-                              {item.category}
-                            </span>
+                            <span className="badge badge-info px-3 py-2">{item.category}</span>
                           </td>
                           <td className="text-center py-2">
                             <div className="btn-group">
@@ -729,6 +720,17 @@ function Product() {
           }
           .badge {
             font-weight: normal;
+          }
+          .table th, .table td {
+            vertical-align: middle !important;
+          }
+          .table th {
+            color: #495057;
+            font-weight: 600;
+            background: #f1f3f6 !important;
+          }
+          .btn, .badge {
+            font-size: 15px;
           }
         `}</style>
 
@@ -869,36 +871,7 @@ function Product() {
                   required
                 />
               </div>
-              <div className="form-group col-md-6">
-                <label>
-                  บาร์โค้ด <span className="text-danger">*</span>
-                </label>
-                <div className="input-group">
-                  <input
-                    value={product.barcode || ""}
-                    onChange={handleBarcodeChange}
-                    type="text"
-                    className="form-control shadow-sm"
-                    required
-                    maxLength="13"
-                    pattern="\d{13}"
-                    title="กรุณากรอกบาร์โค้ด 13 หลัก"
-                    placeholder="กรอกบาร์โค้ด 13 หลัก"
-                  />
-                  <div className="input-group-append">
-                    <button 
-                      type="button" 
-                      className="btn btn-outline-secondary" 
-                      onClick={generateBarcode}
-                      title="สร้างบาร์โค้ดอัตโนมัติ">
-                      <i className="fa fa-refresh"></i>
-                    </button>
-                  </div>
-                </div>
-                <small className="text-muted">
-                  บาร์โค้ดต้องเป็นตัวเลข 13 หลัก ({(product.barcode || "").length}/13)
-                </small>
-              </div>
+              
               <div className="form-group col-md-6">
                 <label>
                   ราคาทุน <span className="text-danger">*</span>
@@ -929,22 +902,7 @@ function Product() {
                   min="0"
                 />
               </div>
-              <div className="form-group col-md-6">
-                <label>วันหมดอายุ</label>
-                <input
-                  value={
-                    product.expirationdate
-                      ? product.expirationdate.substring(0, 10)
-                      : ""
-                  }
-                  onChange={(e) =>
-                    setProduct({ ...product, expirationdate: e.target.value })
-                  }
-                  type="date"
-                  className="form-control shadow-sm"
-                  min={new Date().toISOString().split("T")[0]}
-                />
-              </div>
+              
               <div className="form-group col-md-12">
                 <label>
                   ประเภทสินค้า <span className="text-danger">*</span>
@@ -994,6 +952,36 @@ function Product() {
                     <i className="fa fa-cog"></i>
                   </button>
                 </div>
+              </div>
+              <div className="form-group col-md-12">
+                <label>
+                  บาร์โค้ด <span className="text-danger">*</span>
+                </label>
+                <div className="input-group">
+                  <input
+                    value={product.barcode || ""}
+                    onChange={handleBarcodeChange}
+                    type="text"
+                    className="form-control shadow-sm"
+                    required
+                    maxLength="13"
+                    pattern="\d{13}"
+                    title="กรุณากรอกบาร์โค้ด 13 หลัก"
+                    placeholder="กรอกบาร์โค้ด 13 หลัก"
+                  />
+                  <div className="input-group-append">
+                    <button 
+                      type="button" 
+                      className="btn btn-outline-secondary" 
+                      onClick={generateBarcode}
+                      title="สร้างบาร์โค้ดอัตโนมัติ">
+                      <i className="fa fa-refresh"></i>
+                    </button>
+                  </div>
+                </div>
+                <small className="text-muted">
+                  บาร์โค้ดต้องเป็นตัวเลข 13 หลัก ({(product.barcode || "").length}/13)
+                </small>
               </div>
             </div>
 

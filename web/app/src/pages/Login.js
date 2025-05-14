@@ -101,18 +101,8 @@ function Login() {
                         <h3 className="text-center mb-4">เข้าสู่ระบบ</h3>
                         
                         <nav className="nav nav-pills nav-justified mb-4">
-                            <button 
-                                className={`nav-link ${loginType === 'member' ? 'active' : ''}`}
-                                onClick={() => setLoginType('member')}>
-                                <i className="fas fa-user-tie me-2"></i>
-                                เจ้าของร้าน
-                            </button>
-                            <button 
-                                className={`nav-link ${loginType === 'employee' ? 'active' : ''}`}
-                                onClick={() => setLoginType('employee')}>
-                                <i className="fas fa-user me-2"></i>
-                                พนักงาน
-                            </button>
+                           
+                           
                         </nav>
 
                         <div className="login-form p-3">
@@ -185,11 +175,7 @@ function Login() {
                                 เข้าสู่ระบบ
                             </button>
 
-                            {loginType === 'member' && (
-                                <div className="text-center">
-                                    <p className="mb-0">ยังไม่มีบัญชี? <a href="/Register" className="text-primary text-decoration-none">สมัครสมาชิก</a></p>
-                                </div>
-                            )}
+                           
                         </div>
                     </div>
                 </div>
