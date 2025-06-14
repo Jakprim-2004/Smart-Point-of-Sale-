@@ -35,7 +35,7 @@ function Dashboard() {
   const [year, setYear] = useState(myDate.getFullYear());
   const [month, setMonth] = useState(myDate.getMonth() + 1);
   const [viewType, setViewType] = useState("daily");
-  const [arrYear, ] = useState(() => {
+  const [arrYear,] = useState(() => {
     let arr = [];
     const y = myDate.getFullYear();
     const startYear = y - 5;
@@ -48,18 +48,41 @@ function Dashboard() {
   const [myData, setMyData] = useState([]);
   const [stockData, setStockData] = useState([]);
   const [topSellingProducts, setTopSellingProducts] = useState([]);
-  const [topSellingCategories, setTopSellingCategories] = useState([]);
-  const [totalSales, setTotalSales] = useState(0);
+  const [topSellingCategories, setTopSellingCategories] = useState([]);  const [totalSales, setTotalSales] = useState(0);
   const [totalProfit, setTotalProfit] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
-  const [options, ] = useState({
+  
+  // เพิ่มฟังก์ชันสำหรับแสดงชื่อเดือนภาษาไทย
+  const getThaiMonthName = (monthNumber) => {
+    const thaiMonths = [
+      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", 
+      "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", 
+      "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+    return thaiMonths[monthNumber - 1];
+  };
+    const [options,] = useState({
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
+        labels: {
+          padding: 15,
+          usePointStyle: true,
+          pointStyle: 'circle',
+        }
       },
       tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleFont: { size: 14 },
+        bodyFont: { size: 13 },
+        padding: 12,
         callbacks: {
+          title: function(tooltipItems) {
+            const day = tooltipItems[0].label;
+            return `${day}`;
+          },
           label: function (tooltipItem) {
             let label = tooltipItem.dataset.label || "";
             if (label) {
@@ -73,11 +96,24 @@ function Dashboard() {
     },
     scales: {
       y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        },
         ticks: {
           callback: function (value) {
             return parseFloat(value).toFixed(2);
           },
         },
+      },
+      x: {
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        },
+        ticks: {
+          maxRotation: 45,
+          minRotation: 45,
+        }
       },
     },
   });
@@ -85,13 +121,11 @@ function Dashboard() {
   const [dateRange, setDateRange] = useState("today");
   const [dateRangeValue, setDateRangeValue] = useState([null, null]);
   const [salesData, setSalesData] = useState([]);
-  const [activeSection, setActiveSection] = useState('sales'); 
+  const [activeSection, setActiveSection] = useState('sales');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [productDetails, setProductDetails] = useState([]);
   const [productDateRange, setProductDateRange] = useState([new Date(), new Date()]);
-  const [topSalesDays, setTopSalesDays] = useState([]);
-  const [showSold, setShowSold] = useState(true);
-  const [showRemaining, setShowRemaining] = useState(false);
+  const [topSalesDays, setTopSalesDays] = useState([]);  const [showSold, setShowSold] = useState(true);  const [showRemaining, setShowRemaining] = useState(false);
   const [combinedStockData, setCombinedStockData] = useState([]);
 
   useEffect(() => {
@@ -103,7 +137,7 @@ function Dashboard() {
     if (activeSection === 'stock') {
       fetchProductDetails();
     }
-  }, [year, month, viewType, dateRange, dateRangeValue, activeSection, productDateRange]); 
+  }, [year, month, viewType, dateRange, dateRangeValue, activeSection, productDateRange]);
 
   useEffect(() => {
     if (activeSection === 'stock') {
@@ -127,40 +161,65 @@ function Dashboard() {
   const reportSumSalePerMonth = async () => {
     try {
       const url = config.api_path + "/reportSumSalePerMonth";
-      const payload = { year, month, viewType }; 
-
-      const res = await axios.post(url, payload, config.headers());
-      if (res.data.message === "success") {
-        const results = res.data.results;
+      const payload = { year, month, viewType };      const res = await axios.post(url, payload, config.headers());      if (res.data.message === "success") {
+        // คัดกรองและตรวจสอบข้อมูลที่ได้รับ
+        const results = res.data.results || [];
+        
+        // สร้างรายการข้อมูลที่ละเอียดมากขึ้นเพื่อการตรวจสอบ
+        const detailedData = results.map(item => ({
+          day: item.day,
+          month: item.month,
+          sum: parseFloat(item.sum || 0),
+          profit: parseFloat(item.profit || 0),
+          cost: parseFloat(item.cost || 0),
+          hasData: (parseFloat(item.sum || 0) > 0 || parseFloat(item.profit || 0) > 0 || parseFloat(item.cost || 0) > 0)
+        }));
+        
+        console.log("ข้อมูลที่ได้รับจาก API:", {
+          จำนวนข้อมูล: results.length,
+          วันที่มีข้อมูล: detailedData
+            .filter(item => item.hasData)
+            .map(item => item.day)
+            .sort((a,b) => a-b)
+            .join(", "),
+          ข้อมูลละเอียด: detailedData
+        });
+        
+        // ตรวจสอบข้อมูลของวันที่ 14 และ 15 มิถุนายน
+        const day14 = detailedData.find(item => item.day === 14);
+        const day15 = detailedData.find(item => item.day === 15);
+        
+        if (month === 6) { // มิถุนายน
+          console.log("ข้อมูลวันที่ 14:", day14 ? day14 : "ไม่พบข้อมูล");
+          console.log("ข้อมูลวันที่ 15:", day15 ? day15 : "ไม่พบข้อมูล");
+        }
+        
         let salesData = [],
           profitData = [],
-          costData = [];
-
-        const calculateVat = (amount) => {
-          return amount * 1.07; // เพิ่ม VAT 7%
-        };
-
+          costData = [];// ไม่คำนวณ VAT เพิ่ม
         if (viewType === "daily") {
-          const daysInMonth = new Date(year, month, 0).getDate(); 
+          const daysInMonth = new Date(year, month, 0).getDate();
           salesData = Array(daysInMonth).fill(0);
           profitData = Array(daysInMonth).fill(0);
           costData = Array(daysInMonth).fill(0);
           results.forEach((item) => {
-            salesData[item.day - 1] = calculateVat(item.sum || 0);
-            profitData[item.day - 1] = item.profit || 0;
-            costData[item.day - 1] = item.cost || 0;
+            // ใช้ค่าโดยตรงไม่บวก VAT
+            salesData[item.day - 1] = parseFloat(item.sum || 0);
+            profitData[item.day - 1] = parseFloat(item.profit || 0);
+            costData[item.day - 1] = parseFloat(item.cost || 0);
           });
         } else if (viewType === "weekly") {
-          const weeksInMonth = 4; 
+          const weeksInMonth = 4;
           salesData = Array(weeksInMonth).fill(0);
           profitData = Array(weeksInMonth).fill(0);
           costData = Array(weeksInMonth).fill(0);
           results.forEach((item) => {
             const weekOfMonth = Math.ceil(new Date(year, month - 1, item.day).getDate() / 7);
             if (weekOfMonth <= weeksInMonth) {
-              salesData[weekOfMonth - 1] = calculateVat(item.sum || 0);
-              profitData[weekOfMonth - 1] = item.profit || 0;
-              costData[weekOfMonth - 1] = item.cost || 0;
+              // ใช้ค่าโดยตรงไม่บวก VAT
+              salesData[weekOfMonth - 1] = parseFloat(item.sum || 0);
+              profitData[weekOfMonth - 1] = parseFloat(item.profit || 0);
+              costData[weekOfMonth - 1] = parseFloat(item.cost || 0);
             }
           });
         } else if (viewType === "monthly") {
@@ -168,53 +227,153 @@ function Dashboard() {
           profitData = Array(12).fill(0);
           costData = Array(12).fill(0);
           results.forEach((item) => {
-            salesData[item.month - 1] = calculateVat(item.sum || 0);
-            profitData[item.month - 1] = item.profit || 0;
-            costData[item.month - 1] = item.cost || 0;
+            // ใช้ค่าโดยตรงไม่บวก VAT
+            salesData[item.month - 1] = parseFloat(item.sum || 0);
+            profitData[item.month - 1] = parseFloat(item.profit || 0);
+            costData[item.month - 1] = parseFloat(item.cost || 0);
           });
+        }        let labels = [];
+        
+        // สร้าง labels ตามประเภทการแสดงผล
+        if (viewType === "monthly") {
+          // กรณีแสดงรายเดือน
+          labels = [
+            "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
+            "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม",
+            "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม",
+          ];
+        } else if (viewType === "weekly") {
+          // กรณีแสดงรายสัปดาห์
+          labels = Array.from({ length: 4 }, (_, i) => `สัปดาห์ที่ ${i + 1}`);
+        } else {
+          // กรณีแสดงรายวัน
+          
+          // 1. หาวันที่มีข้อมูลจริง
+          const daysWithData = [];
+          results.forEach(item => {
+            if (item.day) {
+              daysWithData.push(parseInt(item.day));
+            }
+          });
+            // 2. สร้าง map ของข้อมูลตามวันที่
+          const dataByDay = {};
+          
+          // แสดงข้อมูลดิบที่ได้รับจาก API เพื่อตรวจสอบ
+          console.log("ข้อมูลที่ได้รับจาก API:", results);
+          
+          results.forEach(item => {
+            if (item.day) {
+              // บันทึกวันที่เป็นตัวเลขจำนวนเต็ม (integer)
+              const day = parseInt(item.day);
+              dataByDay[day] = {
+                sum: parseFloat(item.sum || 0),
+                profit: parseFloat(item.profit || 0),
+                cost: parseFloat(item.cost || 0),
+                day: day
+              };
+              console.log(`มีข้อมูลของวันที่: ${day}`);
+            }
+          });
+            // แก้ไขเพื่อแสดงทุกวันในเดือนอย่างเดียว (ไม่มีตัวเลือกแสดงเฉพาะวันที่มีข้อมูล)
+          const daysInMonth = new Date(year, month, 0).getDate();
+          
+          // สร้างข้อมูลใหม่สำหรับทุกวัน
+          const newLabels = [];
+          const newSalesData = Array(daysInMonth).fill(0);
+          const newProfitData = Array(daysInMonth).fill(0);
+          const newCostData = Array(daysInMonth).fill(0);
+            // แสดงรายการวันที่มีข้อมูลจาก results
+          console.log("วันที่มีข้อมูลในผลลัพธ์:", daysWithData.join(", "));
+          
+          // สร้าง labels สำหรับทุกวัน
+          for (let i = 1; i <= daysInMonth; i++) {
+            newLabels.push(`${i} ${getThaiMonthName(month)}`);
+              
+            // ใส่ข้อมูลตามวันที่ถ้ามี
+            if (dataByDay[i]) {
+              newSalesData[i-1] = dataByDay[i].sum;
+              newProfitData[i-1] = dataByDay[i].profit; 
+              newCostData[i-1] = dataByDay[i].cost;
+              console.log(`กำหนดค่าวันที่ ${i}: ยอดขาย=${dataByDay[i].sum}, กำไร=${dataByDay[i].profit}, ต้นทุน=${dataByDay[i].cost}`);
+            } else {
+              // แสดงวันที่ไม่มีข้อมูล
+              console.log(`วันที่ ${i} ไม่มีข้อมูล`);
+            }
+          }
+          
+          labels = newLabels;
+          salesData = newSalesData;
+          profitData = newProfitData;
+          costData = newCostData;        }
+          // ตรวจสอบวันที่มีข้อมูล
+        const daysWithData = [];
+        for (let i = 0; i < salesData.length; i++) {
+          if (salesData[i] > 0 || costData[i] > 0 || profitData[i] > 0) {
+            daysWithData.push(i + 1);
+          }
         }
-
-        const labels =
-          viewType === "monthly"
-            ? [
-              "มกราคม",
-              "กุมภาพันธ์",
-              "มีนาคม",
-              "เมษายน",
-              "พฤษภาคม",
-              "มิถุนายน",
-              "กรกฎาคม",
-              "สิงหาคม",
-              "กันยายน",
-              "ตุลาคม",
-              "พฤศจิกายน",
-              "ธันวาคม",
-            ]
-            : viewType === "weekly"
-              ? Array.from({ length: 4 }, (_, i) => `สัปดาห์ที่ ${i + 1}`)
-              : Array.from(
-                { length: salesData.length },
-                (_, i) => `วันที่ ${i + 1}`
-              );
-
+        
+        console.log(`วันที่มีข้อมูลในกราฟ: ${daysWithData.join(', ')}`);
+        
+        // ตรวจสอบพิเศษสำหรับวันที่ 14 และ 15 มิถุนายน
+        if (month === 6) { // มิถุนายน
+          console.log(`ข้อมูลวันที่ 14 มิถุนายน: ยอดขาย=${salesData[14-1]}, ต้นทุน=${costData[14-1]}, กำไร=${profitData[14-1]}`);
+          console.log(`ข้อมูลวันที่ 15 มิถุนายน: ยอดขาย=${salesData[15-1]}, ต้นทุน=${costData[15-1]}, กำไร=${profitData[15-1]}`);
+          
+          // ตรวจสอบว่ามีข้อมูลของวันที่ 15 หรือไม่ในข้อมูลดิบ
+          const day15Data = results.find(item => item.day === 15);
+          if (day15Data) {
+            console.log("พบข้อมูลวันที่ 15 มิถุนายนในข้อมูลดิบ:", day15Data);
+            // ให้แน่ใจว่าข้อมูลถูกใส่ในกราฟ
+            salesData[15-1] = parseFloat(day15Data.sum || 0);
+            profitData[15-1] = parseFloat(day15Data.profit || 0);
+            costData[15-1] = parseFloat(day15Data.cost || 0);
+          } else {
+            console.warn("ไม่พบข้อมูลวันที่ 15 มิถุนายนในข้อมูลดิบ");
+          }
+        }
+        
         setMyData({
           labels,
           datasets: [
             {
-              label: "ยอดขายรวม (รวม VAT 7%)",
+              label: "ยอดขาย",
               data: salesData,
+              backgroundColor: "rgba(54, 162, 235, 0.4)",
+              borderColor: "rgba(54, 162, 235, 1)",
+              borderWidth: 2,
+              tension: 0.3,
+              fill: false,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            },
+            {
+              label: "ต้นทุน",
+              data: costData,
+              backgroundColor: "rgba(255, 99, 132, 0.4)",
+              borderColor: "rgba(255, 99, 132, 1)",
+              borderWidth: 2,
+              tension: 0.3,
+              fill: false,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            },
+            {
+              label: "กำไร",
+              data: profitData,
               backgroundColor: "rgba(75, 192, 192, 0.4)",
               borderColor: "rgba(75, 192, 192, 1)",
               borderWidth: 2,
               tension: 0.3,
-              fill: true,
-            },
-           
-           
+              fill: false,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            }
           ],
         });
 
-        setTotalSales(calculateVat(res.data.totalSales));
+        // ไม่บวก VAT
+        setTotalSales(res.data.totalSales);
         setTotalProfit(res.data.totalProfit);
         setTotalCost(res.data.totalCost);
       }
@@ -258,7 +417,7 @@ function Dashboard() {
       const res = await axios.get(url, config.headers());
       if (res.data.message === "success") {
         const results = res.data.results;
-        const filteredResults = results.slice(0, 5); 
+        const filteredResults = results.slice(0, 5);
         setTopSellingProducts(filteredResults);
       }
     } catch (e) {
@@ -292,7 +451,7 @@ function Dashboard() {
     try {
       const url = config.api_path + "/reportSalesByDateRange";
       const [start, end] = dateRangeValue;
-      
+
       if (dateRange === 'custom' && (!start || !end)) {
         setSalesData([]);
         return;
@@ -326,7 +485,7 @@ function Dashboard() {
 
       const startDate = new Date(start);
       const endDate = new Date(end);
-      
+
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
 
@@ -356,7 +515,7 @@ function Dashboard() {
       // Clone the dates to avoid modifying the original dates
       const startDate = new Date(start);
       const endDate = new Date(end);
-      
+
       // Set time to beginning and end of days
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
@@ -383,14 +542,14 @@ function Dashboard() {
       // First fetch stock report data
       const stockReportRes = await axios.get(`${config.api_path}/stock/report`, config.headers());
       const stockReport = stockReportRes.data.results || [];
-      
+
       // Then fetch combined report data
       const url = config.api_path + "/stock/combinedReport";
       let startDate = new Date();
       let endDate = new Date();
-      
+
       // กำหนดช่วงเวลาตามที่เลือก
-      switch(dateRange) {
+      switch (dateRange) {
         case 'yesterday':
           startDate.setDate(startDate.getDate() - 1);
           endDate = new Date(startDate);
@@ -413,36 +572,36 @@ function Dashboard() {
           break;
         // case 'today' เป็นค่าเริ่มต้น ไม่ต้องกำหนดอะไร
       }
-  
+
       // ตั้งค่าเวลาเริ่มต้นและสิ้นสุด
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
-  
+
       // เรียก API combinedReport
       const res = await axios.post(url, {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         dateRange: dateRange
       }, config.headers());
-  
+
       // ตรวจสอบผลลัพธ์
       if (res.data.message === "success") {
         console.log("API Response:", res.data.results);
-        
+
         // สร้าง map ของข้อมูล stock
         const stockMap = new Map(stockReport.map(item => [item.result.id, {
           stockIn: item.stockIn || 0,
           stockOut: item.stockOut || 0,
           remainingQty: item.stockIn - item.stockOut
         }]));
-  
+
         // รวมข้อมูลการขายกับข้อมูล stock และคำนวณกำไรที่ถูกต้อง
         const combinedData = res.data.results.map(item => {
           const stockData = stockMap.get(item.productId) || { remainingQty: 0 };
-          
+
           // คำนวณกำไรสุทธิอีกครั้งเพื่อความถูกต้อง
           const calculatedProfit = (item.price - item.cost) * item.soldQty;
-          
+
           // ใช้ค่าที่คำนวณใหม่เสมอ เนื่องจากพบปัญหากับข้อมูลจาก API
           return {
             ...item,
@@ -455,10 +614,10 @@ function Dashboard() {
             netProfit: calculatedProfit
           };
         });
-  
+
         // เรียงลำดับตามกำไรสุทธิจากมากไปน้อย
         combinedData.sort((a, b) => b.netProfit - a.netProfit);
-        
+
         setCombinedStockData(combinedData);
       } else {
         console.error('Error response from API:', res.data);
@@ -491,10 +650,10 @@ function Dashboard() {
       const thaiDays = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const isToday = date.getTime() === today.getTime();
       const dayText = isToday ? 'วันนี้' : thaiDays[date.getDay()];
-      
+
       const total = topSalesDays.reduce((sum, d) => sum + d.netProfit, 0);
       const percentage = total > 0 ? ((day.netProfit / total) * 100).toFixed(2) : '0.00';
 
@@ -535,7 +694,7 @@ function Dashboard() {
                       },
                       tooltip: {
                         callbacks: {
-                          label: function(context) {
+                          label: function (context) {
                             return `฿${formatNumber(context.raw)}`;
                           }
                         }
@@ -614,7 +773,7 @@ function Dashboard() {
                   },
                   tooltip: {
                     callbacks: {
-                      label: function(context) {
+                      label: function (context) {
                         return `฿${formatNumber(context.raw)}`;
                       }
                     }
@@ -624,7 +783,7 @@ function Dashboard() {
                   y: {
                     beginAtZero: true,
                     ticks: {
-                      callback: function(value) {
+                      callback: function (value) {
                         return '฿' + formatNumber(value);
                       }
                     }
@@ -649,19 +808,19 @@ function Dashboard() {
   };
 
   const sidebarStyle = {
-    width: window.innerWidth < 768 
-    ? '100%' 
-    : (isSidebarCollapsed ? '60px' : '250px'),
-  height: window.innerWidth < 768 ? 'auto' : '100vh',
-  padding: isSidebarCollapsed && window.innerWidth >= 768 ? '20px 5px' : '20px',
-  position: window.innerWidth < 768 ? 'relative' : 'sticky',
-  top: 0,
-  overflowY: 'auto',
-  borderRight: window.innerWidth < 768 ? 'none' : '1px solid #e0e0e0',
-  borderBottom: window.innerWidth < 768 ? '1px solid #e0e0e0' : 'none',
-  backgroundColor: 'white',
-  transition: 'all 0.3s ease',
-  zIndex: 1000
+    width: window.innerWidth < 768
+      ? '100%'
+      : (isSidebarCollapsed ? '60px' : '250px'),
+    height: window.innerWidth < 768 ? 'auto' : '100vh',
+    padding: isSidebarCollapsed && window.innerWidth >= 768 ? '20px 5px' : '20px',
+    position: window.innerWidth < 768 ? 'relative' : 'sticky',
+    top: 0,
+    overflowY: 'auto',
+    borderRight: window.innerWidth < 768 ? 'none' : '1px solid #e0e0e0',
+    borderBottom: window.innerWidth < 768 ? '1px solid #e0e0e0' : 'none',
+    backgroundColor: 'white',
+    transition: 'all 0.3s ease',
+    zIndex: 1000
   };
 
   const mainContentStyle = {
@@ -684,7 +843,7 @@ function Dashboard() {
     margin: '8px 0',
     cursor: 'pointer',
     color: isActive ? 'white' : '#6c757d',
-    backgroundColor: isActive ? '#1976d2' : 'transparent', 
+    backgroundColor: isActive ? '#1976d2' : 'transparent',
     borderRadius: '8px',
     transition: 'all 0.3s ease',
     textAlign: 'center',
@@ -694,7 +853,7 @@ function Dashboard() {
     alignItems: 'center',
     justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
     '&:hover': {
-      backgroundColor: isActive ? '#1565c0' : '#f8f9fa', 
+      backgroundColor: isActive ? '#1565c0' : '#f8f9fa',
       color: isActive ? 'white' : '#2c3e50'
     }
   });
@@ -708,7 +867,7 @@ function Dashboard() {
     borderBottom: '1px solid #e0e0e0',
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',  
+    gap: '8px',
     justifyContent: isSidebarCollapsed ? 'center' : 'space-between'
   };
 
@@ -734,10 +893,10 @@ function Dashboard() {
       const date = new Date(dateStr);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-    
+
       const thaiDays = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
       const dayAbbr = date.getTime() === today.getTime() ? 'วันนี้' : thaiDays[date.getDay()];
-    
+
       return {
         fullDate: date.toLocaleDateString('th-TH', {
           day: 'numeric',
@@ -747,8 +906,8 @@ function Dashboard() {
         dayAbbr
       };
     };
-    
-  
+
+
     return (
       <div className="col-md-12">
         <div className="card" style={summaryCardStyle}>
@@ -836,12 +995,12 @@ function Dashboard() {
 
   useEffect(() => {
     const handleResize = () => {
-      
+
       setIsSidebarCollapsed(window.innerWidth < 768);
     };
 
     window.addEventListener('resize', handleResize);
-    
+
     // Initial check
     handleResize();
 
@@ -850,7 +1009,7 @@ function Dashboard() {
     };
   }, []);
 
-  
+
 
   return (
     <Template>
@@ -861,14 +1020,14 @@ function Dashboard() {
             <div style={menuTitleStyle}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {!isSidebarCollapsed && <span style={{ marginRight: '-4px' }}>รายงานสินค้า</span>}
-                <i 
+                <i
                   className={`fas fa-${isSidebarCollapsed ? 'chevron-right' : 'chevron-left'}`}
                   style={toggleButtonStyle}
                   onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                 />
               </div>
             </div>
-            <div 
+            <div
               style={menuItemStyle(activeSection === 'sales')}
               onClick={() => setActiveSection('sales')}
               className="d-flex align-items-center"
@@ -877,10 +1036,10 @@ function Dashboard() {
               <i className="fas fa-chart-line" style={iconStyle} />
               {!isSidebarCollapsed && <span className="ms-2">กราฟ</span>}
             </div>
-            
-            
-            
-            <div 
+
+
+
+            <div
               style={menuItemStyle(activeSection === 'timeline')}
               onClick={() => setActiveSection('timeline')}
               className="d-flex align-items-center"
@@ -889,23 +1048,22 @@ function Dashboard() {
               <i className="fas fa-boxes" style={iconStyle} />
               {!isSidebarCollapsed && <span className="ms-2">สินค้า</span>}
             </div>
-            
+
           </div>
         </div>
 
-     
+
         <div style={{
           ...mainContentStyle,
           marginLeft: isSidebarCollapsed ? '10px' : '0px',
           transition: 'margin-left 0.3s ease'
         }}>
-        
+
           <div className="card-body mb-4">
-            <div className="row g-4">
-              <div className="col-12 col-md-4">
+            <div className="row g-4">              <div className="col-12 col-md-4">
                 <div className="card text-center" style={summaryCardStyle}>
                   <div className="card-header bg-primary text-white">
-                    <h5 className="mb-0">ยอดขาย</h5>
+                    <h5 className="mb-0">ยอดขายทั้งหมด </h5>
                   </div>
                   <div className="card-body">
                     <h3 className="mb-0">{formatNumber(totalSales)} บาท</h3>
@@ -941,33 +1099,31 @@ function Dashboard() {
               <div className="card-header bg-white">
                 <div className="row align-items-center g-3">
                   <div className="col-12 col-md-auto">
-                    <select 
-                      className="form-select" 
+                    <select
+                      className="form-select"
                       value={viewType}
                       onChange={(e) => setViewType(e.target.value)}
                     >
                       <option value="daily">รายวัน</option>
-                      
+
                       <option value="monthly">รายเดือน</option>
                     </select>
                   </div>
                   {viewType !== "monthly" && (
-                    <div className="col-12 col-md-auto">
-                      <select 
+                    <div className="col-12 col-md-auto">                      <select
                         className="form-select"
                         value={month}
                         onChange={(e) => setMonth(parseInt(e.target.value))}
                       >
-                        {Array.from({length: 12}, (_, i) => i + 1).map(m => (
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
                           <option key={m} value={m}>
-                            เดือนที่ {m}
+                            {getThaiMonthName(m)}
                           </option>
                         ))}
                       </select>
                     </div>
-                  )}
-                  <div className="col-12 col-md-auto">
-                    <select 
+                  )}                  <div className="col-12 col-md-auto">
+                    <select
                       className="form-select"
                       value={year}
                       onChange={(e) => setYear(parseInt(e.target.value))}
@@ -977,13 +1133,27 @@ function Dashboard() {
                           ปี {y}
                         </option>
                       ))}
-                    </select>
-                  </div>
+                    </select>                  </div>
                 </div>
-              </div>
-              <div className="card-body">
+              </div>              <div className="card-body">
                 <div style={chartContainerStyle}>
-                  {myData.datasets && <Line options={options} data={myData} />}
+                  {myData.datasets && myData.datasets.length > 0 ? (
+                    <>
+                      <Line options={options} data={myData} />
+                      <div className="text-center mt-3 text-muted small">
+                        <i className="fas fa-info-circle me-1"></i>
+                        กดที่จุดในกราฟเพื่อดูรายละเอียดเพิ่มเติม
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-5">
+                      <div className="mb-3">
+                        <i className="fas fa-chart-line fa-3x text-muted"></i>
+                      </div>
+                      <h5 className="text-muted">ไม่พบข้อมูลสำหรับช่วงเวลาที่เลือก</h5>
+                      <p className="text-muted">กรุณาเลือกช่วงเวลาอื่น หรือตรวจสอบว่ามีข้อมูลการขายในช่วงเวลาดังกล่าว</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1009,21 +1179,10 @@ function Dashboard() {
                         ขายได้
                       </label>
                     </div>
-                    <div className="form-check form-check-inline">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="showRemainingCheck"
-                        checked={showRemaining}
-                        onChange={(e) => setShowRemaining(e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor="showRemainingCheck">
-                        คงเหลือ
-                      </label>
-                    </div>
+
                   </div>
                   <div className="col-auto">
-                    <select 
+                    <select
                       className="form-select"
                       value={dateRange}
                       onChange={(e) => setDateRange(e.target.value)}
@@ -1053,58 +1212,52 @@ function Dashboard() {
                 </div>
               </div>
               <div className="card-body">
-              <div style={tableWrapperStyle}>
-  <table className="table">
-    <thead>
-      <tr>
-        <th>บาร์โค้ด</th>
-        <th>ชื่อสินค้า</th>
-        {showSold && <th>จำนวนขาย</th>}
-        {showRemaining && <th>จำนวนคงเหลือ</th>}
-        <th>รวมเป็นเงิน</th>
-       
-        <th>กำไรสุทธิ</th>
-      </tr>
-    </thead>
-    <tbody>
-    {combinedStockData.length > 0 ? (
-  combinedStockData.map((item, index) => {
-    // คำนวณกำไรอีกครั้งตอนแสดงผลเพื่อความแน่ใจ
-    const expectedProfit = (item.price - item.cost) * item.soldQty;
-    const displayProfit = Math.abs(expectedProfit - item.netProfit) > 100 
-      ? expectedProfit 
-      : item.netProfit;
-    
-    return (
-      <tr key={index}>
-        <td>{item.barcode || '-'}</td>
-        <td>{item.name || '-'}</td>
-        {showSold && <td>{formatNumber(item.soldQty) || 0} ชิ้น</td>}
-        {showRemaining && <td>{formatNumber(item.remainingQty) || 0} ชิ้น</td>}
-        <td>฿{formatNumber(item.totalAmount) || 0}</td>
-        <td>
-          {item.cost && item.price 
-            ? `฿${formatNumber(item.cost)} | ฿${formatNumber(item.price)}`
-            : '-'}
-        </td>
-        <td className="text-success">
-          ฿{formatNumber(displayProfit) || 0}
-        </td>
-      </tr>
-    );
-  })
-) : (
-        <tr>
-          <td colSpan={showSold && showRemaining ? 7 : (showSold || showRemaining ? 6 : 5)} className="text-center py-3">
-            <div className="text-muted">
-              <i className="fas fa-info-circle mr-2"></i> ไม่พบข้อมูลสินค้าในช่วงเวลาที่เลือก
-            </div>
-          </td>
-        </tr>
-      )}
-    </tbody>
-  </table>
-</div>
+                <div style={tableWrapperStyle}>
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>บาร์โค้ด</th>
+                        <th>ชื่อสินค้า</th>
+                        {showSold && <th>จำนวนขาย</th>}
+                        <th>รวมเป็นเงิน</th>
+                        <th>กำไรสุทธิ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {combinedStockData.length > 0 ? (
+                        combinedStockData.map((item, index) => {
+                          // คำนวณกำไรอีกครั้งตอนแสดงผลเพื่อความแน่ใจ
+                          const expectedProfit = (item.price - item.cost) * item.soldQty;
+                          const displayProfit = Math.abs(expectedProfit - item.netProfit) > 100
+                            ? expectedProfit
+                            : item.netProfit;
+
+                          return (
+                            <tr key={index}>
+                              <td>{item.barcode || '-'}</td>
+                              <td>{item.name || '-'}</td>
+                              {showSold && <td>{formatNumber(item.soldQty) || 0} ชิ้น</td>}
+                              {showRemaining && <td>{formatNumber(item.remainingQty) || 0} ชิ้น</td>}
+                              <td>฿{formatNumber(item.totalAmount) || 0}</td>
+
+                              <td className="text-success">
+                                ฿{formatNumber(displayProfit) || 0}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={showSold && showRemaining ? 7 : (showSold || showRemaining ? 6 : 5)} className="text-center py-3">
+                            <div className="text-muted">
+                              <i className="fas fa-info-circle mr-2"></i> ไม่พบข้อมูลสินค้าในช่วงเวลาที่เลือก
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
                 {renderTopSalesChart()}
               </div>
             </div>
@@ -1112,9 +1265,9 @@ function Dashboard() {
 
           {activeSection === 'stock' && renderStockSection()}
 
-          
 
-          
+
+
         </div>
       </div>
     </Template>

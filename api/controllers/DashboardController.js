@@ -14,6 +14,7 @@ router.post("/reportSumSalePerMonth", async (req, res) => {
     const { year, month, viewType } = req.body;
     const userId = service.getMemberId(req);
     
+    
     // กำหนดค่าสำหรับมุมมองรายวันหรือรายเดือน
     const dateUnit = viewType === "daily" ? "DAY" : "MONTH";
     const dateAlias = viewType === "daily" ? "day" : "month";
@@ -34,7 +35,7 @@ router.post("/reportSumSalePerMonth", async (req, res) => {
       ]
     };
     
-    // เพิ่มเงื่อนไขกรองตามเดือน (เฉพาะมุมมองรายวัน)
+    // เงื่อนไขกรองตามเดือน (เฉพาะมุมมองรายวัน)
     if (viewType === "daily") {
       whereConditions[sequelize.Op.and].push(
         sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`MONTH FROM "billSaleDetail"."createdAt"`)), month)
@@ -50,19 +51,49 @@ router.post("/reportSumSalePerMonth", async (req, res) => {
         model: ProductModel, 
         as: 'product',  
         attributes: [] 
+      }, {
+        model: BillSaleModel,
+        as: 'billSale',
+        attributes: [],
+        required: true,
+        where: { status: 'pay' }
       }],
       order: [[sequelize.fn("EXTRACT", sequelize.literal(`${dateUnit} FROM "billSaleDetail"."createdAt"`)), 'ASC']]
     });
     
+    
+    // แปลงข้อมูลให้อยู่ในรูปแบบที่ใช้งานง่าย
+    const formattedResults = results.map(item => {
+      const result = {
+        day: parseInt(item.dataValues.day) || null,
+        month: parseInt(item.dataValues.month) || null,
+        sum: parseFloat(item.dataValues.sum || 0),
+        profit: parseFloat(item.dataValues.profit || 0),
+        cost: parseFloat(item.dataValues.cost || 0)
+      };
+      return result;
+    });
+    
+    // แสดงข้อมูลวันที่มีข้อมูลเพื่อการตรวจสอบ
+    if (viewType === "daily") {
+      const daysWithData = formattedResults
+        .filter(item => item && item.day)
+        .map(item => item.day)
+        .sort((a, b) => a - b);
+      
+    }
+    
     // คำนวณผลรวม
-    const totalSales = results.reduce((sum, item) => sum + parseFloat(item.dataValues.sum || 0), 0);
-    const totalProfit = results.reduce((sum, item) => sum + parseFloat(item.dataValues.profit || 0), 0);
-    const totalCost = results.reduce((sum, item) => sum + parseFloat(item.dataValues.cost || 0), 0);
+    const totalSales = formattedResults.reduce((sum, item) => sum + (item.sum || 0), 0);
+    const totalProfit = formattedResults.reduce((sum, item) => sum + (item.profit || 0), 0);
+    const totalCost = formattedResults.reduce((sum, item) => sum + (item.cost || 0), 0);
+    
+   
     
     // ส่งผลลัพธ์กลับไป
     res.send({
       message: "success",
-      results,
+      results: formattedResults,
       totalSales,
       totalProfit,
       totalCost
@@ -138,7 +169,6 @@ router.get('/reportTopSellingProducts', async (req, res) => {
       raw: true
     });
 
-    // Create a map for quick product lookup with default values for missing products
     const productMap = new Map();
     products.forEach(product => {
       productMap.set(product.id, {
@@ -387,7 +417,6 @@ router.get('/reportTodaySales', async (req, res) => {
   }
 });
 
-// เพิ่ม API endpoint ใหม่
 router.get('/todaySalesReport', async (req, res) => {
   try {
     const userId = service.getMemberId(req);
@@ -398,7 +427,6 @@ router.get('/todaySalesReport', async (req, res) => {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    // Get today's sales with correct filter for completed bills
     const todaySales = await BillSaleModel.findAll({
       where: {
         userId: userId,
@@ -406,11 +434,10 @@ router.get('/todaySalesReport', async (req, res) => {
           [sequelize.Op.gte]: today,
           [sequelize.Op.lt]: tomorrow
         },
-        status: 'pay' // Changed to only count paid bills
+        status: 'pay' 
       }
     });
 
-    // Get yesterday's sales with correct filter
     const yesterdaySales = await BillSaleModel.findAll({
       where: {
         userId: userId,
@@ -418,11 +445,10 @@ router.get('/todaySalesReport', async (req, res) => {
           [sequelize.Op.gte]: yesterday,
           [sequelize.Op.lt]: today
         },
-        status: 'pay' // Changed to only count paid bills
+        status: 'pay' 
       }
     });
 
-    // Use the direct bill totalAmount instead of recalculating from details
     const todayTotal = todaySales.reduce((sum, bill) => sum + parseFloat(bill.totalAmount || 0), 0);
     const yesterdayTotal = yesterdaySales.reduce((sum, bill) => sum + parseFloat(bill.totalAmount || 0), 0);
     
@@ -431,12 +457,10 @@ router.get('/todaySalesReport', async (req, res) => {
     const todayAveragePerBill = todayBillCount > 0 ? todayTotal / todayBillCount : 0;
     const yesterdayAveragePerBill = yesterdayBillCount > 0 ? yesterdayTotal / yesterdayBillCount : 0;
 
-    // Calculate growth percentages
     const growthRate = yesterdayTotal ? ((todayTotal - yesterdayTotal) / yesterdayTotal) * 100 : 0;
     const billCountGrowth = yesterdayBillCount ? ((todayBillCount - yesterdayBillCount) / yesterdayBillCount) * 100 : 0;
     const averageGrowth = yesterdayAveragePerBill ? ((todayAveragePerBill - yesterdayAveragePerBill) / yesterdayAveragePerBill) * 100 : 0;
 
-    // Initialize hourly data array
     const hourlyData = Array(24).fill().map((_, hour) => ({
       hour,
       amount: 0

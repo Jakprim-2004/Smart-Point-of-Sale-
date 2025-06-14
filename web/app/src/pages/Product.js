@@ -857,7 +857,7 @@ function Product() {
         >
           <form onSubmit={handleSave}>
             <div className="row">
-              <div className="form-group col-md-12">
+              <div className="form-group col-md-12 ">
                 <label>
                   ชื่อสินค้า <span className="text-danger">*</span>
                 </label>

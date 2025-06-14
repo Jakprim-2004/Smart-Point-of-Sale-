@@ -42,15 +42,11 @@ function Dashboard() {
   const [month] = useState(myDate.getMonth() + 1);
   const [viewType] = useState("daily"); 
   const [topSellingViewType, setTopSellingViewType] = useState('products');
-  const [nearExpiryProducts, setNearExpiryProducts] = useState([]);
-  const [nearExpiryCount, setNearExpiryCount] = useState(0);
   const navigate = useNavigate();
 
   const [stockData, setStockData] = useState([]);
-  const [lowStockItems, setLowStockItems] = useState([]);
   const [topSellingProducts, setTopSellingProducts] = useState([]);
   const [topSellingCategories, setTopSellingCategories] = useState([]);
-  const [pointTransactions, setPointTransactions] = useState([]);
   const [todaySales, setTodaySales] = useState({
     date: new Date(),
     totalAmount: 0,
@@ -65,37 +61,8 @@ function Dashboard() {
   });
   const [currentTime, setCurrentTime] = useState(new Date());
   const [paymentStats, setPaymentStats] = useState([]);
-  const [lowStockCount, setLowStockCount] = useState(0);
 
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "top",
-      },
-      tooltip: {
-        callbacks: {
-          label: function (tooltipItem) {
-            let label = tooltipItem.dataset.label || "";
-            if (label) {
-              label += ": ";
-            }
-            label += parseFloat(tooltipItem.raw).toFixed(2) + " บาท";
-            return label;
-          },
-        },
-      },
-    },
-    scales: {
-      y: {
-        ticks: {
-          callback: function (value) {
-            return parseFloat(value).toFixed(2);
-          },
-        },
-      },
-    },
-  };
+  
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -106,41 +73,15 @@ function Dashboard() {
   }, []);
 
   useEffect(() => {
-    reportStock();
     reportTopSellingProducts();
     reportTopSellingCategories();
     getTodaySalesReport();
     getPaymentStats();
   }, [year, month, viewType]);
 
-  useEffect(() => {
-    calculateLowStockCount();
-  }, [stockData]);
+ 
 
-  const reportStock = async () => {
-    try {
-      const url = config.api_path + "/reportStock";
-      const res = await axios.get(url, config.headers());
-      if (res.data.message === "success") {
-        const results = res.data.results;
-        let stockData = results
-          .map((item) => ({
-            productId: item.productId,
-            productName: item.productName,
-            remainingQty: item.totalQty,
-          }))
-          .sort((a, b) => a.remainingQty - b.remainingQty);
-
-        setStockData(stockData);
-      }
-    } catch (e) {
-      Swal.fire({
-        title: "error",
-        text: e.message,
-        icon: "error",
-      });
-    }
-  };
+ 
 
   const reportTopSellingProducts = async () => {
     try {
@@ -239,21 +180,11 @@ function Dashboard() {
 
  
 
-  const calculateLowStockCount = () => {
-    const CRITICAL_THRESHOLD = 5;
-    const WARNING_THRESHOLD = 10;
-    const lowStockProducts = stockData.filter(item => item.remainingQty <= WARNING_THRESHOLD);
-    setLowStockCount(lowStockProducts.length);
-    setLowStockItems(lowStockProducts);
-  };
+ 
 
-  const navigateToBillSales = () => {
-    navigate('/billSales');
-  };
+ 
 
-  const navigateToStock = () => {
-    navigate('/reportStock');
-  };
+ 
 
 const renderTopSellingContent = () => {
   if (topSellingViewType === 'products') {
@@ -564,8 +495,7 @@ const renderTopSellingContent = () => {
     }
   };
 
-  const [billCountHover, setBillCountHover] = useState(false);
-  const [averageHover, setAverageHover] = useState(false);
+ 
 
   return (
     <Template>
