@@ -41,7 +41,7 @@ const CustomerModel = conn.define("Customer", {
     }
 }, {
     // ใช้ชื่อตารางที่ถูกต้องตามที่ถูกอ้างถึง
-    tableName: 'Customers',
+    tableName: 'Customer',
     freezeTableName: true
 });
 

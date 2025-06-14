@@ -287,9 +287,9 @@ function Sale() {
                     amount: priceAfterDiscount,
                     billSaleDetails: currentBill.billSaleDetails,
                     customerId: selectedCustomer?.id || null,
-                    pointTransaction: pointTransaction, // เพิ่มข้อมูล point transaction
-                    discountFromPoints: discountFromPoints, // เพิ่มข้อมูลส่วนลด
-                    description: description // เพิ่ม description เข้าไปในข้อมูลที่ส่ง
+                    pointTransaction: pointTransaction, 
+                    discountFromPoints: discountFromPoints, 
+                    description: description 
                 };
 
                 const res = await axios.post(

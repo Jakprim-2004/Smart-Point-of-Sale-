@@ -15,6 +15,23 @@ function Stock() {
     const [showModal, setShowModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredProducts, setFilteredProducts] = useState([]);
+    const [productStockStatus, setProductStockStatus] = useState({});
+    const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'added', 'notAdded'
+
+    useEffect(() => {
+        if (stocks.length > 0 && products.length > 0) {
+            const statusMap = {};
+
+            // สร้าง map เก็บสถานะสินค้าที่เพิ่มในสต๊อกแล้ว
+            stocks.forEach(stockItem => {
+                if (stockItem.product && stockItem.product.id) {
+                    statusMap[stockItem.product.id] = true;
+                }
+            });
+
+            setProductStockStatus(statusMap);
+        }
+    }, [stocks, products]);
 
     useEffect(() => {
         fetchDataStock();
@@ -34,7 +51,27 @@ function Stock() {
     };
 
 
-    
+    const getFilteredProducts = () => {
+        let results = [...products];
+
+        // กรองตามสถานะ
+        if (statusFilter === 'added') {
+            results = results.filter(product => productStockStatus[product.id]);
+        } else if (statusFilter === 'notAdded') {
+            results = results.filter(product => !productStockStatus[product.id]);
+        }
+
+        // กรองตามคำค้นหา
+        if (searchQuery) {
+            results = results.filter(product =>
+                (product.name && product.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                (product.barcode && product.barcode.includes(searchQuery)) ||
+                (product.category && product.category.toLowerCase().includes(searchQuery.toLowerCase()))
+            );
+        }
+
+        return results;
+    };
 
     // ฟังก์ชันการค้นหา
     const handleSearch = (query) => {
@@ -219,7 +256,7 @@ function Stock() {
                                     </div>
                                 )}
 
-                               
+
                             </div>
                             <div className="col-2">
                                 <div className="input-group">
@@ -288,8 +325,8 @@ function Stock() {
                 title="เลือกสินค้า"
                 modalSize="modal-lg"
             >
-                <div className="mb-3">
-                    <div className="input-group">
+                <div className="mb-3 d-flex justify-content-between align-items-center">
+                    <div className="input-group" style={{ maxWidth: '70%' }}>
                         <span className="input-group-text">
                             <i className="fa fa-search"></i>
                         </span>
@@ -310,6 +347,17 @@ function Stock() {
                                 <i className="fa fa-times"></i>
                             </button>
                         )}
+                    </div>
+                    <div>
+                        <select
+                            className="form-select"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                            <option value="all">ทั้งหมด</option>
+                            <option value="added">เพิ่มในสต็อกแล้ว</option>
+                            <option value="notAdded">ยังไม่เพิ่มในสต็อก</option>
+                        </select>
                     </div>
                 </div>
 

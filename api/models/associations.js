@@ -32,8 +32,16 @@ BillSaleDetailModel.belongsTo(BillSaleModel, {
 
 
 // Add Customer and BillSale associations
-BillSaleModel.belongsTo(CustomerModel, { foreignKey: 'customerId' });
-CustomerModel.hasMany(BillSaleModel, { foreignKey: 'customerId' });
+BillSaleModel.belongsTo(CustomerModel, { 
+  foreignKey: 'customerId', 
+  targetKey: 'id',
+  constraints: false  
+});
+CustomerModel.hasMany(BillSaleModel, { 
+  foreignKey: 'customerId',
+  sourceKey: 'id',
+  constraints: false 
+});
 
 // Add Customer and PointTransaction associations
 CustomerModel.hasMany(PointTransactionModel, { foreignKey: 'customerId' });

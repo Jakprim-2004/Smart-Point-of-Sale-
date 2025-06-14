@@ -27,18 +27,15 @@ const BillSaleModel = conn.define("billSale", {
   description: {
     type: DataTypes.STRING,
     allowNull: true
-  },
-  customerId: {
-    type: DataTypes.BIGINT,
+  },  customerId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
     references: {
       model: CustomerModel,
       key: 'id'
     }
   },
   totalAmount: {
-    type: DataTypes.DECIMAL(10, 2)
-  },
-  vatAmount: {
     type: DataTypes.DECIMAL(10, 2)
   }
 },);

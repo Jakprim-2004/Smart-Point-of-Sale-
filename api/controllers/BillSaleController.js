@@ -215,17 +215,40 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
     try {
         const { method, amount, billSaleDetails, customerId, description } = req.body;
         const currentTime = getThaiDateTime();
-
-        const updatedBill = await BillSaleModel.update({
+        
+        console.log('Received customer ID:', customerId, 'Type:', typeof customerId);
+        
+        // สร้าง update payload โดยไม่รวม customerId ก่อน
+        const updatePayload = {
             status: 'pay',
             paymentMethod: method,
             payDate: currentTime,
             totalAmount: amount,
-            customerId: customerId,
             createdAt: currentTime,
             updatedAt: currentTime,
-            description: description
-        }, {
+            description: description || ""
+        };
+        
+        // ตรวจสอบ customerId ว่ามีค่าและเป็น ID ที่มีอยู่จริง
+        if (customerId !== null && customerId !== undefined && customerId !== 'null' && customerId !== 'undefined') {
+            try {
+                // แปลงเป็น integer และตรวจสอบว่าลูกค้ามีอยู่จริง
+                const customerIdInt = parseInt(customerId, 10);
+                if (!isNaN(customerIdInt)) {
+                    const customer = await CustomerModel.findByPk(customerIdInt);
+                    if (customer) {
+                        updatePayload.customerId = customerIdInt;
+                        console.log(`พบข้อมูลลูกค้า ID: ${customerIdInt}`);
+                    } else {
+                        console.log(`ไม่พบข้อมูลลูกค้า ID: ${customerIdInt}`);
+                    }
+                }
+            } catch (err) {
+                console.error('Error checking customer:', err);
+            }
+        }
+        
+        const updatedBill = await BillSaleModel.update(updatePayload, {
             where: {
                 status: 'open',
                 userId: service.getMemberId(req)
@@ -234,20 +257,30 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
 
         for (const detail of billSaleDetails) {
             const subtotal = detail.qty * detail.price;
-
-            await BillSaleDetailModel.update({
-                customerId: customerId || null,
-                pointsEarned: customerId ? Math.floor(subtotal / 100) : 0,
-                totalprice: subtotal,  
+            
+            // สร้าง update payload สำหรับ detail
+            const updateDetailPayload = {
+                totalprice: subtotal,
                 updatedAt: currentTime
-            }, {
+            };
+            
+            // เพิ่ม customerId และ pointsEarned เฉพาะเมื่อมี customerId ที่ถูกต้อง
+            if (updatePayload.customerId) {
+                updateDetailPayload.customerId = updatePayload.customerId;
+                updateDetailPayload.pointsEarned = Math.floor(subtotal / 100);
+            } else {
+                updateDetailPayload.customerId = null;
+                updateDetailPayload.pointsEarned = 0;
+            }
+
+            await BillSaleDetailModel.update(updateDetailPayload, {
                 where: { id: detail.id }
             });
         }
 
         // อัปเดตแต้มลูกค้า
-        if (customerId) {
-            const customer = await CustomerModel.findByPk(customerId);
+        if (updatePayload.customerId) {
+            const customer = await CustomerModel.findByPk(updatePayload.customerId);
             if (customer) {
                 const pointsEarned = customer.calculatePoints(amount);
                 customer.points += pointsEarned;
@@ -259,8 +292,13 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
         }
 
         // บันทึกการใช้แต้มลดราคา (ถ้ามี)
-        if (req.body.pointTransaction) {
-            await PointTransactionModel.create(req.body.pointTransaction);
+        if (req.body.pointTransaction && updatePayload.customerId) {
+            // ตรวจสอบว่า pointTransaction มี customerId ที่ถูกต้อง
+            const pointTransaction = {
+                ...req.body.pointTransaction,
+                customerId: updatePayload.customerId // ใช้ customerId ที่ตรวจสอบแล้ว
+            };
+            await PointTransactionModel.create(pointTransaction);
         }
 
         res.json({ message: 'success', result: updatedBill });
@@ -268,7 +306,9 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
         console.error('Error in endSale:', error);
         res.status(500).json({ 
             message: 'error', 
-            error: error.message 
+            error: error.message,
+            detail: error.original ? error.original.detail : null,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });

@@ -111,7 +111,7 @@ function Product() {
       return;
     }
     
-    // ตรวจสอบความซ้ำซ้อนของบาร์โค้ด (กรณีมีการแก้ไขบาร์โค้ด)
+    // ตรวจสอบบาร์โค้ด 
     if (product.barcode !== product.originalBarcode) {
       try {
         const res = await axios.get(
@@ -436,7 +436,7 @@ function Product() {
     if (/^\d{0,13}$/.test(value)) {
       setProduct({ ...product, barcode: value });
       
-      // ตรวจสอบความซ้ำซ้อนเมื่อกรอกครบ 13 หลัก
+      // ตรวจสอบเมื่อกรอกครบ 13 หลัก
       if (value.length === 13 && value !== product.originalBarcode) {
         try {
           const res = await axios.get(
@@ -458,8 +458,8 @@ function Product() {
     }
   };
 
-  // เพิ่มฟังก์ชันสร้างบาร์โค้ดอัตโนมัติ
-  const generateBarcode = () => {
+    // ฟังก์ชันสร้างบาร์โค้ดอัตโนมัติ
+    const generateBarcode = () => {
     // สร้างเลข 13 หลักโดยสุ่ม (12 หลักแรก + check digit)
     const generateRandomDigits = () => {
       let digits = "";
@@ -477,7 +477,7 @@ function Product() {
       return digits + checkDigit;
     };
     
-    // ตรวจสอบความซ้ำซ้อนของบาร์โค้ดที่สร้าง
+    // ตรวจสอบบาร์โค้ดที่สร้าง
     const checkAndSetBarcode = async () => {
       const newBarcode = generateRandomDigits();
       
