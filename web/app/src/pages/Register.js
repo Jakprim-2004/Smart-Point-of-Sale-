@@ -287,18 +287,7 @@ function Register() {
                             </div>
                         </div>
 
-                        {/* Address Section */}
-                        <div className="col-12">
-                            <h5 className="text-secondary mb-3">ที่อยู่</h5>
-                            <div className="row g-3">
-                                <div className="col-md-12">
-                                    <div className="input-group">
-                                        <span className="input-group-text bg-light"><FaUser /></span>
-                                        <input type="text" className="form-control" placeholder="ที่อยู่" value={formData.address} onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))} required />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                      
 
                         <div className="col-12 text-center mt-4">
                             <button type="submit" className="btn btn-primary btn-lg px-5 rounded-pill">

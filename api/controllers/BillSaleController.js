@@ -62,34 +62,41 @@ app.post('/billSale/sale', service.isLogin, async (req, res) => {
             where: payload
         });
 
-        // เตรียมข้อมูลรายการสินค้า
+        // เตรียมข้อมูลรายการสินค้า (item) ที่จะเพิ่มลงในบิล
+        // โดยใช้ข้อมูลจาก request body และ payload ที่สร้างไว้ก่อนหน้า
         const item = {
-            price: req.body.price,
-            productId: req.body.id,
-            billSaleId: currentBill.id,
-            userId: payload.userId,
-            qty: req.body.qty // จำนวนสินค้า
+            price: req.body.price,         // ราคาสินค้าจาก request
+            productId: req.body.id,        // รหัสสินค้าจาก request
+            billSaleId: currentBill.id,    // รหัสบิลที่ได้จากการค้นหาบิลปัจจุบัน
+            userId: payload.userId,        // รหัสผู้ใช้จาก payload
+            qty: req.body.qty              // จำนวนสินค้าที่ต้องการเพิ่ม
         }
 
-        // ตรวจสอบว่ามีสินค้านี้ในบิลแล้วหรือไม่
+        // ตรวจสอบว่ามีสินค้านี้อยู่ในบิลปัจจุบันแล้วหรือไม่
+        // โดยค้นหาจากรหัสสินค้า (productId) และรหัสบิล (billSaleId)
         const billSaleDetail = await BillSaleDetailModel.findOne({
             where: {
-                productId: item.productId,
-                billSaleId: item.billSaleId
+                productId: item.productId,   // ค้นหาจากรหัสสินค้า
+                billSaleId: item.billSaleId  // และรหัสบิล
             }
         });
 
-        // ถ้าไม่มีสินค้าในบิล ให้เพิ่มรายการใหม่
+        // เงื่อนไขแรก: ถ้าไม่พบสินค้านี้ในบิล (billSaleDetail เป็น null)
         if (billSaleDetail == null) {
+            // สร้างรายการใหม่ในตาราง BillSaleDetail ด้วยข้อมูลจาก item
             await BillSaleDetailModel.create(item);
         } else {
-            // ถ้ามีสินค้าแล้ว ให้เพิ่มจำนวน
+            // เงื่อนไขที่สอง: ถ้าพบว่ามีสินค้านี้อยู่ในบิลแล้ว
+            // ให้คำนวณจำนวนสินค้าใหม่โดยนำจำนวนที่มีอยู่เดิมบวกกับจำนวนที่ต้องการเพิ่ม
+            // โดยแปลงเป็น integer ด้วย parseInt เพื่อป้องกันการคำนวณผิดพลาดจากข้อมูล string
             item.qty = parseInt(billSaleDetail.qty) + parseInt(item.qty);
+            
+            // อัปเดตข้อมูลในตาราง BillSaleDetail ตามรหัสรายการ (id)
             await BillSaleDetailModel.update(item, {
                 where: {
-                    id: billSaleDetail.id
+                    id: billSaleDetail.id  // อัปเดตเฉพาะรายการที่ตรงกับ id
                 }
-            })
+            });
         }
 
         res.send({ message: 'success' });
@@ -206,17 +213,14 @@ app.post('/billSale/updateQty', service.isLogin, async (req, res) => {
 // API สำหรับจบการขาย
 app.post('/billSale/endSale', service.isLogin, async (req, res) => {
     try {
-        const { method, amount, vatAmount, billSaleDetails, customerId, description } = req.body;
+        const { method, amount, billSaleDetails, customerId, description } = req.body;
         const currentTime = getThaiDateTime();
-        const vatRate = 0.07; // VAT 7%
 
-        // อัปเดตข้อมูลบิล
         const updatedBill = await BillSaleModel.update({
             status: 'pay',
             paymentMethod: method,
             payDate: currentTime,
             totalAmount: amount,
-            vatAmount: vatAmount,
             customerId: customerId,
             createdAt: currentTime,
             updatedAt: currentTime,
@@ -228,15 +232,13 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
             }
         });
 
-        // อัปเดตรายละเอียดบิล
         for (const detail of billSaleDetails) {
             const subtotal = detail.qty * detail.price;
-            const totalWithVat = subtotal * (1 + vatRate);
 
             await BillSaleDetailModel.update({
                 customerId: customerId || null,
-                pointsEarned: customerId ? Math.floor(totalWithVat / 100) : 0,
-                totalprice: totalWithVat,
+                pointsEarned: customerId ? Math.floor(subtotal / 100) : 0,
+                totalprice: subtotal,  
                 updatedAt: currentTime
             }, {
                 where: { id: detail.id }
@@ -254,23 +256,6 @@ app.post('/billSale/endSale', service.isLogin, async (req, res) => {
                 customer.updateMembershipTier();
                 await customer.save();
             }
-        }
-
-        // อัปเดตรายละเอียดบิลพร้อมคำนวณ VAT
-        for (const detail of billSaleDetails) {
-            const subtotal = detail.qty * detail.price;
-            const itemVat = subtotal * vatRate;
-            const totalWithVat = subtotal + itemVat;
-
-            await BillSaleDetailModel.update({
-                customerId: customerId || null,
-                pointsEarned: customerId ? Math.floor(totalWithVat / 100) : 0,
-                totalprice: totalWithVat,
-                vatAmount: itemVat,
-                updatedAt: currentTime
-            }, {
-                where: { id: detail.id }
-            });
         }
 
         // บันทึกการใช้แต้มลดราคา (ถ้ามี)
