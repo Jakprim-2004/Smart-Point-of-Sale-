@@ -827,7 +827,7 @@ function Sale() {
                             </div>
                           </div>
                         ))
-                      ) : (
+                       ) : (
                         <div className="text-center py-5">
                           <i
                             className="fa fa-shopping-cart mb-3"

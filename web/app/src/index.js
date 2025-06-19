@@ -16,7 +16,7 @@ import Stock from "./pages/Stock";
 import ReportStock from "./pages/ReportStock";
 import Dashboard from "./pages/Dashboard";
 import Terms from "./pages/Terms";
-import DashboardReport from "./pages/DashboardReport";
+import ReportProduct from "./pages/ReportProduct";
 import Customer from "./pages/Customer";
 import Reward from "./pages/Reward";
 import Category from "./pages/Category";
@@ -74,8 +74,8 @@ const router = createBrowserRouter([
     element: <Terms/>,
   },
   {
-    path: "/dashboardreport",
-    element: <DashboardReport />,
+    path: "/ReportProduct",
+    element: <ReportProduct />,
   },
   {
     path: "/customer",

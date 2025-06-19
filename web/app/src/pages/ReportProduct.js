@@ -48,20 +48,20 @@ function Dashboard() {
   const [myData, setMyData] = useState([]);
   const [stockData, setStockData] = useState([]);
   const [topSellingProducts, setTopSellingProducts] = useState([]);
-  const [topSellingCategories, setTopSellingCategories] = useState([]);  const [totalSales, setTotalSales] = useState(0);
+  const [topSellingCategories, setTopSellingCategories] = useState([]); const [totalSales, setTotalSales] = useState(0);
   const [totalProfit, setTotalProfit] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
-  
+
   // เพิ่มฟังก์ชันสำหรับแสดงชื่อเดือนภาษาไทย
   const getThaiMonthName = (monthNumber) => {
     const thaiMonths = [
-      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", 
-      "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", 
+      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
+      "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม",
       "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
     ];
     return thaiMonths[monthNumber - 1];
   };
-    const [options,] = useState({
+  const [options,] = useState({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -79,7 +79,7 @@ function Dashboard() {
         bodyFont: { size: 13 },
         padding: 12,
         callbacks: {
-          title: function(tooltipItems) {
+          title: function (tooltipItems) {
             const day = tooltipItems[0].label;
             return `${day}`;
           },
@@ -125,7 +125,7 @@ function Dashboard() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [productDetails, setProductDetails] = useState([]);
   const [productDateRange, setProductDateRange] = useState([new Date(), new Date()]);
-  const [topSalesDays, setTopSalesDays] = useState([]);  const [showSold, setShowSold] = useState(true);  const [showRemaining, setShowRemaining] = useState(false);
+  const [topSalesDays, setTopSalesDays] = useState([]); const [showSold, setShowSold] = useState(true); const [showRemaining, setShowRemaining] = useState(false);
   const [combinedStockData, setCombinedStockData] = useState([]);
 
   useEffect(() => {
@@ -161,10 +161,10 @@ function Dashboard() {
   const reportSumSalePerMonth = async () => {
     try {
       const url = config.api_path + "/reportSumSalePerMonth";
-      const payload = { year, month, viewType };      const res = await axios.post(url, payload, config.headers());      if (res.data.message === "success") {
+      const payload = { year, month, viewType }; const res = await axios.post(url, payload, config.headers()); if (res.data.message === "success") {
         // คัดกรองและตรวจสอบข้อมูลที่ได้รับ
         const results = res.data.results || [];
-        
+
         // สร้างรายการข้อมูลที่ละเอียดมากขึ้นเพื่อการตรวจสอบ
         const detailedData = results.map(item => ({
           day: item.day,
@@ -174,26 +174,9 @@ function Dashboard() {
           cost: parseFloat(item.cost || 0),
           hasData: (parseFloat(item.sum || 0) > 0 || parseFloat(item.profit || 0) > 0 || parseFloat(item.cost || 0) > 0)
         }));
-        
-        console.log("ข้อมูลที่ได้รับจาก API:", {
-          จำนวนข้อมูล: results.length,
-          วันที่มีข้อมูล: detailedData
-            .filter(item => item.hasData)
-            .map(item => item.day)
-            .sort((a,b) => a-b)
-            .join(", "),
-          ข้อมูลละเอียด: detailedData
-        });
-        
-        // ตรวจสอบข้อมูลของวันที่ 14 และ 15 มิถุนายน
-        const day14 = detailedData.find(item => item.day === 14);
-        const day15 = detailedData.find(item => item.day === 15);
-        
-        if (month === 6) { // มิถุนายน
-          console.log("ข้อมูลวันที่ 14:", day14 ? day14 : "ไม่พบข้อมูล");
-          console.log("ข้อมูลวันที่ 15:", day15 ? day15 : "ไม่พบข้อมูล");
-        }
-        
+
+
+
         let salesData = [],
           profitData = [],
           costData = [];// ไม่คำนวณ VAT เพิ่ม
@@ -232,8 +215,8 @@ function Dashboard() {
             profitData[item.month - 1] = parseFloat(item.profit || 0);
             costData[item.month - 1] = parseFloat(item.cost || 0);
           });
-        }        let labels = [];
-        
+        } let labels = [];
+
         // สร้าง labels ตามประเภทการแสดงผล
         if (viewType === "monthly") {
           // กรณีแสดงรายเดือน
@@ -247,7 +230,7 @@ function Dashboard() {
           labels = Array.from({ length: 4 }, (_, i) => `สัปดาห์ที่ ${i + 1}`);
         } else {
           // กรณีแสดงรายวัน
-          
+
           // 1. หาวันที่มีข้อมูลจริง
           const daysWithData = [];
           results.forEach(item => {
@@ -255,12 +238,12 @@ function Dashboard() {
               daysWithData.push(parseInt(item.day));
             }
           });
-            // 2. สร้าง map ของข้อมูลตามวันที่
+          // 2. สร้าง map ของข้อมูลตามวันที่
           const dataByDay = {};
-          
+
           // แสดงข้อมูลดิบที่ได้รับจาก API เพื่อตรวจสอบ
           console.log("ข้อมูลที่ได้รับจาก API:", results);
-          
+
           results.forEach(item => {
             if (item.day) {
               // บันทึกวันที่เป็นตัวเลขจำนวนเต็ม (integer)
@@ -274,65 +257,48 @@ function Dashboard() {
               console.log(`มีข้อมูลของวันที่: ${day}`);
             }
           });
-            // แก้ไขเพื่อแสดงทุกวันในเดือนอย่างเดียว (ไม่มีตัวเลือกแสดงเฉพาะวันที่มีข้อมูล)
+          // แก้ไขเพื่อแสดงทุกวันในเดือนอย่างเดียว (ไม่มีตัวเลือกแสดงเฉพาะวันที่มีข้อมูล)
           const daysInMonth = new Date(year, month, 0).getDate();
-          
+
           // สร้างข้อมูลใหม่สำหรับทุกวัน
           const newLabels = [];
           const newSalesData = Array(daysInMonth).fill(0);
           const newProfitData = Array(daysInMonth).fill(0);
           const newCostData = Array(daysInMonth).fill(0);
-            // แสดงรายการวันที่มีข้อมูลจาก results
+          // แสดงรายการวันที่มีข้อมูลจาก results
           console.log("วันที่มีข้อมูลในผลลัพธ์:", daysWithData.join(", "));
-          
+
           // สร้าง labels สำหรับทุกวัน
           for (let i = 1; i <= daysInMonth; i++) {
             newLabels.push(`${i} ${getThaiMonthName(month)}`);
-              
+
             // ใส่ข้อมูลตามวันที่ถ้ามี
             if (dataByDay[i]) {
-              newSalesData[i-1] = dataByDay[i].sum;
-              newProfitData[i-1] = dataByDay[i].profit; 
-              newCostData[i-1] = dataByDay[i].cost;
+              newSalesData[i - 1] = dataByDay[i].sum;
+              newProfitData[i - 1] = dataByDay[i].profit;
+              newCostData[i - 1] = dataByDay[i].cost;
               console.log(`กำหนดค่าวันที่ ${i}: ยอดขาย=${dataByDay[i].sum}, กำไร=${dataByDay[i].profit}, ต้นทุน=${dataByDay[i].cost}`);
             } else {
               // แสดงวันที่ไม่มีข้อมูล
               console.log(`วันที่ ${i} ไม่มีข้อมูล`);
             }
           }
-          
+
           labels = newLabels;
           salesData = newSalesData;
           profitData = newProfitData;
-          costData = newCostData;        }
-          // ตรวจสอบวันที่มีข้อมูล
+          costData = newCostData;
+        }
+        // ตรวจสอบวันที่มีข้อมูล
         const daysWithData = [];
         for (let i = 0; i < salesData.length; i++) {
           if (salesData[i] > 0 || costData[i] > 0 || profitData[i] > 0) {
             daysWithData.push(i + 1);
           }
         }
-        
-        console.log(`วันที่มีข้อมูลในกราฟ: ${daysWithData.join(', ')}`);
-        
-        // ตรวจสอบพิเศษสำหรับวันที่ 14 และ 15 มิถุนายน
-        if (month === 6) { // มิถุนายน
-          console.log(`ข้อมูลวันที่ 14 มิถุนายน: ยอดขาย=${salesData[14-1]}, ต้นทุน=${costData[14-1]}, กำไร=${profitData[14-1]}`);
-          console.log(`ข้อมูลวันที่ 15 มิถุนายน: ยอดขาย=${salesData[15-1]}, ต้นทุน=${costData[15-1]}, กำไร=${profitData[15-1]}`);
-          
-          // ตรวจสอบว่ามีข้อมูลของวันที่ 15 หรือไม่ในข้อมูลดิบ
-          const day15Data = results.find(item => item.day === 15);
-          if (day15Data) {
-            console.log("พบข้อมูลวันที่ 15 มิถุนายนในข้อมูลดิบ:", day15Data);
-            // ให้แน่ใจว่าข้อมูลถูกใส่ในกราฟ
-            salesData[15-1] = parseFloat(day15Data.sum || 0);
-            profitData[15-1] = parseFloat(day15Data.profit || 0);
-            costData[15-1] = parseFloat(day15Data.cost || 0);
-          } else {
-            console.warn("ไม่พบข้อมูลวันที่ 15 มิถุนายนในข้อมูลดิบ");
-          }
-        }
-        
+
+
+
         setMyData({
           labels,
           datasets: [
@@ -479,7 +445,6 @@ function Dashboard() {
   const fetchProductDetails = async () => {
     try {
       const url = config.api_path + "/productDetails";
-      // Use productDateRange instead of dateRange
       const [start, end] = productDateRange;
       if (!start || !end) return;
 
@@ -512,7 +477,6 @@ function Dashboard() {
       const [start, end] = productDateRange;
       if (!start || !end) return;
 
-      // Clone the dates to avoid modifying the original dates
       const startDate = new Date(start);
       const endDate = new Date(end);
 
@@ -570,7 +534,6 @@ function Dashboard() {
             endDate = dateRangeValue[1];
           }
           break;
-        // case 'today' เป็นค่าเริ่มต้น ไม่ต้องกำหนดอะไร
       }
 
       // ตั้งค่าเวลาเริ่มต้นและสิ้นสุด
@@ -586,7 +549,6 @@ function Dashboard() {
 
       // ตรวจสอบผลลัพธ์
       if (res.data.message === "success") {
-        console.log("API Response:", res.data.results);
 
         // สร้าง map ของข้อมูล stock
         const stockMap = new Map(stockReport.map(item => [item.result.id, {
@@ -1061,15 +1023,15 @@ function Dashboard() {
 
           <div className="card-body mb-4">
             <div className="row g-4">              <div className="col-12 col-md-4">
-                <div className="card text-center" style={summaryCardStyle}>
-                  <div className="card-header bg-primary text-white">
-                    <h5 className="mb-0">ยอดขายทั้งหมด </h5>
-                  </div>
-                  <div className="card-body">
-                    <h3 className="mb-0">{formatNumber(totalSales)} บาท</h3>
-                  </div>
+              <div className="card text-center" style={summaryCardStyle}>
+                <div className="card-header bg-primary text-white">
+                  <h5 className="mb-0">ยอดขายทั้งหมด </h5>
+                </div>
+                <div className="card-body">
+                  <h3 className="mb-0">{formatNumber(totalSales)} บาท</h3>
                 </div>
               </div>
+            </div>
               <div className="col-12 col-md-4">
                 <div className="card text-center" style={summaryCardStyle}>
                   <div className="card-header bg-warning text-white">
@@ -1111,16 +1073,16 @@ function Dashboard() {
                   </div>
                   {viewType !== "monthly" && (
                     <div className="col-12 col-md-auto">                      <select
-                        className="form-select"
-                        value={month}
-                        onChange={(e) => setMonth(parseInt(e.target.value))}
-                      >
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                          <option key={m} value={m}>
-                            {getThaiMonthName(m)}
-                          </option>
-                        ))}
-                      </select>
+                      className="form-select"
+                      value={month}
+                      onChange={(e) => setMonth(parseInt(e.target.value))}
+                    >
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                        <option key={m} value={m}>
+                          {getThaiMonthName(m)}
+                        </option>
+                      ))}
+                    </select>
                     </div>
                   )}                  <div className="col-12 col-md-auto">
                     <select

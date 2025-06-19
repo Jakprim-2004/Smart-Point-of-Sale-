@@ -4,15 +4,13 @@ import axios from "axios";
 import config from "../config";
 import { Link, useNavigate } from "react-router-dom";
 import Modal from "../components/Modal";
-import React from "react";
 import ExitIcon from "../assets/Exit.svg";
 import logoGif from "../assets/coin.gif";
 import shopping from "../assets/shopping.gif";
 import report from "../assets/report.gif";
 import Selling from "../assets/Selling.gif";
 import checklist from "../assets/checklist.gif";
-import candidates from "../assets/candidates.gif";
-import service from "../assets/service.gif";
+
 
 const Sidebar = forwardRef((props, sidebarRef) => {
   const [firstName, setfirstName] = useState();
@@ -357,7 +355,7 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                           href="#"
                           className="nav-link"
                           style={styles.navLink}
-                          onClick={() => handleNavigation("/dashboardreport")}
+                          onClick={() => handleNavigation("/ReportProduct")}
                           >
                           <span style={styles.navIcon}>
                             <i className="fas fa-chart-bar"></i>

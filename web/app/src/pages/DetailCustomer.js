@@ -253,7 +253,6 @@ function DetailCustomer() {
                         </div>
                         <div className="col-md-6">
                             <p><strong>แต้มสะสม:</strong> {customer.points}</p>
-                            <p><strong>ระดับสมาชิก:</strong> {customer.membershipTier}</p>
                             <p><strong>ยอดใช้จ่ายสะสม:</strong> {customer.totalSpent}</p>
                         </div>
                     </div>

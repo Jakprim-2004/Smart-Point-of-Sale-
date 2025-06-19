@@ -53,13 +53,23 @@ function BillSales() {
       filtered = filtered.filter(bill => 
         bill.id.toString().includes(searchBillNo)
       );
-    }
-
-    // กรองตามช่วงวันที่
+    }    // กรองตามช่วงวันที่
     if (startDate && endDate) {
+      // ปรับ startDate ให้เป็น 00:00:00 ของวันนั้น (เริ่มต้นวัน)
+      const adjustedStartDate = new Date(startDate);
+      adjustedStartDate.setHours(0, 0, 0, 0);
+      
+      // ปรับ endDate ให้เป็น 23:59:59 ของวันนั้น (สิ้นสุดวัน)
+      const adjustedEndDate = new Date(endDate);
+      adjustedEndDate.setHours(23, 59, 59, 999);
+       
+      
       filtered = filtered.filter(bill => {
         const billDate = new Date(bill.createdAt);
-        return billDate >= startDate && billDate <= endDate;
+        
+        
+        
+        return billDate >= adjustedStartDate && billDate <= adjustedEndDate;
       });
     }
 

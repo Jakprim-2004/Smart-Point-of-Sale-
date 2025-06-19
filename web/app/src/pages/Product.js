@@ -663,7 +663,7 @@ function Product() {
                                 onClick={() => {
                                   setProduct({
                                     ...item,
-                                    originalBarcode: item.barcode // เก็บค่าบาร์โค้ดเดิมไว้
+                                    originalBarcode: item.barcode 
                                   });
                                   setShowProductModal(true);
                                 }}
@@ -704,7 +704,6 @@ function Product() {
           </div>
         </div>
 
-        {/* เพิ่ม CSS แบบกำหนดเอง */}
         <style jsx>{`
           .hover-scale:hover {
             transform: scale(1.02);
@@ -849,7 +848,7 @@ function Product() {
           </div>
         </Modal>
 
-        {/* โมดัลข้อมูลสินค้า */}
+        
         <Modal
           show={showProductModal}
           onHide={handleProductModalClose}
@@ -857,6 +856,36 @@ function Product() {
         >
           <form onSubmit={handleSave}>
             <div className="row">
+              <div className="form-group col-md-12">
+                <label>
+                  บาร์โค้ด <span className="text-danger">*</span>
+                </label>
+                <div className="input-group">
+                  <input
+                    value={product.barcode || ""}
+                    onChange={handleBarcodeChange}
+                    type="text"
+                    className="form-control shadow-sm"
+                    required
+                    maxLength="13"
+                    pattern="\d{13}"
+                    title="กรุณากรอกบาร์โค้ด 13 หลัก"
+                    placeholder="กรอกบาร์โค้ด 13 หลัก"
+                  />
+                  <div className="input-group-append">
+                    <button 
+                      type="button" 
+                      className="btn btn-outline-secondary" 
+                      onClick={generateBarcode}
+                      title="สร้างบาร์โค้ดอัตโนมัติ">
+                      <i className="fa fa-refresh"></i>
+                    </button>
+                  </div>
+                </div>
+                <small className="text-muted">
+                  บาร์โค้ดต้องเป็นตัวเลข 13 หลัก ({(product.barcode || "").length}/13)
+                </small>
+              </div>
               <div className="form-group col-md-12 ">
                 <label>
                   ชื่อสินค้า <span className="text-danger">*</span>
@@ -953,36 +982,7 @@ function Product() {
                   </button>
                 </div>
               </div>
-              <div className="form-group col-md-12">
-                <label>
-                  บาร์โค้ด <span className="text-danger">*</span>
-                </label>
-                <div className="input-group">
-                  <input
-                    value={product.barcode || ""}
-                    onChange={handleBarcodeChange}
-                    type="text"
-                    className="form-control shadow-sm"
-                    required
-                    maxLength="13"
-                    pattern="\d{13}"
-                    title="กรุณากรอกบาร์โค้ด 13 หลัก"
-                    placeholder="กรอกบาร์โค้ด 13 หลัก"
-                  />
-                  <div className="input-group-append">
-                    <button 
-                      type="button" 
-                      className="btn btn-outline-secondary" 
-                      onClick={generateBarcode}
-                      title="สร้างบาร์โค้ดอัตโนมัติ">
-                      <i className="fa fa-refresh"></i>
-                    </button>
-                  </div>
-                </div>
-                <small className="text-muted">
-                  บาร์โค้ดต้องเป็นตัวเลข 13 หลัก ({(product.barcode || "").length}/13)
-                </small>
-              </div>
+              
             </div>
 
             <div className="text-muted mb-3">
