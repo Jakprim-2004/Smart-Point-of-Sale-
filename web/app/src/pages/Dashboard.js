@@ -397,6 +397,7 @@ const renderTopSellingContent = () => {
     return (
       <div className="p-3">
         <div className="mb-3 text-center">
+          <h5 className="text-muted">ยอดรวมทั้งหมด: ฿{total.toLocaleString('th-TH')}</h5>
           </div>
         <div className="payment-methods-list">
           {paymentStats.length > 0 ? (

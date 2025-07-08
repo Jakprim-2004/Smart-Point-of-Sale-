@@ -108,7 +108,7 @@ function Login() {
                         <div className="login-form p-3">
                             <div className="form-group mb-4">
                                 <label className="form-label">
-                                    {loginType === 'member' ? 'เบอร์มือถือ' : 'ชื่อผู้ใช้'}
+                                    {loginType === 'member' ? 'เบอร์โทรศัพท์' : 'ชื่อผู้ใช้'}
                                 </label>
                                 {loginType === 'member' ? (
                                     <div className="input-group">
@@ -118,15 +118,17 @@ function Login() {
                                         <input 
                                             type="text" 
                                             className="form-control" 
-                                            placeholder={loginType === 'member' ? "กรอกเบอร์มือถือ" : "กรอกชื่อผู้ใช้"}
-                                            value={loginType === 'member' ? phone  : username}
+                                            placeholder={loginType === 'member' ? "กรอกเบอร์โทรศัพท์" : "กรอกชื่อผู้ใช้"}
+                                            value={loginType === 'member' ? (phone || email) : username}
                                             onChange={(e) => {
                                                 const value = e.target.value;
                                                 if (loginType === 'member') {
                                                     if (value.includes('@')) {
+                                                        setEmail(value);
                                                         setPhone('');
                                                     } else {
                                                         setPhone(value);
+                                                        setEmail('');
                                                     }
                                                 } else {
                                                     setUsername(value);

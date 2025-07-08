@@ -171,6 +171,8 @@ function Customer() {
                             <th>Phone</th>
                             <th>Email</th>
                             <th>Points</th>
+                            <th>Membership</th>
+                            <th>Total Spent</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -208,6 +210,8 @@ function Customer() {
                                     ) : customer.email}
                                 </td>
                                 <td>{customer.points}</td>
+                                <td>{customer.membershipTier}</td>
+                                <td>{customer.totalSpent}</td>
                                 <td>
                                     {editCustomer?.id === customer.id ? (
                                         <button className="btn btn-success me-2" onClick={handleSave}>

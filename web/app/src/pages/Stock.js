@@ -200,7 +200,7 @@ function Stock() {
                     <div className="card-body">
                         <div className="row">
 
-                            <div className="col-8">
+                            <div className="col-4">
                                 <div className="input-group">
                                     <span className="input-group-text">สินค้า</span>
                                     <input
@@ -267,7 +267,7 @@ function Stock() {
                                         className="form-control" />
                                 </div>
                             </div>
-                            <div className="col-2">
+                            <div className="col-6">
                                 <button onClick={handleSave} className="btn btn-primary">
                                     <i className="fa fa-check me-2"></i>
                                     บันทึก
@@ -278,7 +278,7 @@ function Stock() {
                         <table className="table table-bordered table-stirped mt-3">
                             <thead>
                                 <tr>
-                                    <th width="150px">บาร์โค้ด</th>
+                                    <th width="150px">barcode</th>
                                     <th>รายการ</th>
                                     <th width="100px" className="text-end">จำนวน</th>
                                     <th width="180px">วันที่</th>
