@@ -26,6 +26,7 @@ app.use( require("./controllers/DashboardController"));
 app.use( require('./controllers/CustomerControllers'));
 app.use( require('./controllers/RewardController'));
 app.use( require('./controllers/CategoryController'));
+app.use( require('./controllers/CommentController')); // New Neon integration demo
 
 const init = async () => {
   try {

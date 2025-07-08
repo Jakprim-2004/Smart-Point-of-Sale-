@@ -1,25 +1,42 @@
 const { Sequelize } = require('sequelize');
+const { neon } = require('@neondatabase/serverless');
 require('dotenv').config();
 
+// Create a connection using Neon serverless
+const sql = neon(process.env.DATABASE_URL);
 
-const sequelize = new Sequelize(
-    process.env.DB_NAME ,
-    process.env.DB_USER ,
-    process.env.DB_PASSWORD ,
-    {
-        host: process.env.DB_HOST || 'localhost',
-        dialect: 'postgres',
-        logging: false,
-        port: parseInt(process.env.DB_PORT || '5432')
+// Create Sequelize instance with Neon
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: 'postgres',
+  dialectModule: require('pg'),
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false
     }
-);
+  },
+  logging: false, // Set to console.log to see SQL queries
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
+  },
+});
 
 // Test the connection
-sequelize.authenticate()
-    .then(() => console.log('Database connected successfully'))
-    .catch(err => console.error('Unable to connect to the database:', err));
+async function testConnection() {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Database connection has been established successfully with Neon.');
+  } catch (error) {
+    console.error('❌ Unable to connect to the database:', error);
+  }
+}
 
+// Export both Sequelize instance and raw SQL function
 module.exports = sequelize;
+module.exports.sql = sql;
 
-
-
+// Test connection when module is loaded
+testConnection();

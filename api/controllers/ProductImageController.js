@@ -7,7 +7,7 @@ const fs = require('fs');
 
 app.use(fileUpload());
 
-app.post('/productImage/insert', Service.isLogin, async (req, res) => {
+app.post('/productImage/insert/', Service.isLogin, async (req, res) => {
     try {        
         const myDate = new Date();
         const y = myDate.getFullYear();
@@ -42,7 +42,7 @@ app.post('/productImage/insert', Service.isLogin, async (req, res) => {
     }
 })
 
-app.get('/productImage/list/:productId', Service.isLogin, async (req, res) => {
+app.get('/productImage/list/:productId/', Service.isLogin, async (req, res) => {
     try {
         const results = await ProductImageModel.findAll({
             where: {
@@ -56,7 +56,7 @@ app.get('/productImage/list/:productId', Service.isLogin, async (req, res) => {
         res.send({message: e.message});
     }
 })
-app.delete('/productImage/delete/:id', Service.isLogin, async (req, res) => {
+app.delete('/productImage/delete/:id/', Service.isLogin, async (req, res) => {
     try {
         const row = await ProductImageModel.findByPk(req.params.id);
         const imageName = row.imageName;
@@ -75,7 +75,7 @@ app.delete('/productImage/delete/:id', Service.isLogin, async (req, res) => {
         res.send({message: e.message});
     }
 })
-app.get('/productImage/chooseMainImage/:id/:productId', Service.isLogin, async (req, res) => {
+app.get('/productImage/chooseMainImage/:id/:productId/', Service.isLogin, async (req, res) => {
     try {
         await ProductImageModel.update({
             isMain: false
