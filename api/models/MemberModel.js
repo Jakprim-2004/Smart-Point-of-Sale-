@@ -7,9 +7,6 @@ const MemberModel = conn.define('member', {
         primaryKey: true,
         autoIncrement: true
     },
-    packageId: {
-        type: DataTypes.BIGINT
-    },
     email: {
         type: DataTypes.STRING(255)
     },

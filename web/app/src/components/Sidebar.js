@@ -275,8 +275,8 @@ const Sidebar = forwardRef((props, sidebarRef) => {
                     fontWeight: "normal",
                   }}
                 >
-                  {isOwner ? "แอดมิน" : "พนักงาน"}
-                </span>
+                  
+                </span>   
               </div>
            
              
