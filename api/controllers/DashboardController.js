@@ -14,7 +14,6 @@ router.post("/reportSumSalePerMonth", async (req, res) => {
     const { year, month, viewType } = req.body;
     const userId = service.getMemberId(req);
     
-    console.log(`API ได้รับคำขอ: ปี=${year}, เดือน=${month}, viewType=${viewType}`);
     
     // กำหนดค่าสำหรับมุมมองรายวันหรือรายเดือน
     const dateUnit = viewType === "daily" ? "DAY" : "MONTH";
@@ -36,177 +35,35 @@ router.post("/reportSumSalePerMonth", async (req, res) => {
       ]
     };
     
-    // เพิ่มเงื่อนไขกรองตามเดือน (เฉพาะมุมมองรายวัน)
+    // เงื่อนไขกรองตามเดือน (เฉพาะมุมมองรายวัน)
     if (viewType === "daily") {
       whereConditions[sequelize.Op.and].push(
         sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`MONTH FROM "billSaleDetail"."createdAt"`)), month)
       );
     }
     
-    // หมายเหตุ: status จะถูกกำหนดใน include ของ BillSaleModel ด้านล่าง ไม่ใช่ใน whereConditions
-    // ข้อผิดพลาดเดิม: whereConditions.status = 'pay'; // ซึ่งทำให้เกิด error เพราะ BillSaleDetail อาจไม่มีคอลัมน์ status
-    
-    console.log("เงื่อนไขการค้นหา:", JSON.stringify(whereConditions, null, 2));
-    
-    // ตรวจสอบก่อนว่า billSale มีข้อมูลของวันที่ 15 หรือไม่
-    if (viewType === "daily" && month === 6) { // มิถุนายน
-      console.log("กำลังตรวจสอบข้อมูลของเดือนมิถุนายน...");
-      
-      // ตรวจสอบจากตาราง BillSale
-      const billSalesInJune = await BillSaleModel.findAll({
-        attributes: [
-          [sequelize.fn("EXTRACT", sequelize.literal(`DAY FROM "createdAt"`)), "day"],
-          [sequelize.fn("COUNT", sequelize.col("id")), "count"]
-        ],
-        where: {
-          userId,
-          status: 'pay',
-          [sequelize.Op.and]: [
-            sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`YEAR FROM "createdAt"`)), year),
-            sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`MONTH FROM "createdAt"`)), month)
-          ]
-        },
-        group: [sequelize.fn("EXTRACT", sequelize.literal(`DAY FROM "createdAt"`))],
-        order: [[sequelize.fn("EXTRACT", sequelize.literal(`DAY FROM "createdAt"`)), 'ASC']]
-      });
-      
-      console.log("วันที่มียอดขายในเดือนมิถุนายนจากตาราง BillSale:", billSalesInJune.map(item => item.dataValues));
-      
-      try {
-        // ตรวจสอบข้อมูลจากตาราง BillSaleDetail โดยตรง
-        const billSaleDetailsInJune = await BillSaleDetailModel.findAll({
-          attributes: [
-            [sequelize.fn("EXTRACT", sequelize.literal(`DAY FROM "billSaleDetail"."createdAt"`)), "day"],
-            [sequelize.fn("COUNT", sequelize.col("billSaleDetail.id")), "count"]
-          ],
-          where: {
-            userId,
-            [sequelize.Op.and]: [
-              sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`YEAR FROM "billSaleDetail"."createdAt"`)), year),
-              sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`MONTH FROM "billSaleDetail"."createdAt"`)), month)
-            ]
-          },
-          include: [{
-            model: BillSaleModel,
-            as: 'billSale',
-            attributes: [],
-            where: { status: 'pay' },
-            required: true
-          }],
-          group: [sequelize.fn("EXTRACT", sequelize.literal(`DAY FROM "billSaleDetail"."createdAt"`))],
-          order: [[sequelize.fn("EXTRACT", sequelize.literal(`DAY FROM "billSaleDetail"."createdAt"`)), 'ASC']]
-        });
-        
-        console.log("วันที่มียอดขายในเดือนมิถุนายนจากตาราง BillSaleDetail:", 
-                    billSaleDetailsInJune && billSaleDetailsInJune.length > 0 
-                    ? billSaleDetailsInJune.map(item => item.dataValues)
-                    : "ไม่พบข้อมูล");
-      } catch (checkError) {
-        console.error("ข้อผิดพลาดในการตรวจสอบข้อมูลจาก BillSaleDetail:", checkError.message);
-      }
-      
-      try {
-        // ตรวจสอบข้อมูลของวันที่ 14 โดยตรง
-        const day14Details = await BillSaleDetailModel.findAll({
-          include: [
-            { 
-              model: ProductModel, 
-              as: 'product',
-              required: false
-            },
-            { 
-              model: BillSaleModel, 
-              as: 'billSale', 
-              where: { status: 'pay' },
-              required: true
-            }
-          ],
-          where: {
-            userId,
-            [sequelize.Op.and]: [
-              sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`YEAR FROM "billSaleDetail"."createdAt"`)), year),
-              sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`MONTH FROM "billSaleDetail"."createdAt"`)), month),
-              sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`DAY FROM "billSaleDetail"."createdAt"`)), 14)
-            ]
-          }
-        });
-        
-        console.log(`จำนวนรายการสั่งซื้อวันที่ 14: ${day14Details ? day14Details.length : 'ไม่มีข้อมูล'}`);
-        
-        const day15Details = await BillSaleDetailModel.findAll({
-          include: [
-            { 
-              model: ProductModel, 
-              as: 'product',
-              required: false 
-            },
-            { 
-              model: BillSaleModel, 
-              as: 'billSale', 
-              where: { status: 'pay' },
-              required: true
-            }
-          ],
-          where: {
-            userId,
-            [sequelize.Op.and]: [
-              sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`YEAR FROM "billSaleDetail"."createdAt"`)), year),
-              sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`MONTH FROM "billSaleDetail"."createdAt"`)), month),
-              sequelize.where(sequelize.fn("EXTRACT", sequelize.literal(`DAY FROM "billSaleDetail"."createdAt"`)), 15)
-            ]
-          }
-        });
-        
-        console.log(`จำนวนรายการสั่งซื้อวันที่ 15: ${day15Details ? day15Details.length : 'ไม่มีข้อมูล'}`);
-      } catch (daysCheckError) {
-        console.error("ข้อผิดพลาดในการตรวจสอบข้อมูลรายวัน:", daysCheckError.message);
-      }
-    }
-    
-    // ดึงข้อมูลจากฐานข้อมูลด้วยการ join กับตาราง BillSale และ Product
-    console.log("กำลังดึงข้อมูลสรุปยอดขายจากฐานข้อมูล...");
+    // ดึงข้อมูลจากฐานข้อมูล
     const results = await BillSaleDetailModel.findAll({
       attributes,
       where: whereConditions,
       group: [sequelize.fn("EXTRACT", sequelize.literal(`${dateUnit} FROM "billSaleDetail"."createdAt"`))],
-      include: [
-        { 
-          model: ProductModel, 
-          as: 'product',  
-          attributes: [],
-          required: false  
-        },
-        {
-          model: BillSaleModel,
-          as: 'billSale',
-          attributes: [],
-          required: true,  
-          where: { 
-            status: 'pay',  
-            userId: userId  
-          }
-        }
-      ],
+      include: [{ 
+        model: ProductModel, 
+        as: 'product',  
+        attributes: [] 
+      }, {
+        model: BillSaleModel,
+        as: 'billSale',
+        attributes: [],
+        required: true,
+        where: { status: 'pay' }
+      }],
       order: [[sequelize.fn("EXTRACT", sequelize.literal(`${dateUnit} FROM "billSaleDetail"."createdAt"`)), 'ASC']]
     });
     
-    console.log("จำนวนผลลัพธ์ที่ได้:", results ? results.length : 0);
     
     // แปลงข้อมูลให้อยู่ในรูปแบบที่ใช้งานง่าย
-    const formattedResults = results && results.length > 0 ? results.map(item => {
-      // ตรวจสอบก่อนว่ามี dataValues หรือไม่
-      if (!item || !item.dataValues) {
-        console.warn("พบข้อมูลที่ไม่สมบูรณ์:", item);
-        return {
-          day: null,
-          month: null,
-          sum: 0,
-          profit: 0,
-          cost: 0
-        };
-      }
-      
-      // สร้างข้อมูลที่สมบูรณ์
+    const formattedResults = results.map(item => {
       const result = {
         day: parseInt(item.dataValues.day) || null,
         month: parseInt(item.dataValues.month) || null,
@@ -215,76 +72,35 @@ router.post("/reportSumSalePerMonth", async (req, res) => {
         cost: parseFloat(item.dataValues.cost || 0)
       };
       return result;
-    }) : [];
+    });
     
-    console.log("ข้อมูลหลังการแปลงรูปแบบ:", formattedResults.length, "รายการ");
-    
-    // คำนวณผลรวม - ตรวจสอบว่ามีข้อมูลก่อน
-    const totalSales = formattedResults.length > 0 ? 
-      formattedResults.reduce((sum, item) => sum + (item.sum || 0), 0) : 0;
-    const totalProfit = formattedResults.length > 0 ? 
-      formattedResults.reduce((sum, item) => sum + (item.profit || 0), 0) : 0;
-    const totalCost = formattedResults.length > 0 ? 
-      formattedResults.reduce((sum, item) => sum + (item.cost || 0), 0) : 0;
-    
-    // รายละเอียดข้อมูลสำหรับตรวจสอบ
-    const detailedData = formattedResults.map(item => ({
-      ...item,
-      hasData: (item.sum > 0 || item.profit > 0 || item.cost > 0)
-    }));
-    
-    // ถ้าเป็นมิถุนายน ตรวจสอบข้อมูลของวันที่ 14 และ 15 เป็นพิเศษ
-    if (viewType === "daily" && month === 6) {
-      try {
-        const day14 = formattedResults.find(item => item && item.day === 14);
-        const day15 = formattedResults.find(item => item && item.day === 15);
-        console.log("ข้อมูลวันที่ 14 มิถุนายน:", day14 || "ไม่พบข้อมูล");
-        console.log("ข้อมูลวันที่ 15 มิถุนายน:", day15 || "ไม่พบข้อมูล");
-        
-        // หากไม่พบข้อมูลวันที่ 15 แต่มีข้อมูลในตาราง จะสร้างข้อมูลเปล่าเพื่อให้กราฟแสดงถูกต้อง
-        if (!day15 && month === 6 && year === 2025) {
-          console.log("สร้างข้อมูลว่างสำหรับวันที่ 15 มิถุนายน");
-          formattedResults.push({
-            day: 15,
-            month: 6,
-            sum: 0,
-            profit: 0,
-            cost: 0
-          });
-        }
-      } catch (err) {
-        console.error("เกิดข้อผิดพลาดในการตรวจสอบข้อมูลวันที่ 14 และ 15:", err.message);
-      }
+    // แสดงข้อมูลวันที่มีข้อมูลเพื่อการตรวจสอบ
+    if (viewType === "daily") {
+      const daysWithData = formattedResults
+        .filter(item => item && item.day)
+        .map(item => item.day)
+        .sort((a, b) => a - b);
+      
     }
     
-    // แสดงข้อมูลสรุปโดยไม่มีข้อมูลละเอียดเกินไปเพื่อลดขนาดของ log
-    console.log("API ส่งข้อมูลกลับ:", {
-      count: formattedResults.length,
-      days: formattedResults.filter(item => item && item.day).map(item => item.day).sort((a, b) => a - b),
+    // คำนวณผลรวม
+    const totalSales = formattedResults.reduce((sum, item) => sum + (item.sum || 0), 0);
+    const totalProfit = formattedResults.reduce((sum, item) => sum + (item.profit || 0), 0);
+    const totalCost = formattedResults.reduce((sum, item) => sum + (item.cost || 0), 0);
+    
+   
+    
+    // ส่งผลลัพธ์กลับไป
+    res.send({
+      message: "success",
+      results: formattedResults,
       totalSales,
       totalProfit,
       totalCost
     });
-    
-    // ตรวจสอบและจัดการข้อมูลก่อนส่งกลับ
-    // ส่งผลลัพธ์กลับไป
-    res.send({
-      message: "success",
-      results: formattedResults || [], // ป้องกันกรณี null
-      totalSales: parseFloat(totalSales || 0),
-      totalProfit: parseFloat(totalProfit || 0),
-      totalCost: parseFloat(totalCost || 0)
-    });
   } catch (error) {
-    // บันทึกข้อผิดพลาดอย่างละเอียดพร้อมรายละเอียดคำขอ
     console.error("Error in reportSumSalePerMonth:", error);
-    console.error("Request details:", { year, month, viewType });
-    
-    // ส่งข้อความกลับไปที่ client
-    res.status(500).send({ 
-      message: "เกิดข้อผิดพลาดในการดึงข้อมูล: " + (error.message || "Internal server error"),
-      errorCode: error.code || 500
-    });
+    res.status(500).send({ message: error.message });
   }
 });
 
